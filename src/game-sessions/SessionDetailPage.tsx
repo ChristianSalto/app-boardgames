@@ -1,0 +1,328 @@
+import { useMemo, useState } from 'react'
+import { Link, useLocation, useParams } from 'react-router-dom'
+import { usePrototype } from '../app/PrototypeContext'
+import { AppIcon } from '../shared/AppIcon'
+import {
+  formatSessionLongDate,
+  formatSessionTime,
+  getGameInitials,
+  getRemainingSeats,
+  getSessionDisplayState,
+  getUserRelation,
+} from './model'
+
+const stateLabels = {
+  open: 'Abierta',
+  complete: 'Completa',
+  cancelled: 'Cancelada',
+  past: 'Pasada',
+} as const
+
+export function SessionDetailPage() {
+  const { sessionId } = useParams()
+  const location = useLocation()
+  const {
+    acceptRequest,
+    currentPlayerId,
+    declineRequest,
+    players,
+    requestSeat,
+    sessions,
+  } = usePrototype()
+  const [confirmingDecline, setConfirmingDecline] = useState<string | null>(null)
+  const [actionMessage, setActionMessage] = useState(
+    (location.state as { readonly created?: boolean } | null)?.created
+      ? 'Partida publicada correctamente.'
+      : '',
+  )
+
+  const session = sessions.find((item) => item.id === sessionId)
+
+  const playerById = useMemo(
+    () => new Map(players.map((player) => [player.id, player])),
+    [players],
+  )
+
+  if (!session) {
+    return (
+      <section className="page-container page-section">
+        <div className="empty-state">
+          <h1>Partida no encontrada</h1>
+          <p>Puede que el enlace no sea correcto o que la partida ya no esté disponible.</p>
+          <Link className="button button--primary" to="/">Volver a Explorar</Link>
+        </div>
+      </section>
+    )
+  }
+
+  const organizer = playerById.get(session.organizerId)
+  const participants = session.participantIds
+    .map((id) => playerById.get(id))
+    .filter((player) => player !== undefined)
+  const pendingRequests = session.requests.filter((request) => request.state === 'pending')
+  const relation = getUserRelation(session, currentPlayerId)
+  const displayState = getSessionDisplayState(session)
+  const remainingSeats = getRemainingSeats(session)
+  const isOrganizer = relation === 'organizer'
+
+  const handleRequest = () => {
+    requestSeat(session.id)
+    setActionMessage(
+      'Solicitud enviada. Está pendiente de respuesta; aún no tienes una plaza confirmada.',
+    )
+  }
+
+  const handleAccept = (playerId: string) => {
+    const player = playerById.get(playerId)
+    const willComplete = remainingSeats === 1
+    const requestsClosed = willComplete ? Math.max(0, pendingRequests.length - 1) : 0
+    acceptRequest(session.id, playerId)
+    setConfirmingDecline(null)
+    setActionMessage(
+      willComplete
+        ? `${player?.name ?? 'La persona'} tiene plaza confirmada. La partida está completa${requestsClosed > 0 ? ` y ${requestsClosed} ${requestsClosed === 1 ? 'solicitud restante se ha cerrado' : 'solicitudes restantes se han cerrado'} por falta de plazas` : ''}.`
+        : `${player?.name ?? 'La persona'} tiene ahora una plaza confirmada.`,
+    )
+  }
+
+  const handleDecline = (playerId: string) => {
+    const player = playerById.get(playerId)
+    declineRequest(session.id, playerId)
+    setConfirmingDecline(null)
+    setActionMessage(`La solicitud de ${player?.name ?? 'esta persona'} no ha sido aceptada.`)
+  }
+
+  return (
+    <section className="page-container detail-page">
+      <Link className="back-link" to={isOrganizer ? '/my-sessions' : '/'}>← Volver</Link>
+
+      {actionMessage ? (
+        <div className="feedback-banner" role="status" tabIndex={-1}>
+          <span aria-hidden="true">✓</span>
+          <p>{actionMessage}</p>
+        </div>
+      ) : null}
+
+      <div className="detail-layout">
+        <div className="detail-main">
+          <div className="detail-heading">
+            <div className={`game-art game-art--large game-art--${session.tone}`} aria-hidden="true">
+              <span>{getGameInitials(session.game)}</span>
+            </div>
+            <div>
+              <div className="detail-heading__meta">
+                <span className={`status-pill status-pill--${displayState}`}>
+                  {stateLabels[displayState]}
+                </span>
+                {isOrganizer ? <span className="status-pill status-pill--organizer">Organizada por ti</span> : null}
+              </div>
+              <h1>{session.game}</h1>
+              <p>Una mesa organizada por {organizer?.name ?? 'un jugador de la comunidad'}.</p>
+            </div>
+          </div>
+
+          <dl className="detail-facts">
+            <div>
+              <dt><AppIcon name="calendar" /> Cuándo</dt>
+              <dd className="u-capitalize">{formatSessionLongDate(session.startsAt)} · {formatSessionTime(session.startsAt)}</dd>
+            </div>
+            <div>
+              <dt><AppIcon name="location" /> Dónde</dt>
+              <dd>{session.zone} · Madrid</dd>
+            </div>
+            <div>
+              <dt><AppIcon name="people" /> Aforo</dt>
+              <dd>{session.participantIds.length}/{session.capacity} confirmados · {remainingSeats} {remainingSeats === 1 ? 'plaza' : 'plazas'}</dd>
+            </div>
+          </dl>
+
+          <div className="content-block">
+            <h2>Sobre la partida</h2>
+            <p>{session.description || 'El organizador no ha añadido información adicional.'}</p>
+          </div>
+
+          <div className="content-block">
+            <div className="content-block__heading">
+              <h2>Participantes confirmados</h2>
+              <span>{participants.length}/{session.capacity}</span>
+            </div>
+            <ul className="people-list">
+              {participants.map((player) => (
+                <li key={player.id}>
+                  <Link className="person-row" to={player.id === currentPlayerId ? '/profile' : `/players/${player.id}`}>
+                    <span className="avatar" aria-hidden="true">{getInitials(player.name)}</span>
+                    <span>
+                      <strong>{player.name}</strong>
+                      <small>{player.id === session.organizerId ? 'Organiza la partida' : player.zone ?? 'Madrid'}</small>
+                    </span>
+                    <AppIcon name="arrow" size={18} />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {isOrganizer ? (
+            <OrganizerRequests
+              confirmingDecline={confirmingDecline}
+              onAccept={handleAccept}
+              onCancelDecline={() => setConfirmingDecline(null)}
+              onConfirmDecline={handleDecline}
+              onStartDecline={setConfirmingDecline}
+              pendingRequests={pendingRequests.map((request) => ({
+                playerId: request.playerId,
+                player: playerById.get(request.playerId),
+              }))}
+              sessionIsComplete={displayState === 'complete'}
+            />
+          ) : null}
+        </div>
+
+        <aside className="detail-aside" aria-label="Estado de tu participación">
+          <ParticipationPanel
+            displayState={displayState}
+            isOrganizer={isOrganizer}
+            onRequest={handleRequest}
+            relation={relation}
+            remainingSeats={remainingSeats}
+          />
+          <p className="privacy-note">
+            <AppIcon name="location" size={18} />
+            Por privacidad, este prototipo solo muestra la zona aproximada.
+          </p>
+        </aside>
+      </div>
+    </section>
+  )
+}
+
+type ParticipationPanelProps = {
+  readonly displayState: ReturnType<typeof getSessionDisplayState>
+  readonly isOrganizer: boolean
+  readonly onRequest: () => void
+  readonly relation: ReturnType<typeof getUserRelation>
+  readonly remainingSeats: number
+}
+
+function ParticipationPanel({
+  displayState,
+  isOrganizer,
+  onRequest,
+  relation,
+  remainingSeats,
+}: ParticipationPanelProps) {
+  if (isOrganizer) {
+    return <div className="participation-panel"><p className="eyebrow">Tu partida</p><h2>Gestiona esta mesa</h2><p>Revisa participantes y solicitudes desde esta misma pantalla.</p></div>
+  }
+
+  if (displayState === 'cancelled') {
+    return <div className="participation-panel participation-panel--muted"><p className="eyebrow">Cancelada</p><h2>La partida ha sido cancelada</h2><p>No admite nuevas solicitudes.</p></div>
+  }
+
+  if (displayState === 'past') {
+    return <div className="participation-panel participation-panel--muted"><p className="eyebrow">Pasada</p><h2>Esta partida ya se celebró</h2><p>Puedes conservarla como referencia en Mis partidas.</p></div>
+  }
+
+  if (relation === 'confirmed') {
+    return <div className="participation-panel participation-panel--success"><p className="eyebrow">Tu plaza</p><h2>Participación confirmada</h2><p>Ya cuentas dentro del aforo de esta partida.</p></div>
+  }
+
+  if (relation === 'pending') {
+    return <div className="participation-panel participation-panel--pending"><p className="eyebrow">Tu solicitud</p><h2>Solicitud pendiente</h2><p>Aún no tienes una plaza confirmada. El organizador debe aceptar tu solicitud.</p><Link className="text-link" to="/my-sessions">Ver en Mis partidas <AppIcon name="arrow" size={17} /></Link></div>
+  }
+
+  if (relation === 'not-confirmed') {
+    return <div className="participation-panel participation-panel--muted"><p className="eyebrow">Sin plaza confirmada</p><h2>La partida se ha completado</h2><p>Tu solicitud no llegó a confirmarse porque ya no quedan plazas.</p><Link className="text-link" to="/my-sessions">Ver en Mis partidas <AppIcon name="arrow" size={17} /></Link></div>
+  }
+
+  if (relation === 'declined') {
+    return <div className="participation-panel participation-panel--muted"><p className="eyebrow">Tu solicitud</p><h2>Solicitud no aceptada</h2><p>Esta vez el organizador no ha confirmado tu participación.</p></div>
+  }
+
+  if (displayState === 'complete') {
+    return <div className="participation-panel participation-panel--muted"><p className="eyebrow">Aforo completo</p><h2>No quedan plazas</h2><p>Esta partida ya tiene todas sus plazas confirmadas.</p></div>
+  }
+
+  return (
+    <div className="participation-panel">
+      <p className="eyebrow">{remainingSeats} {remainingSeats === 1 ? 'plaza disponible' : 'plazas disponibles'}</p>
+      <h2>¿Te apetece jugar?</h2>
+      <p>Tu solicitud deberá ser aceptada por el organizador.</p>
+      <button className="button button--primary button--wide" onClick={onRequest} type="button">
+        Solicitar plaza
+      </button>
+    </div>
+  )
+}
+
+type OrganizerRequestsProps = {
+  readonly confirmingDecline: string | null
+  readonly onAccept: (playerId: string) => void
+  readonly onCancelDecline: () => void
+  readonly onConfirmDecline: (playerId: string) => void
+  readonly onStartDecline: (playerId: string) => void
+  readonly pendingRequests: readonly {
+    readonly playerId: string
+    readonly player: ReturnType<Map<string, ReturnType<typeof usePrototype>['players'][number]>['get']>
+  }[]
+  readonly sessionIsComplete: boolean
+}
+
+function OrganizerRequests({
+  confirmingDecline,
+  onAccept,
+  onCancelDecline,
+  onConfirmDecline,
+  onStartDecline,
+  pendingRequests,
+  sessionIsComplete,
+}: OrganizerRequestsProps) {
+  return (
+    <div className="content-block requests-block">
+      <div className="content-block__heading">
+        <div>
+          <p className="eyebrow">Solo para ti</p>
+          <h2>Solicitudes pendientes</h2>
+        </div>
+        <span>{pendingRequests.length}</span>
+      </div>
+
+      {pendingRequests.length === 0 ? (
+        <div className="inline-empty">
+          <p>{sessionIsComplete ? 'La partida está completa. No quedan solicitudes pendientes.' : 'No tienes solicitudes pendientes.'}</p>
+        </div>
+      ) : (
+        <ul className="request-list">
+          {pendingRequests.map(({ playerId, player }) => (
+            <li className="request-card" key={playerId}>
+              <div className="person-row person-row--static">
+                <span className="avatar" aria-hidden="true">{getInitials(player?.name ?? '?')}</span>
+                <span>
+                  <strong>{player?.name ?? 'Perfil no disponible'}</strong>
+                  <small>{player?.zone ? `${player.zone} · Madrid` : 'Madrid'}</small>
+                </span>
+                <Link className="text-link" to={`/players/${playerId}`}>Ver perfil</Link>
+              </div>
+              {player?.description ? <p>{player.description}</p> : null}
+              {confirmingDecline === playerId ? (
+                <div className="inline-confirm" role="group" aria-label={`Confirmar rechazo de ${player?.name ?? 'la solicitud'}`}>
+                  <p>¿Rechazar esta solicitud?</p>
+                  <button className="button button--danger" onClick={() => onConfirmDecline(playerId)} type="button">Sí, rechazar</button>
+                  <button className="button button--ghost" onClick={onCancelDecline} type="button">Volver</button>
+                </div>
+              ) : (
+                <div className="request-card__actions">
+                  <button className="button button--primary" onClick={() => onAccept(playerId)} type="button">Aceptar solicitud</button>
+                  <button className="button button--ghost" onClick={() => onStartDecline(playerId)} type="button">Rechazar</button>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
+const getInitials = (name: string) =>
+  name.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('')

@@ -1,0 +1,93 @@
+@use '../02-tools/mixins' as tools;
+
+.page-container {
+  width: min(100% - 2rem, var(--content-width));
+  margin-inline: auto;
+}
+
+.page-section,
+.form-page,
+.profile-page,
+.detail-page {
+  padding-block: 2rem 7rem;
+}
+
+.page-heading {
+  max-width: var(--reading-width);
+  margin-bottom: 1.75rem;
+}
+
+.page-heading > p:last-child {
+  color: var(--color-ink-soft);
+  font-size: 1.05rem;
+}
+
+.section-heading,
+.content-block__heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.section-heading {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.content-block__heading {
+  align-items: flex-end;
+}
+
+.session-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.detail-layout {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.detail-main {
+  min-width: 0;
+}
+
+@include tools.desktop {
+  .page-container {
+    width: min(100% - 3rem, var(--content-width));
+  }
+
+  .page-section,
+  .form-page,
+  .profile-page,
+  .detail-page {
+    padding-block: 3.5rem 5rem;
+  }
+
+  .session-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+
+  .section-heading {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+}
+
+@include tools.wide {
+  .session-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .detail-layout {
+    grid-template-columns: minmax(0, 1fr) 21rem;
+    align-items: start;
+    gap: 2rem;
+  }
+
+  .detail-aside {
+    position: sticky;
+    top: 6.5rem;
+  }
+}

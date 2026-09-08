@@ -1,0 +1,16 @@
+@mixin focus-ring {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+
+@mixin desktop {
+  @media (min-width: 48rem) {
+    @content;
+  }
+}
+
+@mixin wide {
+  @media (min-width: 68rem) {
+    @content;
+  }
+}
