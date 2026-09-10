@@ -1,10 +1,13 @@
 export type SessionLifecycle = 'scheduled' | 'cancelled'
-export type RequestState = 'pending' | 'declined' | 'not-confirmed'
+export type RequestState = 'pending' | 'confirmed' | 'rejected'
 export type SessionTone = 'terracotta' | 'forest' | 'mustard' | 'blue' | 'plum'
 
 export type ParticipationRequest = {
+  readonly id: string
+  readonly sessionId: string
   readonly playerId: string
-  readonly state: RequestState
+  readonly status: RequestState
+  readonly createdAt?: string
 }
 
 export type GameSession = {
@@ -32,6 +35,8 @@ export type CreateSessionInput = {
   readonly capacity: number
   readonly description: string
 }
+
+export type UpdateSessionInput = CreateSessionInput
 
 export type DateFilter = 'all' | 'today' | 'seven-days' | 'weekend'
 export type SessionDisplayState = 'open' | 'complete' | 'cancelled' | 'past'

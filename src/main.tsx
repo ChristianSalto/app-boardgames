@@ -6,6 +6,8 @@ import { initializeFirebaseInfrastructure } from './app/composition/firebase'
 import { createFirebaseAuthenticationGateway } from './authentication/infrastructure/firebaseAuthentication'
 import { AuthenticationProvider } from './authentication/presentation/AuthenticationProvider'
 import { createFirestorePlayerRepository } from './players/infrastructure/firestorePlayerRepository'
+import { createFirestoreGameSessionRepository } from './game-sessions/infrastructure/firestoreGameSessionRepository'
+import { createFirestoreParticipationRequestRepository } from './game-sessions/infrastructure/firestoreParticipationRequestRepository'
 import { CurrentPlayerProvider } from './players/presentation/CurrentPlayerProvider'
 import './styles/main.scss'
 
@@ -18,13 +20,19 @@ if (!rootElement) {
 const firebaseInfrastructure = initializeFirebaseInfrastructure()
 const authenticationGateway = createFirebaseAuthenticationGateway(firebaseInfrastructure.auth)
 const playerRepository = createFirestorePlayerRepository(firebaseInfrastructure.firestore)
+const gameSessionRepository = createFirestoreGameSessionRepository(firebaseInfrastructure.firestore)
+const participationRequestRepository = createFirestoreParticipationRequestRepository(firebaseInfrastructure.firestore)
 
 createRoot(rootElement).render(
   <StrictMode>
     <BrowserRouter>
       <AuthenticationProvider gateway={authenticationGateway}>
         <CurrentPlayerProvider repository={playerRepository}>
-          <App />
+          <App
+            gameSessionRepository={gameSessionRepository}
+            participationRequestRepository={participationRequestRepository}
+            playerRepository={playerRepository}
+          />
         </CurrentPlayerProvider>
       </AuthenticationProvider>
     </BrowserRouter>

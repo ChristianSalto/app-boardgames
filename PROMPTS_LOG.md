@@ -134,3 +134,24 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** sustituir el puente de Player simulado por perfiles mínimos persistidos en Firestore Emulator y asociados a Auth.
 - **Agentes:** FirebaseAgent y FrontendAgent.
 - **Resultado:** `players/{uid}` se crea y recupera mediante un port de Application y adaptador Firestore; el flujo de completar perfil precede a la SPA y las Rules temporales limitan el acceso al propio perfil. Fase 5 continúa en progreso y PROMPT-006C-2 no ha comenzado.
+
+## PROMPT-006C-2 — Game Sessions Persistence
+
+- **Fecha:** 2026-09-10
+- **Objetivo:** persistir partidas mínimas en Firestore y conectar Crear, Explorar, Detalle y partidas organizadas.
+- **Agentes:** FirebaseAgent y FrontendAgent.
+- **Resultado:** port y adaptador Firestore de partidas incorporados; Crear guarda con el Player actual y las pantallas leen sesiones persistidas. Solicitudes y reputación siguen fuera de Firestore; Fase 5 continúa en progreso y PROMPT-006C-3 no ha comenzado.
+
+## PROMPT-006C-3 — Participation Requests Persistence
+
+- **Fecha:** 2026-09-10
+- **Objetivo:** persistir solicitudes, aceptaciones y rechazos entre dos usuarios mediante Firestore Emulator, garantizando aforo y cierre de solicitudes al completar una partida.
+- **Agentes:** FirebaseAgent y FrontendAgent.
+- **Resultado:** solicitudes persistidas tras puertos de Application y transacciones Firestore; el flujo real A/B cubre pendiente, confirmación, rechazo y última plaza sin superar el aforo. Fase 5 continúa en progreso y 006D no ha comenzado.
+
+## PROMPT-006C-4 — Session Time & Essential Lifecycle
+
+- **Fecha:** 2026-09-10
+- **Objetivo:** corregir la semántica de hora local y añadir edición y cancelación mínima de partidas persistidas.
+- **Agentes:** FirebaseAgent y FrontendAgent.
+- **Resultado:** la hora civil de Madrid se conserva sin conversión UTC, y el organizador puede editar o cancelar sin borrado físico; cancelación cierra solicitudes pendientes. Fase 5 continúa en progreso y 006D no ha comenzado.

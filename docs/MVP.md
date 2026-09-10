@@ -61,7 +61,7 @@ Una capacidad no entra en el MVP por ser técnicamente fácil, habitual en otras
 2. contar con decisión explícita de `ProductManagerAgent` y revisión humana;
 3. actualizar PRD, este documento, riesgos y criterios de aceptación antes de implementarse.
 
-Los detalles habilitadores —por ejemplo autenticación y ciclo de vida de una partida— se mantendrán en su forma mínima. No deben convertirse en productos paralelos.
+Los detalles habilitadores —por ejemplo autenticación y ciclo de vida de una partida— se mantendrán en su forma mínima. La partida permite edición por su organizador y cancelación sin borrado físico; abandonos, retirada de solicitudes y ausencias siguen diferidos. No deben convertirse en productos paralelos.
 
 ## Posibles evoluciones posteriores al MVP 1
 
@@ -102,7 +102,7 @@ Esta lista conserva la visión, pero no constituye backlog aprobado.
 - usuario prioritario dentro del contexto conceptual de Madrid;
 - contenido y visibilidad del perfil básico;
 - método de autenticación;
-- ciclo de vida de la partida más allá de la definición inicial de disponibilidad;
+- ciclo de vida de la partida más allá de edición, cancelación y la definición inicial de disponibilidad;
 - fuente de catálogo externo, si resulta necesaria después del prototipo con datos simulados;
 - forma y momento de compartir un punto concreto de encuentro con visibilidad controlada;
 - medidas mínimas de seguridad/moderación para pruebas con usuarios;

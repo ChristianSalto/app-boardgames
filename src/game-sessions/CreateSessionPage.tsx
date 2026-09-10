@@ -1,16 +1,22 @@
-import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
 import { gameOptions, madridZones } from '../mock-data/prototypeData'
 import { VisualSelect } from '../shared/VisualSelect'
+import { isFutureSessionInput } from './model'
 import type { CreateSessionInput } from './types'
 
 type FormErrors = Partial<Record<keyof CreateSessionInput, string>>
 
+const toDateInputValue = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+
+const today = () => toDateInputValue(new Date())
+
 const tomorrow = () => {
   const date = new Date()
   date.setDate(date.getDate() + 1)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  return toDateInputValue(date)
 }
 
 const initialForm: CreateSessionInput = {
@@ -28,7 +34,7 @@ const validate = (form: CreateSessionInput): FormErrors => {
   if (!form.game) errors.game = 'Selecciona el juego de la partida.'
   if (!form.date) errors.date = 'Indica la fecha de la partida.'
   if (!form.time) errors.time = 'Indica la hora de la partida.'
-  if (form.date && form.time && new Date(`${form.date}T${form.time}:00`).getTime() <= Date.now()) {
+  if (form.date && form.time && !isFutureSessionInput(form)) {
     errors.date = 'La fecha y la hora deben estar en el futuro.'
   }
   if (!form.zone) errors.zone = 'Selecciona una zona o distrito.'
@@ -39,10 +45,27 @@ const validate = (form: CreateSessionInput): FormErrors => {
 }
 
 export function CreateSessionPage() {
-  const { createSession } = usePrototype()
+  const { createSession, currentPlayerId, sessions, sessionsLoading, updateSession } = usePrototype()
+  const { sessionId } = useParams()
   const navigate = useNavigate()
+  const editingSession = sessionId ? sessions.find((session) => session.id === sessionId) : undefined
+  const isEditing = Boolean(sessionId)
   const [form, setForm] = useState<CreateSessionInput>(initialForm)
   const [errors, setErrors] = useState<FormErrors>({})
+
+  useEffect(() => {
+    if (!editingSession) return
+    const [date, timeWithSeconds] = editingSession.startsAt.split('T')
+    setForm({
+      game: editingSession.game,
+      date: date ?? '',
+      time: timeWithSeconds?.slice(0, 5) ?? '',
+      zone: editingSession.zone,
+      place: editingSession.place,
+      capacity: editingSession.capacity,
+      description: editingSession.description,
+    })
+  }, [editingSession])
 
   const update = <Key extends keyof CreateSessionInput>(
     key: Key,
@@ -56,27 +79,53 @@ export function CreateSessionPage() {
     })
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const nextErrors = validate(form)
+    if (editingSession && form.capacity < editingSession.participantIds.length) {
+      nextErrors.capacity = `El aforo no puede ser inferior a las ${editingSession.participantIds.length} plazas ya confirmadas.`
+    }
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
       requestAnimationFrame(() => document.getElementById('form-errors')?.focus())
       return
     }
 
-    const sessionId = createSession(form)
-    navigate(`/sessions/${sessionId}`, {
-      state: { created: true, from: '/my-sessions', fromLabel: 'Mis partidas' },
-    })
+    if (editingSession) {
+      await updateSession(editingSession.id, form)
+      navigate(`/sessions/${editingSession.id}`, {
+        state: { edited: true, from: '/my-sessions', fromLabel: 'Mis partidas' },
+      })
+    } else {
+      const createdSessionId = await createSession(form)
+      navigate(`/sessions/${createdSessionId}`, {
+        state: { created: true, from: '/my-sessions', fromLabel: 'Mis partidas' },
+      })
+    }
+  }
+
+  if (isEditing && sessionsLoading) {
+    return <main className="auth-state" aria-live="polite"><p>Cargando partida…</p></main>
+  }
+
+  if (isEditing && (!editingSession || editingSession.organizerId !== currentPlayerId)) {
+    return (
+      <section className="page-container page-section">
+        <div className="empty-state">
+          <h1>No puedes editar esta partida</h1>
+          <p>Solo la persona organizadora puede modificarla.</p>
+          <Link className="button button--primary" to="/my-sessions">Volver a Mis partidas</Link>
+        </div>
+      </section>
+    )
   }
 
   return (
     <section className="page-container form-page">
       <div className="page-heading">
-        <p className="eyebrow">Abre una mesa</p>
-        <h1>Crear partida</h1>
-        <p>Lo esencial para que otras personas sepan si esta partida les encaja.</p>
+        <p className="eyebrow">{isEditing ? 'Gestiona tu mesa' : 'Abre una mesa'}</p>
+        <h1>{isEditing ? 'Editar partida' : 'Crear partida'}</h1>
+        <p>{isEditing ? 'Actualiza la información sin cambiar participantes ni solicitudes.' : 'Lo esencial para que otras personas sepan si esta partida les encaja.'}</p>
       </div>
 
       <form className="form-card" noValidate onSubmit={handleSubmit}>
@@ -118,7 +167,7 @@ export function CreateSessionPage() {
               aria-describedby={errors.date ? 'date-error' : undefined}
               aria-invalid={Boolean(errors.date)}
               id="date"
-              min={tomorrow()}
+              min={isEditing ? today() : tomorrow()}
               onChange={(event) => update('date', event.target.value)}
               required
               type="date"
@@ -202,7 +251,7 @@ export function CreateSessionPage() {
               value={form.capacity}
             />
             <p className="field__help" id="capacity-help">
-              Tú ocupas una plaza. Quedarán {Math.max(0, form.capacity - 1)} para otras personas.
+              {isEditing ? `Hay ${editingSession?.participantIds.length ?? 0} plazas ya confirmadas.` : `Tú ocupas una plaza. Quedarán ${Math.max(0, form.capacity - 1)} para otras personas.`}
             </p>
             {errors.capacity ? <p className="field__error" id="capacity-error">{errors.capacity}</p> : null}
           </div>
@@ -228,7 +277,7 @@ export function CreateSessionPage() {
 
         <div className="form-actions">
           <button className="button button--primary form-submit" type="submit">
-            Publicar partida
+            {isEditing ? 'Guardar cambios' : 'Publicar partida'}
           </button>
         </div>
       </form>

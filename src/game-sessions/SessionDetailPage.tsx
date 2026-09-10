@@ -30,11 +30,13 @@ export function SessionDetailPage() {
   const location = useLocation()
   const locationState = location.state as {
     readonly created?: boolean
+    readonly edited?: boolean
     readonly from?: string
     readonly fromLabel?: string
   } | null
   const {
     acceptRequest,
+    cancelSession,
     currentPlayerId,
     declineRequest,
     players,
@@ -42,10 +44,9 @@ export function SessionDetailPage() {
     sessions,
   } = usePrototype()
   const [confirmingDecline, setConfirmingDecline] = useState<string | null>(null)
+  const [confirmingCancellation, setConfirmingCancellation] = useState(false)
   const [actionMessage, setActionMessage] = useState(
-    locationState?.created
-      ? 'Partida publicada correctamente.'
-      : '',
+    locationState?.created ? 'Partida publicada correctamente.' : locationState?.edited ? 'Cambios guardados correctamente.' : '',
   )
 
   const session = sessions.find((item) => item.id === sessionId)
@@ -71,7 +72,7 @@ export function SessionDetailPage() {
   const participants = session.participantIds
     .map((id) => playerById.get(id))
     .filter((player) => player !== undefined)
-  const pendingRequests = session.requests.filter((request) => request.state === 'pending')
+  const pendingRequests = session.requests.filter((request) => request.status === 'pending')
   const relation = getUserRelation(session, currentPlayerId)
   const displayState = getSessionDisplayState(session)
   const remainingSeats = getRemainingSeats(session)
@@ -85,31 +86,53 @@ export function SessionDetailPage() {
     rootLabel: originLabel,
   }
 
-  const handleRequest = () => {
-    requestSeat(session.id)
-    setActionMessage(
-      'Solicitud enviada. Está pendiente de respuesta; aún no tienes una plaza confirmada.',
-    )
+  const handleRequest = async () => {
+    try {
+      await requestSeat(session.id)
+      setActionMessage(
+        'Solicitud enviada. Está pendiente de respuesta; aún no tienes una plaza confirmada.',
+      )
+    } catch {
+      setActionMessage('No se ha podido enviar la solicitud. Comprueba que la partida siga disponible.')
+    }
   }
 
-  const handleAccept = (playerId: string) => {
+  const handleAccept = async (playerId: string) => {
     const player = playerById.get(playerId)
     const willComplete = remainingSeats === 1
     const requestsClosed = willComplete ? Math.max(0, pendingRequests.length - 1) : 0
-    acceptRequest(session.id, playerId)
-    setConfirmingDecline(null)
-    setActionMessage(
-      willComplete
-        ? `${player?.displayName ?? 'La persona'} tiene plaza confirmada. La partida está completa${requestsClosed > 0 ? ` y ${requestsClosed} ${requestsClosed === 1 ? 'solicitud restante se ha cerrado' : 'solicitudes restantes se han cerrado'} por falta de plazas` : ''}.`
-        : `${player?.displayName ?? 'La persona'} tiene ahora una plaza confirmada.`,
-    )
+    try {
+      await acceptRequest(session.id, playerId)
+      setConfirmingDecline(null)
+      setActionMessage(
+        willComplete
+          ? `${player?.displayName ?? 'La persona'} tiene plaza confirmada. La partida está completa${requestsClosed > 0 ? ` y ${requestsClosed} ${requestsClosed === 1 ? 'solicitud restante se ha cerrado' : 'solicitudes restantes se han cerrado'} por falta de plazas` : ''}.`
+          : `${player?.displayName ?? 'La persona'} tiene ahora una plaza confirmada.`,
+      )
+    } catch {
+      setActionMessage('No se ha podido aceptar la solicitud. La partida puede haberse completado.')
+    }
   }
 
-  const handleDecline = (playerId: string) => {
+  const handleDecline = async (playerId: string) => {
     const player = playerById.get(playerId)
-    declineRequest(session.id, playerId)
-    setConfirmingDecline(null)
-    setActionMessage(`La solicitud de ${player?.displayName ?? 'esta persona'} no ha sido aceptada.`)
+    try {
+      await declineRequest(session.id, playerId)
+      setConfirmingDecline(null)
+      setActionMessage(`La solicitud de ${player?.displayName ?? 'esta persona'} no ha sido aceptada.`)
+    } catch {
+      setActionMessage('No se ha podido rechazar la solicitud. Inténtalo de nuevo.')
+    }
+  }
+
+  const handleCancel = async () => {
+    try {
+      await cancelSession(session.id)
+      setConfirmingCancellation(false)
+      setActionMessage('La partida se ha cancelado. Ya no admite solicitudes.')
+    } catch {
+      setActionMessage('No se ha podido cancelar la partida. Inténtalo de nuevo.')
+    }
   }
 
   return (
@@ -146,6 +169,19 @@ export function SessionDetailPage() {
               </div>
               <h1>{session.game}</h1>
               <p>Encuentro de juegos de mesa en {session.zone}.</p>
+              {isOrganizer && displayState !== 'cancelled' ? (
+                <div className="request-card__actions">
+                  <Link className="button button--ghost" to={`/sessions/${session.id}/edit`}>Editar partida</Link>
+                  <button className="button button--danger" onClick={() => setConfirmingCancellation(true)} type="button">Cancelar partida</button>
+                </div>
+              ) : null}
+              {isOrganizer && confirmingCancellation ? (
+                <div className="inline-confirm" role="group" aria-label="Confirmar cancelación de la partida">
+                  <p>¿Cancelar esta partida? Las solicitudes pendientes dejarán de estar activas.</p>
+                  <button className="button button--danger" onClick={handleCancel} type="button">Sí, cancelar partida</button>
+                  <button className="button button--ghost" onClick={() => setConfirmingCancellation(false)} type="button">Volver</button>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -230,7 +266,7 @@ export function SessionDetailPage() {
             </ul>
           </div>
 
-          {isOrganizer ? (
+          {isOrganizer && displayState !== 'cancelled' ? (
             <OrganizerRequests
               confirmingDecline={confirmingDecline}
               onAccept={handleAccept}
@@ -268,7 +304,7 @@ export function SessionDetailPage() {
 type ParticipationPanelProps = {
   readonly displayState: ReturnType<typeof getSessionDisplayState>
   readonly isOrganizer: boolean
-  readonly onRequest: () => void
+  readonly onRequest: () => Promise<void>
   readonly relation: ReturnType<typeof getUserRelation>
   readonly remainingSeats: number
 }
@@ -326,9 +362,9 @@ function ParticipationPanel({
 
 type OrganizerRequestsProps = {
   readonly confirmingDecline: string | null
-  readonly onAccept: (playerId: string) => void
+  readonly onAccept: (playerId: string) => Promise<void>
   readonly onCancelDecline: () => void
-  readonly onConfirmDecline: (playerId: string) => void
+  readonly onConfirmDecline: (playerId: string) => Promise<void>
   readonly onStartDecline: (playerId: string) => void
   readonly pendingRequests: readonly {
     readonly playerId: string

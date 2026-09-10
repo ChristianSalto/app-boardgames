@@ -8,11 +8,22 @@ import { MySessionsPage } from '../game-sessions/MySessionsPage'
 import { SessionDetailPage } from '../game-sessions/SessionDetailPage'
 import { PlayerProfilePage } from '../players/PlayerProfilePage'
 import type { Player } from '../players/types'
+import type { GameSessionRepository } from '../game-sessions/application/gameSessionRepository'
+import type { ParticipationRequestRepository } from '../game-sessions/application/participationRequestRepository'
+import type { PlayerRepository } from '../players/application/playerRepository'
 import { CompleteProfilePage } from '../players/presentation/CompleteProfilePage'
 import { useCurrentPlayer } from '../players/presentation/CurrentPlayerProvider'
 import { AppShell } from '../shared/AppShell'
 
-export function App() {
+export function App({
+  gameSessionRepository,
+  participationRequestRepository,
+  playerRepository,
+}: {
+  readonly gameSessionRepository: GameSessionRepository
+  readonly participationRequestRepository: ParticipationRequestRepository
+  readonly playerRepository: PlayerRepository
+}) {
   const { status, user } = useAuthentication()
   const { player, status: playerStatus } = useCurrentPlayer()
 
@@ -32,20 +43,42 @@ export function App() {
       <Route
         path="*"
         element={
-          user && player ? <AuthenticatedPrototype player={player} /> : user && playerStatus === 'missing' ? <Navigate replace to="/complete-profile" /> : <Navigate replace to="/login" />
+          user && player ? <AuthenticatedPrototype
+            player={player}
+            repository={gameSessionRepository}
+            participationRequestRepository={participationRequestRepository}
+            playerRepository={playerRepository}
+          /> : user && playerStatus === 'missing' ? <Navigate replace to="/complete-profile" /> : <Navigate replace to="/login" />
         }
       />
     </Routes>
   )
 }
 
-function AuthenticatedPrototype({ player }: { readonly player: Player }) {
+function AuthenticatedPrototype({
+  player,
+  repository,
+  participationRequestRepository,
+  playerRepository,
+}: {
+  readonly player: Player
+  readonly repository: GameSessionRepository
+  readonly participationRequestRepository: ParticipationRequestRepository
+  readonly playerRepository: PlayerRepository
+}) {
   return (
-    <PrototypeProvider currentPlayer={player} key={player.id}>
+    <PrototypeProvider
+      currentPlayer={player}
+      sessionRepository={repository}
+      participationRequestRepository={participationRequestRepository}
+      playerRepository={playerRepository}
+      key={player.id}
+    >
       <AppShell>
         <Routes>
           <Route path="/" element={<ExplorePage />} />
           <Route path="/sessions/:sessionId" element={<SessionDetailPage />} />
+          <Route path="/sessions/:sessionId/edit" element={<CreateSessionPage />} />
           <Route path="/my-sessions" element={<MySessionsPage />} />
           <Route path="/create" element={<CreateSessionPage />} />
           <Route path="/profile" element={<PlayerProfilePage />} />

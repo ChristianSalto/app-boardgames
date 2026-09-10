@@ -7,6 +7,14 @@ import type {
   UserRelation,
 } from './types'
 
+export const localSessionDateTime = (date: string, time: string) =>
+  `${date}T${time}:00`
+
+export const isFutureSessionInput = (
+  input: Pick<CreateSessionInput, 'date' | 'time'>,
+  now = new Date(),
+) => new Date(localSessionDateTime(input.date, input.time)).getTime() > now.getTime()
+
 const dateFormatter = new Intl.DateTimeFormat('es-ES', {
   weekday: 'short',
   day: 'numeric',
@@ -38,6 +46,8 @@ export const getSessionDisplayState = (
   return 'open'
 }
 
+export const isValidCapacity = (capacity: number) => Number.isInteger(capacity) && capacity >= 2
+
 export const isSessionAvailable = (session: GameSession, now = new Date()) =>
   getSessionDisplayState(session, now) === 'open'
 
@@ -49,7 +59,10 @@ export const getUserRelation = (
   if (session.participantIds.includes(playerId)) return 'confirmed'
 
   const request = session.requests.find((item) => item.playerId === playerId)
-  return request?.state ?? 'none'
+  if (!request) return 'none'
+  if (request.status === 'pending') return 'pending'
+  if (request.status === 'confirmed') return 'confirmed'
+  return getSessionDisplayState(session) === 'complete' ? 'not-confirmed' : 'declined'
 }
 
 export const requestParticipation = (
@@ -65,7 +78,10 @@ export const requestParticipation = (
 
   return {
     ...session,
-    requests: [...session.requests, { playerId, state: 'pending' }],
+    requests: [
+      ...session.requests,
+      { id: `${session.id}_${playerId}`, sessionId: session.id, playerId, status: 'pending' },
+    ],
   }
 }
 
@@ -74,7 +90,7 @@ export const acceptParticipation = (
   playerId: string,
 ): GameSession => {
   const request = session.requests.find(
-    (item) => item.playerId === playerId && item.state === 'pending',
+    (item) => item.playerId === playerId && item.status === 'pending',
   )
 
   if (!request || getRemainingSeats(session) === 0) return session
@@ -82,11 +98,12 @@ export const acceptParticipation = (
   const participantIds = [...session.participantIds, playerId]
   const isNowComplete = participantIds.length >= session.capacity
   const requests = session.requests
-    .filter((item) => item.playerId !== playerId)
     .map((item) =>
-      isNowComplete && item.state === 'pending'
-        ? { ...item, state: 'not-confirmed' as const }
-        : item,
+      item.playerId === playerId
+        ? { ...item, status: 'confirmed' as const }
+        : isNowComplete && item.status === 'pending'
+          ? { ...item, status: 'rejected' as const }
+          : item,
     )
 
   return { ...session, participantIds, requests }
@@ -98,8 +115,8 @@ export const declineParticipation = (
 ): GameSession => ({
   ...session,
   requests: session.requests.map((item) =>
-    item.playerId === playerId && item.state === 'pending'
-      ? { ...item, state: 'declined' }
+    item.playerId === playerId && item.status === 'pending'
+      ? { ...item, status: 'rejected' }
       : item,
   ),
 })
@@ -112,7 +129,7 @@ export const createGameSession = (
 ): GameSession => ({
   id,
   game: input.game,
-  startsAt: new Date(`${input.date}T${input.time}:00`).toISOString(),
+  startsAt: localSessionDateTime(input.date, input.time),
   city: 'Madrid',
   zone: input.zone,
   place: input.place.trim(),

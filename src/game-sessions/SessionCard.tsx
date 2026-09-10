@@ -39,7 +39,7 @@ export function SessionCard({ session, showRelation = false }: SessionCardProps)
   const state = getSessionDisplayState(session)
   const relation = getUserRelation(session, currentPlayerId)
   const pendingRequests = session.requests.filter(
-    (request) => request.state === 'pending',
+    (request) => request.status === 'pending',
   ).length
 
   return (

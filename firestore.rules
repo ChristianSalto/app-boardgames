@@ -3,12 +3,86 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /players/{playerId} {
-      allow get: if request.auth != null && request.auth.uid == playerId;
+      // Perfiles mínimos visibles para identificar a organizadores y solicitantes.
+      allow get: if request.auth != null;
       allow create: if request.auth != null
         && request.auth.uid == playerId
         && request.resource.data.keys().hasOnly(['displayName', 'city', 'district', 'description'])
         && request.resource.data.displayName is string
         && request.resource.data.city == 'Madrid';
+    }
+    match /gameSessions/{sessionId} {
+      allow get, list: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.organizerId == request.auth.uid
+        && request.resource.data.city == 'Madrid'
+        && request.resource.data.capacity is int
+        && request.resource.data.capacity >= 2
+        && request.resource.data.status == 'scheduled';
+      // Temporal hasta 006D: una persona puede añadir solo su solicitud pendiente;
+      // el organizador es el único que confirma una plaza y resuelve pendientes.
+      allow update: if request.auth != null && (
+        (
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingRequestIds'])
+          && resource.data.status == 'scheduled'
+          && resource.data.participantIds.size() < resource.data.capacity
+          && (
+            (!resource.data.keys().hasAll(['pendingRequestIds'])
+              && request.resource.data.pendingRequestIds.size() == 1)
+            || (
+              resource.data.keys().hasAll(['pendingRequestIds'])
+              && request.resource.data.pendingRequestIds.size() == resource.data.pendingRequestIds.size() + 1
+              && request.resource.data.pendingRequestIds.hasAll(resource.data.pendingRequestIds)
+            )
+          )
+        )
+        || (
+          resource.data.organizerId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participantIds', 'pendingRequestIds'])
+          && request.resource.data.participantIds.size() == resource.data.participantIds.size() + 1
+          && request.resource.data.participantIds.size() <= resource.data.capacity
+          && request.resource.data.participantIds.hasAll(resource.data.participantIds)
+        )
+        || (
+          resource.data.organizerId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingRequestIds'])
+          && request.resource.data.pendingRequestIds.size() + 1 == resource.data.pendingRequestIds.size()
+          && resource.data.pendingRequestIds.hasAll(request.resource.data.pendingRequestIds)
+        )
+        || (
+          resource.data.organizerId == request.auth.uid
+          && resource.data.status == 'scheduled'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gameName', 'date', 'time', 'district', 'venue', 'description', 'capacity'])
+          && request.resource.data.capacity is int
+          && request.resource.data.capacity >= resource.data.participantIds.size()
+        )
+        || (
+          resource.data.organizerId == request.auth.uid
+          && resource.data.status == 'scheduled'
+          && request.resource.data.status == 'cancelled'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'pendingRequestIds'])
+          && request.resource.data.pendingRequestIds.size() == 0
+        )
+      );
+    }
+    match /participationRequests/{requestId} {
+      allow get: if request.auth != null
+        && (!exists(/databases/$(database)/documents/participationRequests/$(requestId))
+          || resource.data.playerId == request.auth.uid
+          || get(/databases/$(database)/documents/gameSessions/$(resource.data.sessionId)).data.organizerId == request.auth.uid);
+      allow list: if request.auth != null
+        && (resource.data.playerId == request.auth.uid
+          || get(/databases/$(database)/documents/gameSessions/$(resource.data.sessionId)).data.organizerId == request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['sessionId', 'playerId', 'status', 'createdAt'])
+        && request.resource.data.playerId == request.auth.uid
+        && request.resource.data.status == 'pending';
+      // Temporal hasta 006D: solo el organizador puede resolver una solicitud pendiente.
+      allow update: if request.auth != null
+        && get(/databases/$(database)/documents/gameSessions/$(resource.data.sessionId)).data.organizerId == request.auth.uid
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['confirmed', 'rejected'];
     }
   }
 }

@@ -41,7 +41,29 @@ Firebase Auth mantiene su sesión local de navegador; por eso una recarga restau
 
 Tras autenticarse, la aplicación busca el perfil propio. Si no existe, muestra una pantalla mínima para crear nombre visible, Madrid fijo, distrito y descripción opcionales. Hasta que Auth y Player se resuelven no se muestra la SPA. La reputación, partidas, solicitudes y perfiles ajenos siguen siendo datos simulados.
 
-`firestore.rules` contiene una regla temporal de mínimo privilegio para esta iteración: solo el usuario autenticado puede leer o crear su propio `players/{uid}`; no hay listados, actualizaciones ni acceso a otros documentos. Se sustituirá por Rules completas cuando se definan las operaciones y audiencias restantes.
+`firestore.rules` contiene reglas temporales de mínimo privilegio: una persona autenticada puede crear solo su propio `players/{uid}` y consultar por identificador el perfil mínimo necesario para reconocer organizadores y solicitantes; no hay listados ni actualizaciones. Se sustituirán por Rules completas cuando se definan las proyecciones y audiencias restantes.
+
+## Persistencia inicial de partidas
+
+`game-sessions/application` define las consultas y el comando mínimos para descubrir, obtener, crear y recuperar las partidas organizadas. El adaptador Firestore persiste `gameSessions` con juego, fecha, hora, Madrid, distrito, lugar opcional, descripción opcional, aforo, organizador, participantes confirmados y estado; los tipos Firebase no cruzan Infrastructure.
+
+Las consultas actuales cargan las partidas persistidas para Explorar, Detalle y Mis partidas; Crear escribe una partida cuyo organizador ocupa la primera plaza conceptual. Las Rules temporales permiten a una persona autenticada leer partidas y crear únicamente una partida propia de Madrid con aforo válido; no son las Rules finales de producción.
+
+## Persistencia de solicitudes de participación
+
+`ParticipationRequestRepository`, definido en `game-sessions/application`, persiste documentos mínimos en `participationRequests`: identificador, partida, jugador, estado (`pending`, `confirmed` o `rejected`) y fecha de creación. La interfaz consulta solicitudes propias y, para quien organiza, las pendientes de su partida; ya no existe un puente mock para estos estados.
+
+El adaptador Firestore crea una solicitud con un identificador determinista por partida y jugador, de modo que no puede haber dos solicitudes de la misma persona para una misma partida. La aceptación y el rechazo son transacciones: revalidan organizador, solicitud pendiente y aforo autoritativo antes de escribir. La aceptación añade el jugador a `participantIds`; si ocupa la última plaza, cierra en esa misma transacción las solicitudes pendientes restantes como `rejected` y vacía la lista técnica mínima de referencias pendientes de la partida. La presentación traduce este último caso a “la partida se ha completado”, sin implicar un rechazo personal.
+
+Las Rules temporales permiten crear una solicitud solo a su jugador y reservar la resolución de una pendiente al organizador; también limitan la actualización del aforo a una plaza y nunca por encima de `capacity`. Siguen siendo provisionales: 006D endurecerá transiciones, campos, consultas autorizadas y pruebas de reglas antes de cualquier entorno remoto.
+
+## Hora local y ciclo de vida esencial
+
+`date` y `time` representan la hora civil del encuentro en Madrid, no un instante UTC ni un `Timestamp`. Infrastructure los reconstruye como fecha-hora local sin añadir el sufijo `Z`; de ese modo una partida creada a las 16:00 conserva y muestra 16:00, sin aplicar compensaciones fijas de horario de verano.
+
+El puerto de partidas añade actualización y cancelación mínima. Solo la persona organizadora puede actualizar juego, fecha, hora, distrito, lugar, descripción y aforo; la operación transaccional conserva participantes y solicitudes, exige fecha/hora futura y no permite un aforo inferior a participantes confirmados. La cancelación es una transición a `cancelled`, nunca un borrado físico: cierra las solicitudes pendientes en la misma transacción, excluye la partida de Explorar y conserva el historial de Mis partidas.
+
+Las Rules temporales reflejan estas transiciones para el emulador. No son las Rules de producción de 006D y deberán ampliar sus validaciones de forma, transiciones y concurrencia antes de un entorno remoto.
 
 ## Frontera Firebase y aplicación
 

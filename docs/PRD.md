@@ -96,7 +96,7 @@ Una persona identificada podrá crear una partida indicando, como mínimo:
 
 El prototipo añade «Lugar de la partida» como texto libre opcional y diferenciado de la zona y la descripción. Se orienta a nombres de locales o puntos reconocibles, no exige una dirección postal y no integra mapas, geocodificación ni servicios de lugares.
 
-En el MVP 1, el juego queda indicado al crear la partida. Esto no establece una obligación para todos los posibles modelos de quedada POST-MVP. El organizador cuenta dentro del aforo total: una partida con aforo de cuatro personas comienza con un organizador y tres plazas disponibles. En el prototipo, Madrid se muestra como contexto fijo y el usuario selecciona únicamente zona o distrito; no introduce otra ciudad. Las validaciones temporales, edición, cancelación y datos opcionales requieren definición antes del desarrollo del vertical slice.
+En el MVP 1, el juego queda indicado al crear la partida. Esto no establece una obligación para todos los posibles modelos de quedada POST-MVP. El organizador cuenta dentro del aforo total: una partida con aforo de cuatro personas comienza con un organizador y tres plazas disponibles. En el prototipo, Madrid se muestra como contexto fijo y el usuario selecciona únicamente zona o distrito; no introduce otra ciudad. El organizador puede editar los datos publicados sin reducir el aforo por debajo de participantes confirmados, o cancelar la partida sin borrarla; la cancelación impide nuevas solicitudes y conserva el historial mínimo.
 
 ### RF-06 — Participación
 
@@ -201,7 +201,7 @@ Estas hipótesis guían el diseño, pero no son decisiones validadas:
 1. **¿Quién es el usuario inicial más urgente dentro del contexto conceptual de Madrid?** Recomendación: entrevistar tanto a buscadores como a organizadores y priorizar según evidencia.
 2. **¿Qué datos forman el perfil básico y cuáles son públicos?** Recomendación: comenzar con nombre visible y zona general; añadir solo lo respaldado por un flujo o riesgo concreto.
 3. **¿Qué método de autenticación se usará?** Recomendación: elegir en la fase de arquitectura/Firebase según fricción, privacidad y población piloto.
-4. **¿Cómo se gestionan edición, cancelación, abandono de una participación confirmada, retirada voluntaria de una solicitud, partidas pasadas y ausencias?** Recomendación: definir el ciclo de vida mínimo antes del primer vertical slice, sin crear un sistema de reputación.
+4. **¿Cómo se gestionan abandono de una participación confirmada, retirada voluntaria de una solicitud, partidas pasadas y ausencias?** Edición y cancelación básica ya están definidas; el resto del ciclo de vida debe mantenerse mínimo y no crear un sistema de reputación.
 5. **¿Qué catálogo externo, si alguno, se necesitará después del prototipo?** Recomendación: evaluar fuente, licencia y necesidad antes de integrar servicios externos; la Fase 2 usará datos simulados.
 6. **¿Qué granularidad y vocabulario se usarán para ciudad, zona o distrito?** Recomendación: texto o selección general normalizada para descubrimiento, sin geolocalización continua ni coordenadas públicas.
 7. **¿Cómo y cuándo se compartirá un punto concreto de encuentro sin chat en tiempo real?** Recomendación: investigarlo en los flujos y escoger el mecanismo mínimo, con visibilidad controlada, privacidad y acceso solo cuando sea necesario.
