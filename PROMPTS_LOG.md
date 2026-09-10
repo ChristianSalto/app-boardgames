@@ -120,3 +120,10 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** preparar SDK, tooling y emuladores locales de Firebase sin implementar autenticación, persistencia de funcionalidades ni un esquema Firestore.
 - **Agentes:** FrontendAgent y FirebaseAgent.
 - **Resultado:** base local configurada con project ID demo, Auth Emulator, Firestore Emulator e inicialización confinada al composition root; Fase 5 permanece en progreso y PROMPT-006B no ha comenzado.
+
+## PROMPT-006B — Authentication
+
+- **Fecha:** 2026-09-10
+- **Objetivo:** sustituir la identidad simulada global por autenticación local con email/password mediante Firebase Auth Emulator, sin persistencia Firestore.
+- **Agentes:** FirebaseAgent y FrontendAgent.
+- **Resultado:** registro, login, logout, observación y restauración de sesión integrados tras una frontera de Application; la SPA queda protegida y mantiene un puente temporal hacia perfiles simulados. Fase 5 continúa en progreso y PROMPT-006C no ha comenzado.

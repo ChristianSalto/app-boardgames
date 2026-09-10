@@ -187,6 +187,77 @@
   box-shadow: var(--shadow-1);
 }
 
+.header-logout-action {
+  min-height: 2.75rem;
+  padding: var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--color-ink-soft);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.header-logout-action:hover {
+  color: var(--color-text);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.auth-state,
+.auth-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+}
+
+.auth-state {
+  padding: var(--space-5);
+  color: var(--color-ink-soft);
+}
+
+.auth-card {
+  width: min(100%, 31rem);
+  margin-block: var(--space-7);
+  padding: var(--space-6);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-2);
+}
+
+.auth-card__brand {
+  margin-bottom: var(--space-7);
+}
+
+.auth-card__heading {
+  margin-bottom: var(--space-5);
+}
+
+.auth-card__heading p:last-child,
+.auth-form__switch {
+  color: var(--color-ink-soft);
+}
+
+.auth-form {
+  gap: var(--space-4);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.auth-form__switch {
+  margin: 0;
+  text-align: center;
+}
+
+.auth-form__switch a {
+  color: var(--color-forest-dark);
+  font-weight: 750;
+  text-underline-offset: 0.2em;
+}
+
 .hero {
   position: relative;
   overflow: hidden;
@@ -946,6 +1017,7 @@
   .primary-nav:not(.primary-nav--mobile) .primary-nav__link:hover { color: var(--color-text); }
   .primary-nav:not(.primary-nav--mobile) .primary-nav__link.is-active::after { transform: scaleX(1); }
   .header-create-action { display: inline-flex; }
+  .header-logout-action { display: inline-flex; align-items: center; }
   .header-create-action:hover { background: var(--color-forest-dark); color: var(--color-text-on-dark); }
   .header-create-action.is-active { background: var(--color-forest-dark); color: var(--color-text-on-dark); box-shadow: 0 0 0 2px var(--color-highlight), var(--shadow-1); }
   .hero__inner { grid-template-columns: 1fr auto; min-height: 26rem; padding-block: 3rem; }

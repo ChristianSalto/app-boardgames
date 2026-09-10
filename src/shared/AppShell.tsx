@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { AppIcon } from './AppIcon'
+import { useAuthentication } from '../authentication/presentation/AuthenticationProvider'
 
 const desktopNavigation = [
   { to: '/', label: 'Explorar', icon: 'explore', end: true },
@@ -41,6 +42,7 @@ function PrimaryNavigation({ mobile = false }: { readonly mobile?: boolean }) {
 
 export function AppShell({ children }: { readonly children: ReactNode }) {
   const { pathname } = useLocation()
+  const { logout } = useAuthentication()
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
@@ -69,6 +71,9 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
               <AppIcon name="create" size={18} />
               <span>Crear partida</span>
             </NavLink>
+            <button className="header-logout-action" onClick={() => { void logout() }} type="button">
+              Cerrar sesión
+            </button>
           </div>
         </div>
       </header>

@@ -2,7 +2,7 @@
 
 ## Propósito y alcance
 
-Definir cómo Firebase podrá aportar autenticación, persistencia y hosting sin convertirse en una dependencia de Domain, Application o Presentation. Este documento establece fronteras y garantías; no configura Firebase, no crea colecciones y no define un esquema Firestore campo por campo.
+Definir cómo Firebase aporta autenticación, persistencia y hosting sin convertirse en una dependencia de Domain, Application o Presentation. Este documento establece fronteras y garantías, recoge la base local y la autenticación ya implementadas, y no crea colecciones ni define un esquema Firestore campo por campo.
 
 Stack previsto:
 
@@ -24,6 +24,16 @@ La Fase 5 incorpora una base local sin datos ni funcionalidades Firebase:
 - la SPA continúa usando datos simulados: no existe autenticación, repositorio Firestore, modelo de datos ni lectura o escritura de funcionalidades.
 
 El script `npm run emulators` inicia únicamente Auth y Firestore locales. No configura Hosting remoto, Storage ni Cloud Functions.
+
+## Autenticación local implementada
+
+La primera integración funcional utiliza exclusivamente email/password contra Auth Emulator. `FirebaseAuthenticationAdapter` vive en `authentication/infrastructure` y traduce `Firebase User` a `AuthenticatedUser`, con solo `id` y `email`; los tipos, códigos y objetos del SDK no cruzan ese límite.
+
+`authentication/application` define el puerto y las operaciones de registro, inicio de sesión, cierre y observación de sesión. `AuthenticationProvider` consume ese puerto en React, espera la primera resolución antes de decidir la ruta y protege la SPA hasta que haya una identidad autenticada. Los errores del proveedor se traducen a un vocabulario de aplicación y a mensajes propios en la interfaz.
+
+Mientras los perfiles sigan siendo mocks, el composition root vincula de forma determinista cada `AuthenticatedUser` a un `Player` simulado únicamente para hacer funcional el prototipo. No persiste esa relación, no convierte el `uid` en `PlayerId` y no representa el modelo final de perfiles. La vinculación real se decidirá con Firestore.
+
+Firebase Auth mantiene su sesión local de navegador; por eso una recarga restaura la identidad cuando Auth Emulator sigue disponible. Google, alta de perfil y cualquier acceso a Firestore permanecen fuera de esta iteración.
 
 ## Frontera Firebase y aplicación
 
@@ -272,7 +282,7 @@ Antes de conectar un entorno remoto deberán superarse pruebas de Rules para acc
 - esquema de colecciones, documentos, relaciones y proyecciones;
 - representación de solicitudes y participantes que permita atomicidad;
 - consultas definitivas e índices requeridos;
-- provider inicial de Authentication: email/password, Google o ambos;
+- incorporación futura de Google u otros providers de Authentication;
 - creación y vinculación inicial del perfil de jugador;
 - coincidencia o separación material entre `uid` y `PlayerId`;
 - campos públicos y privados definitivos del perfil;

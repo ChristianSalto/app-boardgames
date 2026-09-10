@@ -1,8 +1,6 @@
 import type { GameSession, SessionTone } from '../game-sessions/types'
 import type { Player } from '../players/types'
 
-export const currentPlayerId = 'alex'
-
 export const initialPlayers: readonly Player[] = [
   {
     id: 'alex',

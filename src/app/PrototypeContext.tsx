@@ -15,7 +15,6 @@ import {
 import type { CreateSessionInput, GameSession } from '../game-sessions/types'
 import {
   createInitialSessions,
-  currentPlayerId,
   initialPlayers,
   prototypeTones,
 } from '../mock-data/prototypeData'
@@ -34,7 +33,13 @@ type PrototypeContextValue = {
 
 const PrototypeContext = createContext<PrototypeContextValue | undefined>(undefined)
 
-export function PrototypeProvider({ children }: { readonly children: ReactNode }) {
+export function PrototypeProvider({
+  children,
+  currentPlayerId,
+}: {
+  readonly children: ReactNode
+  readonly currentPlayerId: string
+}) {
   const [players, setPlayers] = useState<readonly Player[]>(initialPlayers)
   const [sessions, setSessions] =
     useState<readonly GameSession[]>(createInitialSessions)
@@ -47,7 +52,7 @@ export function PrototypeProvider({ children }: { readonly children: ReactNode }
           : item,
       ),
     )
-  }, [])
+  }, [currentPlayerId])
 
   const acceptRequest = useCallback((sessionId: string, playerId: string) => {
     setSessions((current) =>
@@ -78,7 +83,7 @@ export function PrototypeProvider({ children }: { readonly children: ReactNode }
 
     setSessions((current) => [...current, newSession])
     return id
-  }, [])
+  }, [currentPlayerId])
 
   const updateCurrentPlayer = useCallback((input: PlayerProfileInput) => {
     setPlayers((current) =>
@@ -93,7 +98,7 @@ export function PrototypeProvider({ children }: { readonly children: ReactNode }
           : player,
       ),
     )
-  }, [])
+  }, [currentPlayerId])
 
   const value = useMemo<PrototypeContextValue>(
     () => ({
