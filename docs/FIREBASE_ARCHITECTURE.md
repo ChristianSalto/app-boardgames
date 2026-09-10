@@ -2,7 +2,7 @@
 
 ## Propósito y alcance
 
-Definir cómo Firebase aporta autenticación, persistencia y hosting sin convertirse en una dependencia de Domain, Application o Presentation. Este documento establece fronteras y garantías, recoge la base local y la autenticación ya implementadas, y no crea colecciones ni define un esquema Firestore campo por campo.
+Definir cómo Firebase aporta autenticación, persistencia y hosting sin convertirse en una dependencia de Domain, Application o Presentation. Este documento establece fronteras y garantías, recoge la base local y las capacidades ya implementadas, y evita convertir el esquema Firestore actual en un diseño especulativo para capacidades futuras.
 
 Stack previsto:
 
@@ -41,13 +41,13 @@ Firebase Auth mantiene su sesión local de navegador; por eso una recarga restau
 
 Tras autenticarse, la aplicación busca el perfil propio. Si no existe, muestra una pantalla mínima para crear nombre visible, Madrid fijo, distrito y descripción opcionales. Hasta que Auth y Player se resuelven no se muestra la SPA. La reputación, partidas, solicitudes y perfiles ajenos siguen siendo datos simulados.
 
-`firestore.rules` contiene reglas temporales de mínimo privilegio: una persona autenticada puede crear solo su propio `players/{uid}` y consultar por identificador el perfil mínimo necesario para reconocer organizadores y solicitantes; no hay listados ni actualizaciones. Se sustituirán por Rules completas cuando se definan las proyecciones y audiencias restantes.
+`firestore.rules` aplica la baseline de seguridad del MVP actual: cualquier persona autenticada puede obtener por identificador los perfiles públicos necesarios para la SPA, sin permitir un listado general, y solo `uid` puede crear o actualizar su propio `players/{uid}`. La regla valida una lista cerrada de campos públicos, sus tipos y límites, e impide crear, modificar o ampliar el perfil de otra persona.
 
 ## Persistencia inicial de partidas
 
 `game-sessions/application` define las consultas y el comando mínimos para descubrir, obtener, crear y recuperar las partidas organizadas. El adaptador Firestore persiste `gameSessions` con juego, fecha, hora, Madrid, distrito, lugar opcional, descripción opcional, aforo, organizador, participantes confirmados y estado; los tipos Firebase no cruzan Infrastructure.
 
-Las consultas actuales cargan las partidas persistidas para Explorar, Detalle y Mis partidas; Crear escribe una partida cuyo organizador ocupa la primera plaza conceptual. Las Rules temporales permiten a una persona autenticada leer partidas y crear únicamente una partida propia de Madrid con aforo válido; no son las Rules finales de producción.
+Las consultas actuales cargan las partidas persistidas para Explorar, Detalle y Mis partidas; Crear escribe una partida cuyo organizador ocupa la primera plaza conceptual. Las Rules permiten lectura solo autenticada, validan la forma mínima del documento y reservan creación, edición y cancelación al organizador identificado por Auth. `organizerId` es inmutable, el aforo nunca puede ser inferior a participantes confirmados y el borrado físico está denegado.
 
 ## Persistencia de solicitudes de participación
 
@@ -55,7 +55,7 @@ Las consultas actuales cargan las partidas persistidas para Explorar, Detalle y 
 
 El adaptador Firestore crea una solicitud con un identificador determinista por partida y jugador, de modo que no puede haber dos solicitudes de la misma persona para una misma partida. La aceptación y el rechazo son transacciones: revalidan organizador, solicitud pendiente y aforo autoritativo antes de escribir. La aceptación añade el jugador a `participantIds`; si ocupa la última plaza, cierra en esa misma transacción las solicitudes pendientes restantes como `rejected` y vacía la lista técnica mínima de referencias pendientes de la partida. La presentación traduce este último caso a “la partida se ha completado”, sin implicar un rechazo personal.
 
-Las Rules temporales permiten crear una solicitud solo a su jugador y reservar la resolución de una pendiente al organizador; también limitan la actualización del aforo a una plaza y nunca por encima de `capacity`. Siguen siendo provisionales: 006D endurecerá transiciones, campos, consultas autorizadas y pruebas de reglas antes de cualquier entorno remoto.
+Las Rules permiten crear una solicitud `pending` solo para la identidad autenticada, con identificador determinista y dentro de una escritura coordinada con una partida abierta y con plaza. La lectura queda limitada al solicitante y al organizador; solo el organizador puede confirmar o rechazar. Las transiciones se validan contra el estado posterior de la partida para impedir autoconfirmaciones, participantes arbitrarios y aforo superior a `capacity`.
 
 ## Hora local y ciclo de vida esencial
 
@@ -63,7 +63,17 @@ Las Rules temporales permiten crear una solicitud solo a su jugador y reservar l
 
 El puerto de partidas añade actualización y cancelación mínima. Solo la persona organizadora puede actualizar juego, fecha, hora, distrito, lugar, descripción y aforo; la operación transaccional conserva participantes y solicitudes, exige fecha/hora futura y no permite un aforo inferior a participantes confirmados. La cancelación es una transición a `cancelled`, nunca un borrado físico: cierra las solicitudes pendientes en la misma transacción, excluye la partida de Explorar y conserva el historial de Mis partidas.
 
-Las Rules temporales reflejan estas transiciones para el emulador. No son las Rules de producción de 006D y deberán ampliar sus validaciones de forma, transiciones y concurrencia antes de un entorno remoto.
+Las Rules reflejan estas transiciones para el MVP implementado: una cancelación solo puede ejecutarla el organizador, debe conservar el documento y vaciar sus referencias pendientes; una partida cancelada no admite nuevas solicitudes ni confirmaciones. Esta baseline no cubre funcionalidades futuras todavía inexistentes y deberá revisarse antes de cualquier despliegue remoto.
+
+## Baseline de Security Rules validada
+
+`firestore.rules` sustituye las reglas temporales de las iteraciones anteriores y aplica `deny by default`, autenticación obligatoria, listas cerradas de campos, propiedad por identidad y transiciones mínimas compatibles con el modelo real. No existe acceso anónimo ni borrado de partidas o solicitudes desde cliente.
+
+Las operaciones que cambian a la vez una partida y sus solicitudes se mantienen atómicas en Infrastructure. Las Rules usan el estado anterior y `getAfter()` como límite de confianza independiente: una solicitud nueva debe quedar enlazada a la partida, y una resolución solo es válida si su efecto sobre participantes y referencias pendientes es coherente con el aforo.
+
+La batería `tests/firestore.rules.test.mjs`, ejecutada con `npm run test:rules`, usa Firebase Emulator y `@firebase/rules-unit-testing`. Cubre identidades sin autenticar, propietario, solicitante, organizador y terceros, con escenarios `ALLOW` y `DENY` para perfiles, partidas, solicitudes, cancelación y última plaza.
+
+El modelo actual conserva una lista desnormalizada de identificadores pendientes en la partida. La transacción de Infrastructure cierra todos los documentos afectados al llenar o cancelar; las Rules impiden nuevas confirmaciones después de esos estados, pero no pueden cuantificar dinámicamente todos los documentos enlazados para exigir su actualización individual. Esta consistencia deberá vigilarse y reevaluarse si crece el volumen o cambia la representación.
 
 ## Frontera Firebase y aplicación
 
@@ -227,7 +237,7 @@ Rules no puede reutilizar directamente las funciones TypeScript de Domain. Repet
 - Denegar al cliente la escritura directa de ratings, agregados de reputación o señales de fiabilidad calculadas.
 - Probar accesos permitidos y denegados con identidades distintas y sin autenticar.
 
-Las reglas son parte versionada y probada de Infrastructure. No se redactan completas hasta disponer del esquema y de las operaciones definitivas.
+Las reglas son parte versionada y probada de Infrastructure. La baseline actual cubre únicamente el esquema y las operaciones ya implementadas; cualquier capacidad nueva deberá ampliar reglas y pruebas antes de incorporarse.
 
 ## Client SDK frente a servidor propio
 

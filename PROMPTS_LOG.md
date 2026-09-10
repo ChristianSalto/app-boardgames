@@ -155,3 +155,10 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** corregir la semántica de hora local y añadir edición y cancelación mínima de partidas persistidas.
 - **Agentes:** FirebaseAgent y FrontendAgent.
 - **Resultado:** la hora civil de Madrid se conserva sin conversión UTC, y el organizador puede editar o cancelar sin borrado físico; cancelación cierra solicitudes pendientes. Fase 5 continúa en progreso y 006D no ha comenzado.
+
+## PROMPT-006D — Firestore Security Rules & Security Tests
+
+- **Fecha:** 2026-09-10
+- **Objetivo:** sustituir las reglas temporales por una baseline de mínimo privilegio para los perfiles, partidas y solicitudes ya implementados, validada contra Firestore Emulator.
+- **Agentes:** FirebaseAgent y QAReviewerAgent.
+- **Resultado:** reglas `deny by default` con autenticación obligatoria, propiedad, forma de documentos, transiciones y aforo protegidos; tests automatizados `ALLOW`/`DENY` superados. Fase 5 continúa en progreso y 006E no ha comenzado.
