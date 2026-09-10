@@ -50,15 +50,19 @@ export function SessionCard({ session, showRelation = false }: SessionCardProps)
       <div className="session-card__body">
         <div className="session-card__heading">
           <h2>{session.game}</h2>
-          {showRelation && relation !== 'none' ? (
-            <span className={`status-pill status-pill--${relation}`}>
-              {relationLabels[relation]}
-            </span>
-          ) : null}
-          {showRelation && state !== 'open' ? (
-            <span className={`status-pill status-pill--${state}`}>
-              {stateLabels[state]}
-            </span>
+          {showRelation && (relation !== 'none' || state !== 'open') ? (
+            <div className="session-card__states">
+              {relation !== 'none' ? (
+                <span className={`status-pill status-pill--${relation}`}>
+                  {relationLabels[relation]}
+                </span>
+              ) : null}
+              {state !== 'open' ? (
+                <span className={`status-pill status-pill--${state}`}>
+                  {stateLabels[state]}
+                </span>
+              ) : null}
+            </div>
           ) : null}
         </div>
 
@@ -96,7 +100,14 @@ export function SessionCard({ session, showRelation = false }: SessionCardProps)
           </p>
         ) : null}
 
-        <Link className="text-link session-card__link" to={`/sessions/${session.id}`}>
+        <Link
+          className="text-link session-card__link"
+          state={{
+            from: showRelation ? '/my-sessions' : '/',
+            fromLabel: showRelation ? 'Mis partidas' : 'Explorar',
+          }}
+          to={`/sessions/${session.id}`}
+        >
           {relation === 'organizer' ? 'Gestionar partida' : 'Ver partida'}
           <AppIcon name="arrow" size={18} />
           <span className="u-visually-hidden"> de {session.game}</span>

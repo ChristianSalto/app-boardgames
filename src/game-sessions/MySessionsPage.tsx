@@ -36,37 +36,26 @@ export function MySessionsPage() {
         <p>Organiza tus mesas y sigue el estado de las plazas que has solicitado.</p>
       </div>
 
-      <div className="segmented-control" role="tablist" aria-label="Tipo de partidas">
+      <div className="segmented-control" role="group" aria-label="Mostrar partidas">
         <button
-          aria-controls="my-sessions-panel"
-          aria-selected={activeTab === 'organized'}
+          aria-pressed={activeTab === 'organized'}
           className={activeTab === 'organized' ? 'is-active' : ''}
-          id="organized-tab"
           onClick={() => setActiveTab('organized')}
-          role="tab"
           type="button"
         >
           Organizadas por mí <span>{organized.length}</span>
         </button>
         <button
-          aria-controls="my-sessions-panel"
-          aria-selected={activeTab === 'participating'}
+          aria-pressed={activeTab === 'participating'}
           className={activeTab === 'participating' ? 'is-active' : ''}
-          id="participating-tab"
           onClick={() => setActiveTab('participating')}
-          role="tab"
           type="button"
         >
           Participo / he solicitado <span>{participating.length}</span>
         </button>
       </div>
 
-      <div
-        aria-labelledby={activeTab === 'organized' ? 'organized-tab' : 'participating-tab'}
-        id="my-sessions-panel"
-        role="tabpanel"
-        tabIndex={0}
-      >
+      <div>
         {displayedSessions.length > 0 ? (
           <div className="session-grid">
             {displayedSessions.map((session) => (

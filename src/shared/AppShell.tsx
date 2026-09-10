@@ -2,14 +2,21 @@ import { useEffect, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { AppIcon } from './AppIcon'
 
-const navigation = [
+const desktopNavigation = [
   { to: '/', label: 'Explorar', icon: 'explore', end: true },
   { to: '/my-sessions', label: 'Mis partidas', icon: 'sessions', end: false },
-  { to: '/create', label: 'Crear', icon: 'create', end: false },
   { to: '/profile', label: 'Perfil', icon: 'profile', end: false },
 ] as const
 
+const mobileNavigation = [
+  ...desktopNavigation.slice(0, 2),
+  { to: '/create', label: 'Crear', icon: 'create', end: false },
+  desktopNavigation[2],
+] as const
+
 function PrimaryNavigation({ mobile = false }: { readonly mobile?: boolean }) {
+  const navigation = mobile ? mobileNavigation : desktopNavigation
+
   return (
     <nav
       aria-label="Navegación principal"
@@ -18,7 +25,7 @@ function PrimaryNavigation({ mobile = false }: { readonly mobile?: boolean }) {
       {navigation.map((item) => (
         <NavLink
           className={({ isActive }) =>
-            `primary-nav__link${isActive ? ' is-active' : ''}${item.label === 'Crear' ? ' primary-nav__link--create' : ''}`
+            `primary-nav__link${item.to === '/create' ? ' primary-nav__link--create' : ''}${isActive ? ' is-active' : ''}`
           }
           end={item.end}
           key={item.to}
@@ -51,7 +58,18 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
             <span className="brand__name">Mesa Abierta</span>
             <span className="brand__tag">Prototipo</span>
           </Link>
-          <PrimaryNavigation />
+          <div className="site-header__actions">
+            <PrimaryNavigation />
+            <NavLink
+              className={({ isActive }) =>
+                `header-create-action${isActive ? ' is-active' : ''}`
+              }
+              to="/create"
+            >
+              <AppIcon name="create" size={18} />
+              <span>Crear partida</span>
+            </NavLink>
+          </div>
         </div>
       </header>
       <main id="main-content">{children}</main>

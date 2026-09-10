@@ -10,7 +10,7 @@ El MVP se resuelve con cinco pantallas principales. Los estados de solicitud, la
 - **Usuario:** cualquier persona que busca partida; en el prototipo se usa una identidad simulada.
 - **Punto de entrada:** apertura de la aplicación o navegación «Explorar».
 - **Acciones principales:** buscar juego, filtrar fecha, filtrar zona/distrito, limpiar filtros, ver partida, crear partida desde un vacío general.
-- **Información principal:** Madrid, filtros activos y tarjetas con juego, fecha/hora, zona, organizador, confirmados/aforo y plazas disponibles.
+- **Información principal:** propuesta de valor explícita sobre encontrar personas con quienes jugar a juegos de mesa, Madrid, filtros activos y tarjetas con juego, fecha/hora, zona, organizador, confirmados/aforo y plazas disponibles.
 - **Estados importantes:** loading, listado con resultados, sin partidas disponibles, sin coincidencias de filtros y error de carga.
 
 No muestra completas, canceladas o pasadas. No necesita orden avanzado ni mapa.
@@ -21,7 +21,7 @@ No muestra completas, canceladas o pasadas. No necesita orden avanzado ni mapa.
 - **Usuario:** visitante interesado, solicitante pendiente, participante confirmado u organizador.
 - **Punto de entrada:** tarjeta de Explorar, tarjeta de Mis partidas o detalle tras publicar.
 - **Acciones principales:** solicitar plaza; abrir perfil; para el organizador, aceptar o rechazar solicitudes.
-- **Información principal:** juego, fecha, hora, Madrid y zona/distrito, organizador, descripción, confirmados/aforo, plazas disponibles, participantes confirmados y estado personal.
+- **Información principal:** orientación contextual de origen y modo de consulta/gestión; juego, fecha, hora, Madrid, zona/distrito y lugar simulado si existe; organizador con reputación y fiabilidad simuladas resumidas, descripción, confirmados/aforo, plazas disponibles, participantes confirmados y estado personal.
 - **Estados importantes:** loading, disponible para solicitar, solicitud pendiente, participación confirmada, solicitud no aceptada, partida completada antes de confirmar la solicitud, vista del organizador, completa, cancelada, pasada, error/no encontrada y éxito tras publicación.
 
 Variantes:
@@ -33,15 +33,15 @@ Variantes:
 - **Partida completada durante la espera:** la solicitud deja de figurar como pendiente y se explica que no llegó a confirmarse porque se agotaron las plazas, sin presentarlo como rechazo personal.
 - **No disponible:** explica completa, cancelada o pasada y elimina la acción de solicitud.
 
-El punto exacto de encuentro no aparece.
+El prototipo puede mostrar el nombre de un local o punto reconocible; no exige una dirección postal ni define la visibilidad futura de un punto exacto real.
 
 ## SCR-03 — Crear partida
 
 - **Objetivo:** publicar una partida mediante un formulario corto.
 - **Usuario:** persona identificada que organiza.
 - **Punto de entrada:** navegación principal «Crear» o CTA desde el vacío de Explorar/Mis partidas.
-- **Acciones principales:** seleccionar juego simulado, introducir fecha/hora, seleccionar zona o distrito de Madrid, indicar aforo total, añadir descripción opcional y publicar.
-- **Información principal:** Madrid como contexto fijo no editable, etiquetas, obligatoriedad, ayuda de aforo y resumen de errores.
+- **Acciones principales:** seleccionar juego simulado, introducir fecha/hora, seleccionar zona o distrito de Madrid, añadir un lugar opcional diferenciado, indicar aforo total, añadir descripción opcional y publicar.
+- **Información principal:** Madrid como contexto fijo no editable; zona, lugar y descripción separados; etiquetas, obligatoriedad, ayuda de aforo y resumen de errores.
 - **Estados importantes:** inicial, edición, validación incorrecta, publicación en curso, error de publicación y éxito con navegación a SCR-02.
 
 La pantalla es única. No contiene selector de ciudad, multi-ciudad, recurrencia, torneo, lista de espera, votación, múltiples juegos, mapa, geolocalización, precio o pago. Esta simplificación del prototipo no bloquea soporte futuro para otras ciudades.
@@ -63,10 +63,10 @@ Los estados se muestran solo cuando explican la situación. No se modelan transi
 - **Usuario:** titular del perfil u otra persona desde una partida.
 - **Punto de entrada:** navegación «Perfil», nombre del organizador o participante.
 - **Acciones principales:** abrir actividad relacionada; solo en perfil propio, editar y guardar datos básicos.
-- **Información principal:** nombre visible, avatar opcional, Madrid como ciudad fija del prototipo, zona/distrito opcional, descripción opcional y actividad derivada cuando sea útil.
+- **Información principal:** nombre visible, avatar opcional, Madrid como ciudad fija del prototipo, zona/distrito opcional, descripción opcional, actividad derivada, reputación subjetiva, fiabilidad observable o derivada, aspectos destacados y opiniones recientes simuladas.
 - **Estados importantes:** perfil propio, perfil ajeno, opcionales ausentes, edición, error de validación, guardado, éxito y error de carga.
 
-No incluye email/teléfono públicos, seguidores, amistades, reputación, puntuaciones, badges o nivel.
+No incluye email/teléfono públicos, seguidores, amistades, badges o nivel. Las opiniones son de solo lectura y se presentan como procedentes de partidas finalizadas compartidas por participantes confirmados; no existe acción para valorar.
 
 ## Matriz resumida de estados
 

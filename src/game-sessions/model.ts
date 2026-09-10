@@ -115,6 +115,7 @@ export const createGameSession = (
   startsAt: new Date(`${input.date}T${input.time}:00`).toISOString(),
   city: 'Madrid',
   zone: input.zone,
+  place: input.place.trim(),
   organizerId,
   capacity: input.capacity,
   description: input.description.trim(),

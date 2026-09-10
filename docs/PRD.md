@@ -30,6 +30,7 @@ La persona quiere jugar a juegos de mesa, pero le cuesta encontrar gente con qui
 - Permitir solicitar participación, gestionarla mediante aceptación o rechazo del organizador y hacer visible quién está confirmado.
 - Permitir a cada persona consultar las partidas que organiza o en las que participa.
 - Aprender qué fricciones impiden pasar de la intención de jugar a una participación acordada.
+- Validar si señales diferenciadas de reputación y fiabilidad ayudan a decidir quedar con personas desconocidas.
 - Proteger privacidad, accesibilidad y simplicidad desde el diseño.
 
 ## No objetivos
@@ -37,7 +38,7 @@ La persona quiere jugar a juegos de mesa, pero le cuesta encontrar gente con qui
 - Construir una red social generalista o maximizar interacción social no vinculada a partidas.
 - Resolver compraventa, intercambio, pagos o logística de juegos.
 - Ofrecer comunicación en tiempo real.
-- Crear sistemas de reputación, reseñas, recomendación algorítmica o gamificación.
+- Construir un sistema productivo de reputación, publicación de reseñas, recomendación algorítmica o gamificación. El prototipo solo representa señales simuladas para validar la hipótesis de confianza.
 - Gestionar clubes, tiendas o comunidades complejas.
 - Rastrear al usuario, usar geolocalización continua o GPS en tiempo real, o publicar innecesariamente una ubicación precisa.
 - Optimizar todavía monetización, crecimiento viral o métricas comerciales no validadas.
@@ -60,6 +61,7 @@ Una misma persona puede adoptar ambos roles. La segmentación por experiencia, f
 - Como jugador, quiero consultar partidas disponibles para saber qué opciones tengo.
 - Como jugador, quiero filtrar partidas por criterios esenciales para reducir opciones irrelevantes.
 - Como jugador, quiero ver el detalle de una partida para decidir si me encaja.
+- Como jugador, quiero consultar señales comprensibles sobre quien organiza para valorar si me inspira confianza antes de solicitar plaza.
 - Como organizador, quiero crear una partida indicando juego, fecha y hora, ciudad o zona y aforo máximo para encontrar participantes.
 - Como jugador, quiero solicitar una plaza y conocer si está pendiente o aceptada para no confundir una solicitud con una participación confirmada.
 - Como participante u organizador, quiero consultar la lista de participantes para conocer el estado de la partida.
@@ -81,7 +83,7 @@ El jugador podrá reducir el listado al menos por juego, fecha y ciudad, zona, d
 
 ### RF-04 — Detalle de partida
 
-El sistema mostrará los datos publicados de la partida, el estado de plazas, la persona organizadora y los participantes que la política de privacidad permita mostrar.
+El sistema mostrará los datos publicados de la partida, el estado de plazas, la persona organizadora y los participantes que la política de privacidad permita mostrar. En el prototipo, el detalle puede mostrar un nombre de lugar simulado separado de la zona para validar su comprensión; esto no define la visibilidad futura de una dirección exacta.
 
 ### RF-05 — Creación de partida
 
@@ -91,6 +93,8 @@ Una persona identificada podrá crear una partida indicando, como mínimo:
 - fecha y hora;
 - ciudad, zona, distrito o granularidad equivalente;
 - número máximo de jugadores.
+
+El prototipo añade «Lugar de la partida» como texto libre opcional y diferenciado de la zona y la descripción. Se orienta a nombres de locales o puntos reconocibles, no exige una dirección postal y no integra mapas, geocodificación ni servicios de lugares.
 
 En el MVP 1, el juego queda indicado al crear la partida. Esto no establece una obligación para todos los posibles modelos de quedada POST-MVP. El organizador cuenta dentro del aforo total: una partida con aforo de cuatro personas comienza con un organizador y tres plazas disponibles. En el prototipo, Madrid se muestra como contexto fijo y el usuario selecciona únicamente zona o distrito; no introduce otra ciudad. Las validaciones temporales, edición, cancelación y datos opcionales requieren definición antes del desarrollo del vertical slice.
 
@@ -105,6 +109,17 @@ El sistema permitirá consultar participantes confirmados. El organizador podrá
 ### RF-08 — Partidas propias
 
 Una misma cuenta podrá organizar partidas y participar en partidas creadas por otras personas. El usuario podrá consultar por separado o distinguir ambas clases de partida.
+
+### HXP-01 — Señales de confianza en el prototipo
+
+La Fase 2 mostrará datos exclusivamente simulados para comprobar si facilitan la decisión de participar. La representación separará:
+
+- reputación subjetiva: media, número de valoraciones y opiniones recientes;
+- fiabilidad observable o derivada: partidas jugadas, asistencias y ausencias sin aviso.
+
+El detalle ofrecerá un resumen compacto de la persona organizadora y el perfil permitirá ampliar la información. No habrá acción para publicar una valoración. Como regla provisional de producto, una futura valoración estará vinculada a una partida finalizada y solo a participantes confirmados que la hayan compartido.
+
+Este experimento no define un requisito funcional de producción ni su modelo técnico. Algoritmo, moderación, derecho de réplica, prevención de fraude, disputas, privacidad y persistencia siguen pendientes antes de producción.
 
 ## Requisitos no funcionales
 
@@ -127,7 +142,7 @@ El MVP 1 cubre el recorrido desde una identidad con perfil básico hasta encontr
 
 - feed, seguidores y amistades complejas;
 - chat en tiempo real;
-- reputación y reviews;
+- sistema real de reputación, publicación de reviews y cálculo de fiabilidad; el prototipo solo contiene una representación simulada para validar su utilidad;
 - clubes y tiendas;
 - recomendaciones mediante IA;
 - gamificación;
@@ -144,6 +159,7 @@ No se fijan cifras comerciales sin una línea base. El MVP se considerará prome
 - encontrar una partida que consideren relevante o publicar una nueva;
 - alcanzar un estado de participación entendido por organizador y jugador;
 - identificar claramente cuándo, dónde a nivel de zona y a qué se jugará;
+- localizar y comprender las señales simuladas de reputación y fiabilidad al decidir si quedar;
 - usar los flujos críticos en móvil y con las necesidades de accesibilidad contempladas;
 - expresar que el producto reduce una fricción real frente a su forma actual de organizarse.
 
@@ -154,6 +170,7 @@ Antes del lanzamiento de validación se definirá un plan de medición con event
 - **Mercado vacío:** pocas partidas visibles reducen el valor para los primeros usuarios.
 - **Densidad local:** la utilidad depende de coincidencias geográficas y temporales.
 - **Confianza y seguridad:** encontrarse con desconocidos puede frenar la participación; el MVP necesita medidas proporcionadas sin construir reputación completa.
+- **Interpretación de señales:** una valoración subjetiva o un dato derivado pueden generar falsa seguridad si se presentan sin contexto; deben distinguirse y validarse con usuarios.
 - **Privacidad:** información de zona, perfil y asistencia puede revelar hábitos si se diseña mal.
 - **Abandono y plazas desactualizadas:** cancelaciones o ausencias pueden deteriorar la confianza.
 - **Confusión de participación:** si solicitud pendiente y confirmación no se distinguen claramente, pueden generarse expectativas incorrectas.
@@ -169,6 +186,7 @@ Antes del lanzamiento de validación se definirá un plan de medición con event
 - **Contexto geográfico del prototipo:** Madrid es fijo y preseleccionado. Explorar muestra partidas de Madrid y Crear permite elegir solo zona/distrito; no existe selector de ciudad. Esto no limita la arquitectura futura a Madrid.
 - **Participación:** solicitar una plaza crea una solicitud pendiente. El organizador acepta o rechaza; solo la aceptación confirma al participante. Las solicitudes pendientes no cuentan dentro del aforo confirmado.
 - **Cierre por aforo:** cuando una aceptación ocupa la última plaza, la partida queda completa, sale de Explorar y las demás solicitudes dejan de estar pendientes con una explicación de falta de plazas. No existe lista de espera ni se decide todavía el nombre técnico de este resultado.
+- **Validación de confianza:** la iteración del prototipo mostrará reputación y fiabilidad simuladas como conceptos diferentes. No se habilita publicar valoraciones ni se aprueba todavía un sistema real.
 
 ## Hipótesis iniciales
 
@@ -176,6 +194,7 @@ Estas hipótesis guían el diseño, pero no son decisiones validadas:
 
 - Ciudad o zona ofrece precisión suficiente para evaluar una partida antes de acordar detalles por otros medios.
 - Juego, fecha/hora, zona y aforo son los datos mínimos útiles para publicar.
+- Las señales de reputación y fiabilidad pueden reducir la incertidumbre al quedar con personas desconocidas; su utilidad y comprensión deben observarse, no asumirse.
 
 ## Preguntas abiertas y recomendación provisional
 

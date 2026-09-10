@@ -22,6 +22,7 @@ En la exploración y el detalle, una persona debe poder reconocer sin esfuerzo:
 5. cuántas plazas confirmadas y disponibles hay;
 6. cómo solicitar una plaza;
 7. si su solicitud está pendiente o confirmada.
+8. qué señales de confianza existen sobre la persona organizadora.
 
 ## Principios UX
 
@@ -35,6 +36,7 @@ En la exploración y el detalle, una persona debe poder reconocer sin esfuerzo:
 - **Recuperación:** errores y estados vacíos explican qué ocurrió y ofrecen una acción siguiente.
 - **Accesibilidad desde el diseño:** estructura, contenido, foco y estados se conciben para WCAG 2.2 AA.
 - **Sin falsas expectativas:** una solicitud pendiente no consume una plaza confirmada ni promete aceptación.
+- **Confianza con contexto:** reputación subjetiva y fiabilidad observable se presentan por separado; ninguna cifra se comunica como garantía de seguridad.
 
 ## Arquitectura de información propuesta
 
@@ -45,7 +47,7 @@ En la exploración y el detalle, una persona debe poder reconocer sin esfuerzo:
 3. **Crear:** acceso directo al formulario breve para publicar una partida.
 4. **Perfil:** perfil propio y acceso a su edición básica.
 
-La propuesta usa cuatro elementos porque cada uno soporta una intención principal frecuente. «Crear» se presenta como acción destacada, pero conserva etiqueta textual y posición estable; no depende exclusivamente de un botón flotante o de un icono. Su prominencia podrá reevaluarse después de observar la SPA en la validación visual.
+La propuesta usa cuatro elementos porque cada uno soporta una intención principal frecuente. En móvil conservan una posición estable en la navegación inferior. En desktop, Explorar, Mis partidas y Perfil se leen como navegación y «Crear partida» aparece al lado como acción principal compacta y separada. No depende exclusivamente de un botón flotante o de un icono.
 
 ### Navegación contextual
 
@@ -82,6 +84,12 @@ Perfil
 └── Edición básica del propio perfil
 ```
 
+## Dirección de la iteración visual
+
+La primera revisión humana confirma una base seria y creíble, pero exige hacer inequívoca la propuesta de valor. Explorar abre con una frase breve que explica que Mesa Abierta sirve para encontrar personas con quienes jugar a juegos de mesa en Madrid. Este encabezado permanece compacto en móvil para que filtros y partidas sigan apareciendo pronto.
+
+La dirección visual se define como **club moderno de juegos de mesa**: cercana, seria, fiable y con personalidad editorial. Emplea superficies cálidas, geometrías de tablero, fichas y cartas abstractas de forma sutil. Evita fantasía, estética gamer/neón, casino, ilustración infantil y decoración que compita con la información.
+
 ## Estrategia de descubrimiento
 
 ### Orden inicial
@@ -91,12 +99,12 @@ Las partidas se ordenan por fecha y hora próximas. No se añade un selector de 
 ### Filtros mínimos
 
 - **Juego:** búsqueda por nombre entre los juegos simulados.
-- **Fecha:** cualquier fecha, hoy, esta semana o una fecha concreta; el patrón definitivo se validará en el prototipo.
+- **Fecha:** cualquier fecha, hoy, próximos siete días o este fin de semana mediante botones seleccionables visibles.
 - **Zona o distrito:** una selección simple de ejemplos de Madrid, sin catálogo oficial ni mapa.
 
 Madrid se muestra como contexto fijo y no editable. No existe selector de ciudad, multi-ciudad, geolocalización, GPS ni mapa en el prototipo. Tampoco se añade un filtro avanzado de distancia, duración, dificultad, edad, idioma o experiencia. Al limpiar filtros se recupera el listado disponible completo de Madrid.
 
-La densidad de los tres controles en 360–430 px se observará durante la validación visual de la Fase 2; esta observación podrá cambiar su distribución, pero no añadirá filtros.
+En 360–430 px, las opciones de fecha forman una cuadrícula compacta y mantienen selección textual y gráfica. La zona conserva un `select` nativo para evitar un componente complejo. Esta distribución podrá refinarse visualmente, pero no añadirá filtros.
 
 ### Contenido mínimo de una tarjeta
 
@@ -128,7 +136,7 @@ No se ofrece solicitar cuando la partida está completa, cancelada o pasada. El 
 - El organizador es el primer participante confirmado.
 - El aforo se comunica como `confirmados / total` y también mediante texto de plazas disponibles.
 - Las solicitudes pendientes se cuentan por separado y no reducen plazas confirmadas.
-- El organizador ve nombre, avatar si existe, zona general y descripción breve del solicitante; no reputación ni puntuaciones.
+- El organizador ve nombre, avatar si existe, zona general y descripción breve del solicitante. Puede abrir el perfil simulado para consultar las mismas señales de reputación y fiabilidad disponibles para el resto de usuarios.
 - Al aceptar, se comprueba de nuevo que exista plaza. El usuario pasa a confirmado y el contador se actualiza.
 - Al cubrir la última plaza, la partida pasa a completa, deja de estar disponible en Explorar y ya no permite aceptar solicitudes.
 - Las demás solicitudes dejan de aparecer como pendientes en ese momento. Para sus solicitantes, el resultado explica que la partida se completó antes de que su plaza fuese confirmada; no se presenta como rechazo personal.
@@ -137,16 +145,19 @@ No se ofrece solicitar cuando la partida está completa, cancelada o pasada. El 
 
 ## Creación de partida
 
-Se mantiene una sola pantalla. Los seis datos introducidos o seleccionados por el usuario son breves, siguen una secuencia natural y no justifican pasos ni indicador de progreso:
+Se mantiene una sola pantalla. Los datos introducidos o seleccionados por el usuario son breves, siguen una secuencia natural y no justifican pasos ni indicador de progreso:
 
 1. juego simulado;
 2. fecha;
 3. hora;
 4. zona o distrito de Madrid;
-5. aforo total, incluyendo al organizador;
-6. descripción opcional.
+5. lugar opcional, como nombre de un local o punto reconocible;
+6. aforo total, incluyendo al organizador;
+7. descripción opcional.
 
 La pantalla muestra «Ciudad: Madrid» como contexto preseleccionado, no como campo de texto editable. No ofrece selector de ciudad. Esta decisión es específica del prototipo y no convierte Madrid en una restricción futura del producto.
+
+Zona, lugar y descripción son conceptos distintos. El prototipo muestra el lugar para validar su utilidad, pero no solicita una dirección postal ni resuelve cuándo debe revelarse un punto exacto real. Esa política permanece pendiente y deberá aplicar minimización de datos y visibilidad controlada.
 
 El texto de ayuda del aforo hará explícito: «Te contamos dentro del aforo». Los errores se muestran junto al campo y en un resumen enlazable al inicio del formulario. Tras publicar se navega al detalle, con el mensaje «Partida publicada».
 
@@ -154,7 +165,7 @@ El MVP crea una partida con un único juego definido. No se representa votación
 
 ## Perfil básico
 
-El perfil responde únicamente «¿Quién es esta persona con la que potencialmente voy a jugar?».
+El perfil responde principalmente «¿Quién es esta persona con la que potencialmente voy a jugar?» y permite explorar si las señales de confianza reducen la incertidumbre al quedar.
 
 ### Perfil propio
 
@@ -164,11 +175,18 @@ El perfil responde únicamente «¿Quién es esta persona con la que potencialme
 - zona o distrito opcional;
 - descripción breve opcional;
 - recuentos derivados de partidas organizadas y participaciones, si ayudan a orientar;
+- reputación simulada: media, número de valoraciones y opiniones recientes;
+- fiabilidad simulada y separada: partidas jugadas, asistencias y ausencias sin aviso;
+- aspectos mencionados por otros jugadores, sin badges ni gamificación;
 - acción «Editar perfil».
 
 ### Perfil de otra persona
 
-Muestra los mismos datos que sean públicos, sin acción social. No incluye email, teléfono, fecha de nacimiento, reputación, seguidores, badges o puntuaciones. La ausencia de avatar, zona o descripción se resuelve sin campos vacíos ni mensajes negativos.
+Muestra los mismos datos que sean públicos, incluidas las señales simuladas de confianza, sin acción social. No incluye email, teléfono, fecha de nacimiento, seguidores, badges o nivel. La ausencia de avatar, zona o descripción se resuelve sin campos vacíos ni mensajes negativos.
+
+La reputación representa opiniones subjetivas de personas con las que se compartió mesa. La fiabilidad representa comportamiento observable o derivado y nunca se fusiona en una única estrella. Las reviews del prototipo son solo lectura y variadas; no existe flujo para escribirlas. Como principio provisional, una futura valoración solo podría realizarse tras una partida finalizada entre participantes confirmados.
+
+El detalle de partida muestra únicamente un resumen compacto de reputación y fiabilidad de quien organiza, además del enlace al perfil. Las opiniones completas permanecen en el perfil para no desviar el foco de la partida.
 
 Esta composición es una **hipótesis UX**, no un modelo de datos definitivo.
 
@@ -210,6 +228,8 @@ No se fijan breakpoints ni reglas CSS en esta fase.
 - Las zonas táctiles y la separación entre Aceptar/Rechazar permiten operar sin precisión fina.
 - Loading no bloquea silenciosamente; error y vacío ofrecen reintento, limpiar filtros o crear partida según contexto.
 - El contenido esencial no depende de imagen, avatar, icono, posición o gesto.
+- Las estrellas incluyen una alternativa textual y reputación/fiabilidad usan títulos explícitos; no dependen solo de iconos o color.
+- Los segmentos de Mis partidas usan botones normales con estado pulsado y funcionamiento nativo mediante Tab, Enter y Espacio.
 - La ampliación a desktop no altera el orden de lectura ni esconde funcionalidad disponible en móvil.
 
 No se prescribe implementación ARIA en esta fase; se definirá con la semántica concreta del prototipo.
@@ -228,6 +248,7 @@ No se prescribe implementación ARIA en esta fase; se definirá con la semántic
 10. Las partidas completas, canceladas y pasadas se excluyen de Explorar, pero siguen visibles en Mis partidas cuando corresponda.
 11. Al llenarse el aforo, ninguna solicitud inviable permanece pendiente: se cierra con un mensaje de capacidad, sin lista de espera ni apariencia de rechazo personal.
 12. La identidad ya iniciada y los juegos serán simulados durante el prototipo; no se diseñan autenticación ni catálogo externo.
+13. La confianza es una hipótesis prioritaria del prototipo: perfiles y detalle representan reputación y fiabilidad simuladas por separado, sin publicación de reviews ni sistema productivo.
 
 Estas decisiones han sido aprobadas para el prototipo. No definen modelo de datos ni arquitectura técnica y podrán reevaluarse después de la validación visual cuando así se indica.
 
@@ -241,6 +262,7 @@ Estas decisiones han sido aprobadas para el prototipo. No definen modelo de dato
 - El número de solicitudes por partida será suficientemente pequeño para gestionarlas en el detalle.
 - Las personas comprenden mejor el aforo si ven confirmados/total y plazas disponibles juntos; debe validarse.
 - El formulario en una pantalla será más comprensible que un flujo por pasos; debe comprobarse en prototipo.
+- Reputación y fiabilidad separadas pueden ayudar a decidir quedar sin crear una falsa equivalencia entre opinión y comportamiento; debe validarse con usuarios.
 
 ## Preguntas realmente bloqueantes para Fase 2
 
@@ -257,10 +279,10 @@ No se identifica una pregunta adicional que impida construir un prototipo con da
 - Necesidad y fuente de un catálogo externo.
 - Experiencia multi-ciudad real y selector futuro de ciudad.
 - Usuario prioritario, requisitos legales, compatibilidad objetivo y métricas de validación.
-- Colección, intercambio, chat, reputación y votación de juegos, que siguen fuera del MVP y requieren decisiones futuras independientes.
+- Colección, intercambio, chat, votación de juegos y el sistema productivo de reputación/fiabilidad, que siguen fuera del alcance implementado y requieren decisiones futuras independientes.
 
 Las cuestiones de ciclo de vida deberán resolverse antes del primer vertical slice, según el PRD, pero no impiden un prototipo visual con datos simulados.
 
 ## Fuera de esta fase
 
-Intercambio, colección, feed, seguidores, amistades, chat, reputación, reviews, votación o elección colectiva de juegos, clubes, tiendas, gamificación, notificaciones push, IA, pagos, mapas, geolocalización y *tracking*. Ninguno aparece como navegación, flujo o pantalla del MVP.
+Intercambio, colección, feed, seguidores, amistades, chat, publicación de reviews, sistema productivo de reputación/fiabilidad, votación o elección colectiva de juegos, clubes, tiendas, gamificación, notificaciones push, IA, pagos, mapas, geolocalización y *tracking*. La Fase 2 solo incorpora señales simuladas de confianza dentro del detalle y del perfil, sin navegación adicional.

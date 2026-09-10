@@ -18,7 +18,8 @@
 
 ```mermaid
 flowchart TD
-    A[Entrar en la aplicación] --> B[Explorar partidas en Madrid]
+    A[Entrar en la aplicación] --> V[Comprender que puede encontrar gente para jugar a juegos de mesa]
+    V --> B[Explorar partidas en Madrid]
     B --> C[Ver disponibles por fecha próxima]
     C --> D{¿Necesita reducir resultados?}
     D -- No --> E[Elegir una partida]
@@ -51,9 +52,10 @@ flowchart TD
     A[Seleccionar resultado o partida propia] --> B[Cargar detalle]
     B --> C{¿Se puede mostrar?}
     C -- No --> D[Error o no encontrada]
-    C -- Sí --> E[Ver juego, fecha, hora y zona]
+    C -- Sí --> E[Ver juego, fecha, hora, zona y lugar si existe]
     E --> F[Ver organizador, aforo y confirmados]
-    F --> G[Ver descripción y estado personal]
+    F --> T[Consultar reputación y fiabilidad resumidas del organizador]
+    T --> G[Ver descripción y estado personal]
     G --> H{Rol y estado}
     H -- Puede solicitar --> I[Mostrar Solicitar plaza]
     H -- Pendiente --> J[Mostrar Solicitud pendiente]
@@ -62,9 +64,9 @@ flowchart TD
     H -- Completa, cancelada o pasada --> M[Explicar que no admite solicitudes]
 ```
 
-**Contenido:** juego, fecha, hora, Madrid y zona/distrito, nombre del organizador, aforo total, plazas confirmadas y disponibles, participantes confirmados, descripción opcional y estado del usuario.
+**Contenido:** juego, fecha, hora, Madrid y zona/distrito, lugar simulado si existe, nombre del organizador, resumen separado de su reputación y fiabilidad simuladas, aforo total, plazas confirmadas y disponibles, participantes confirmados, descripción opcional y estado del usuario. Las opiniones completas se consultan en el perfil para mantener el foco del detalle.
 
-El punto exacto de encuentro no se muestra ni se diseña en esta fase. Una solicitud pendiente tampoco aparece dentro de participantes confirmados.
+El lugar se representa como nombre de local o punto reconocible, sin exigir dirección postal. La visibilidad futura de un punto exacto real no se diseña en esta fase. Una solicitud pendiente tampoco aparece dentro de participantes confirmados.
 
 ## FLOW-03 — Solicitar participar
 
@@ -106,7 +108,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A[Abrir partida organizada] --> B[Ver solicitudes pendientes]
-    B --> C[Revisar perfil básico]
+    B --> C[Revisar perfil y señales simuladas de confianza]
     C --> D{Decisión}
     D -- Rechazar --> E[Confirmar rechazo]
     E --> F[Estado: no aceptada]
@@ -129,7 +131,7 @@ flowchart TD
 - Si la partida queda completa, las demás solicitudes dejan de estar pendientes porque ya no pueden obtener plaza y no existe lista de espera.
 - Esas personas ven: «La partida se ha completado. Tu solicitud no llegó a confirmarse porque ya no quedan plazas». No se comunica como rechazo personal del organizador.
 - No se decide todavía el nombre técnico del resultado ni su modelo de datos.
-- Ninguna decisión usa reputación, reviews, badges o scoring.
+- Las señales del perfil ayudan a contextualizar la decisión, pero no automatizan, recomiendan ni bloquean aceptar o rechazar. No hay scoring de aceptación.
 
 ## FLOW-05 — Crear una partida
 
@@ -141,16 +143,17 @@ flowchart TD
     B --> C[Juego simulado]
     C --> D[Fecha y hora]
     D --> E[Ver Madrid fijo y elegir zona o distrito]
-    E --> F[Aforo total y descripción opcional]
-    F --> G[Publicar partida]
-    G --> H{¿Datos válidos y publicación correcta?}
-    H -- No --> I[Mostrar errores y conservar datos]
-    I --> B
-    H -- Sí --> J[Mostrar Partida publicada]
-    J --> K[Abrir detalle como organizador]
+    E --> F[Indicar lugar opcional]
+    F --> G[Aforo total y descripción opcional]
+    G --> H[Publicar partida]
+    H --> I{¿Datos válidos y publicación correcta?}
+    I -- No --> J[Mostrar errores y conservar datos]
+    J --> B
+    I -- Sí --> K[Mostrar Partida publicada]
+    K --> L[Abrir detalle como organizador]
 ```
 
-**Decisión de pantalla:** un solo formulario. Madrid se muestra como contexto fijo, no como campo editable; el usuario elige únicamente zona o distrito. Los seis datos introducidos o seleccionados no justifican pasos adicionales.
+**Decisión de pantalla:** un solo formulario. Madrid se muestra como contexto fijo, no como campo editable; el usuario elige zona o distrito y puede indicar por separado un lugar reconocible. El lugar es opcional en el prototipo, no sustituye la descripción y no exige una dirección particular.
 
 **Validaciones UX mínimas:** campos obligatorios identificados, fecha/hora futura y aforo total comprensible. Ayuda de aforo: «Tú cuentas dentro del aforo; con 4 habrá 3 plazas disponibles».
 
@@ -188,6 +191,8 @@ flowchart TD
     A{Origen} -->|Navegación Perfil| B[Ver perfil propio]
     A -->|Organizador o participante| C[Ver perfil de otra persona]
     B --> D[Ver datos públicos y actividad derivada]
+    D --> J[Consultar reputación y fiabilidad separadas]
+    J --> K[Leer opiniones simuladas]
     D --> E[Editar perfil básico]
     E --> F{¿Datos válidos?}
     F -- No --> G[Mostrar errores]
@@ -196,8 +201,10 @@ flowchart TD
     C --> I[Ver identidad pública mínima]
 ```
 
-**Perfil propio:** nombre visible, avatar opcional, ciudad, zona/distrito opcional, descripción opcional, actividad derivada útil y «Editar perfil».
+**Perfil propio:** nombre visible, avatar opcional, ciudad, zona/distrito opcional, descripción opcional, actividad derivada útil, reputación simulada, fiabilidad simulada y «Editar perfil».
 
-**Perfil ajeno:** solo información pública equivalente. No tiene seguir, añadir amistad, puntuar, contactar ni ver datos privados.
+**Perfil ajeno:** información pública equivalente, con reputación subjetiva, fiabilidad observable o derivada, aspectos destacados y opiniones recientes. No tiene seguir, añadir amistad, puntuar, contactar ni ver datos privados.
+
+Las opiniones son solo lectura. Conceptualmente proceden de personas que compartieron una partida ya finalizada y estuvieron confirmadas; el flujo de publicación no se implementa todavía.
 
 La composición sigue siendo una hipótesis UX y no prescribe modelo de datos.

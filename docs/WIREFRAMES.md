@@ -10,12 +10,15 @@ Wireframes de baja fidelidad para 360–430 px. Los corchetes representan contro
 ┌──────────────────────────────────┐
 │ Explorar                 Madrid  │
 ├──────────────────────────────────┤
-│ Encuentra una partida            │
+│ Encuentra gente con quien jugar  │
+│ a juegos de mesa en Madrid.      │
 │                                  │
 │ Juego                            │
 │ [ Buscar juego…                ] │
 │                                  │
-│ [ Fecha: cualquiera ▼ ]          │
+│ Fecha                            │
+│ [✓ Cualquiera] [ Hoy ]           │
+│ [ Próx. 7 días] [ Este finde ]   │
 │ [ Zona: todas ▼       ]          │
 │                                  │
 │ 6 partidas disponibles           │
@@ -67,19 +70,24 @@ Error: «No pudimos cargar las partidas» + `[ Reintentar ]`. Loading conserva e
 
 ```text
 ┌──────────────────────────────────┐
-│ ‹ Explorar        Detalle        │
+│ Explorar / Terraforming Mars     │
 ├──────────────────────────────────┤
+│ DETALLE DE PARTIDA               │
 │ Terraforming Mars                │
 │                                  │
 │ Viernes, 18 de septiembre        │
 │ 19:00                            │
+│ Café Manuela                     │
 │ Chamberí · Madrid                │
 │                                  │
 │ 2/4 confirmados                  │
 │ Quedan 2 plazas                  │
 │                                  │
 │ Organiza                         │
-│ (A) Lucía              [ Ver ]   │
+│ (A) Lucía                        │
+│ Reputación 4,9 ★ · 31 valorac.   │
+│ Fiabilidad 24/24 asistencias     │
+│ [ Ver perfil y opiniones ]       │
 │                                  │
 │ Sobre la partida                 │
 │ Partida tranquila. Explicamos    │
@@ -98,7 +106,7 @@ Error: «No pudimos cargar las partidas» + `[ Reintentar ]`. Loading conserva e
 └──────────────────────────────────┘
 ```
 
-No se muestra dirección o punto exacto.
+El nombre del lugar es simulado y se diferencia de zona y descripción. No se exige una dirección postal; la visibilidad futura del punto exacto sigue pendiente.
 
 ### WF-02A — Solicitud pendiente
 
@@ -201,6 +209,10 @@ Este resultado no se etiqueta como rechazo del organizador y no crea una lista d
 │ Zona o distrito *                │
 │ [ Chamberí                    ▼ ] │
 │                                  │
+│ Lugar de la partida (opcional)   │
+│ [ Ej. Café Manuela             ] │
+│ Nombre de local o punto conocido │
+│                                  │
 │ Aforo total *                    │
 │ [ 4                            ] │
 │ Te contamos dentro del aforo:    │
@@ -214,7 +226,7 @@ Este resultado no se etiqueta como rechazo del organizador y no crea una lista d
 └──────────────────────────────────┘
 ```
 
-Madrid no es un campo editable ni ofrece selector de ciudad. En error, un resumen al inicio dice qué debe corregirse y cada campo muestra su mensaje. Los datos introducidos se conservan. En éxito se abre WF-02B con «Partida publicada».
+Madrid no es un campo editable ni ofrece selector de ciudad. Zona, lugar y descripción son campos distintos; el lugar no exige una dirección particular. En error, un resumen al inicio dice qué debe corregirse y cada campo muestra su mensaje. Los datos introducidos se conservan. En éxito se abre WF-02B con «Partida publicada».
 
 ## WF-04 — Mis partidas
 
@@ -296,6 +308,24 @@ Vacío: «Aún no has solicitado participar» + `[ Explorar partidas ]`.
 │ Me gustan los euros medios y     │
 │ aprender juegos nuevos.          │
 │                                  │
+│ Señales de confianza · simuladas │
+│                                  │
+│ Reputación                       │
+│ 4,8 ★ · 26 valoraciones          │
+│ Opiniones de personas con las    │
+│ que ha compartido mesa.          │
+│                                  │
+│ Fiabilidad                       │
+│ 17 de 18 partidas asistidas      │
+│ 1 ausencia sin aviso             │
+│                                  │
+│ [ Puntual ] [ Buen ambiente ]    │
+│                                  │
+│ Opiniones recientes              │
+│ ★★★★★                            │
+│ «Buen ambiente y explicó el      │
+│ juego perfectamente.»            │
+│                                  │
 │ 3 organizadas · 5 participaciones│
 │                                  │
 │ [ Editar perfil ]                │
@@ -320,18 +350,32 @@ Vacío: «Aún no has solicitado participar» + `[ Explorar partidas ]`.
 │ Partidas tranquilas y abiertas   │
 │ a personas que están aprendiendo.│
 │                                  │
+│ Reputación                       │
+│ 4,9 ★ · 31 valoraciones          │
+│                                  │
+│ Fiabilidad                       │
+│ 24/24 asistencias · 0 ausencias  │
+│                                  │
+│ Lo que más destacan              │
+│ Explica bien · Acogedora         │
+│                                  │
+│ Opiniones recientes              │
+│ ★★★☆☆ «La partida estuvo bien,   │
+│ aunque faltó algo de claridad.»  │
+│                                  │
 │ 4 organizadas · 6 participaciones│
 │                                  │
 │ [ Volver a la partida ]          │
 └──────────────────────────────────┘
 ```
 
-No hay seguir, contactar, valorar o añadir amistad.
+No hay seguir, contactar, valorar o añadir amistad. Las opiniones son simuladas y de solo lectura; conceptualmente solo pueden proceder de participantes confirmados que compartieron una partida finalizada.
 
 ## Adaptación principal a desktop
 
 - Navegación en cabecera horizontal, sin cambiar nombres.
-- WF-01: filtros en una fila y tarjetas en cuadrícula de dos o tres columnas.
+- WF-01: filtros adaptados al ancho, fecha mediante opciones seleccionables visibles y tarjetas en cuadrícula de dos o tres columnas.
+- La cabecera separa «Explorar», «Mis partidas» y «Perfil» de la acción compacta «+ Crear partida».
 - WF-02: información a la izquierda y aforo/acción a la derecha; solicitudes del organizador pueden ocupar la segunda columna.
 - WF-03: formulario centrado con ancho de lectura moderado, aún en una sola secuencia.
 - WF-04: tarjetas en cuadrícula dentro de los mismos dos segmentos.

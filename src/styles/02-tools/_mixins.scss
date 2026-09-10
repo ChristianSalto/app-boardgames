@@ -1,6 +1,7 @@
 @mixin focus-ring {
   outline: 3px solid var(--color-focus);
   outline-offset: 3px;
+  box-shadow: 0 0 0 5px var(--color-focus-halo);
 }
 
 @mixin desktop {

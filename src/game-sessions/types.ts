@@ -13,6 +13,7 @@ export type GameSession = {
   readonly startsAt: string
   readonly city: string
   readonly zone: string
+  readonly place: string
   readonly organizerId: string
   readonly capacity: number
   readonly description: string
@@ -27,6 +28,7 @@ export type CreateSessionInput = {
   readonly date: string
   readonly time: string
   readonly zone: string
+  readonly place: string
   readonly capacity: number
   readonly description: string
 }

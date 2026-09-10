@@ -1,19 +1,19 @@
 # Estado actual
 
 **Fase actual:**  
-Fase 2 — Prototipo SPA con datos simulados
+Fase 4 — Arquitectura técnica detallada
 
 **Tarea:**  
-Implementar una SPA React navegable con datos simulados para validar los core user flows aprobados.
+PROMPT-005D — Architecture Review & Consolidation.
 
 **Estado:**  
-En revisión.
+Completada.
 
 **Resultado:**  
-Prototipo visual e interactivo preparado para revisión humana.
+Baseline arquitectónico aprobado.
 
 **Siguiente fase:**  
-Fase 3 — Validación UX/UI.
+Fase 5 — Firebase y persistencia.
 
 **Restricción:**  
-La Fase 2 no está completada y la Fase 3 todavía no ha comenzado.
+La Fase 5 todavía no ha comenzado y Firebase no se ha configurado.

@@ -11,12 +11,19 @@ El MVP 1 valida una sola apuesta: si facilitar el descubrimiento, la creación y
 - Disponer de una identidad para realizar acciones personales.
 - Crear y consultar un perfil mínimo, con campos y visibilidad aún por decidir.
 - Una misma cuenta puede organizar partidas y participar en partidas creadas por otras personas.
+- Durante la iteración del prototipo, mostrar señales simuladas de confianza para evaluar su utilidad: reputación subjetiva y fiabilidad observable o derivada. Esto no incorpora todavía un sistema real al MVP.
+
+### Experimento de confianza en el prototipo
+
+Para validar si la confianza condiciona el encuentro, los perfiles simulados mostrarán una media y opiniones junto a datos separados de partidas jugadas, asistencias y ausencias sin aviso. El detalle resumirá las señales de la persona organizadora.
+
+No se podrá publicar una valoración ni se definirán cálculo, persistencia, moderación, fraude, disputas o privacidad definitiva. Como principio provisional, una futura valoración requerirá haber compartido una partida finalizada como participante confirmado.
 
 ### Descubrimiento de partidas
 
 - Consultar partidas disponibles, entendidas inicialmente como futuras, no canceladas y con plazas disponibles.
 - Buscar o filtrar por juego, fecha y ciudad, zona, distrito o granularidad equivalente.
-- Consultar detalle con juego, fecha/hora, zona, aforo/plazas, organizador y participantes según privacidad.
+- Consultar detalle con juego, fecha/hora, zona, lugar cuando proceda, aforo/plazas, organizador y participantes según privacidad.
 - Durante el prototipo, consultar únicamente Madrid y filtrar solo por juego, fecha y zona/distrito; Madrid no será un filtro editable.
 
 ### Organización
@@ -24,6 +31,7 @@ El MVP 1 valida una sola apuesta: si facilitar el descubrimiento, la creación y
 - Crear una partida.
 - Indicar juego, fecha y hora, ciudad, zona, distrito o granularidad equivalente, y número máximo de jugadores.
 - Durante el prototipo, mostrar Madrid como contexto fijo y seleccionar únicamente zona o distrito, sin entrada libre o selector de ciudad.
+- Durante el prototipo, permitir un nombre de lugar opcional, separado de zona y descripción, para validar la interfaz sin exigir una dirección postal.
 - Contar al organizador dentro del aforo total; con aforo de cuatro personas habrá inicialmente un organizador y tres plazas disponibles.
 - Consultar las partidas organizadas por el usuario.
 
@@ -43,7 +51,7 @@ El MVP 1 valida una sola apuesta: si facilitar el descubrimiento, la creación y
 
 El descubrimiento público se limita inicialmente a ciudad, zona, distrito o granularidad equivalente. En el prototipo, Madrid será el contexto fijo y preseleccionado; el usuario trabajará únicamente con sus zonas o distritos. No habrá selector de ciudad ni multi-ciudad real, pero la ampliación futura no debe quedar bloqueada. El MVP 1 no usa mapas, *tracking*, geolocalización continua ni GPS en tiempo real, y no publica ubicación precisa de forma innecesaria.
 
-Un punto o dirección concreta de encuentro podrá incorporarse posteriormente si el flujo demuestra que es necesario, siempre con minimización de datos, visibilidad controlada, privacidad y acceso solo cuando corresponda. Ese flujo, su UI y cualquier mecanismo de geolocalización no se diseñan en esta fase.
+El prototipo puede mostrar nombres simulados de locales o puntos reconocibles para validar la diferencia entre zona y lugar. Un punto o dirección concreta real solo podrá incorporarse si el flujo demuestra que es necesario, siempre con minimización de datos, visibilidad controlada, privacidad y acceso solo cuando corresponda. La política definitiva y cualquier mecanismo de geolocalización no se diseñan en esta fase.
 
 ## Guardas contra ampliación accidental
 
@@ -78,7 +86,7 @@ Esta lista conserva la visión, pero no constituye backlog aprobado.
 - sistema complejo de amigos;
 - listas de espera;
 - chat en tiempo real;
-- reputación y reviews;
+- sistema real de reputación, publicación de reviews y cálculo productivo de fiabilidad; la representación simulada de Fase 2 es solo un experimento UX;
 - clubes y tiendas;
 - recomendaciones mediante IA;
 - gamificación;
@@ -98,6 +106,7 @@ Esta lista conserva la visión, pero no constituye backlog aprobado.
 - fuente de catálogo externo, si resulta necesaria después del prototipo con datos simulados;
 - forma y momento de compartir un punto concreto de encuentro con visibilidad controlada;
 - medidas mínimas de seguridad/moderación para pruebas con usuarios;
+- condiciones de producción para reputación y fiabilidad: cálculo, fraude, moderación, disputas, derecho de réplica y privacidad;
 - plan de medición de la validación.
 
 Las recomendaciones provisionales están en la sección de preguntas abiertas del PRD. Ninguna de estas decisiones autoriza funciones sociales adicionales.

@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
-import { gameOptions } from '../mock-data/prototypeData'
 import { AppIcon } from '../shared/AppIcon'
+import { VisualSelect } from '../shared/VisualSelect'
 import {
   isSessionAvailable,
   matchesDateFilter,
@@ -10,6 +10,13 @@ import {
 } from './model'
 import { SessionCard } from './SessionCard'
 import type { DateFilter } from './types'
+
+const dateOptions = [
+  { value: 'all', label: 'Cualquier fecha' },
+  { value: 'today', label: 'Hoy' },
+  { value: 'seven-days', label: 'Próximos 7 días' },
+  { value: 'weekend', label: 'Este fin de semana' },
+] satisfies ReadonlyArray<{ value: DateFilter; label: string }>
 
 export function ExplorePage() {
   const { sessions } = usePrototype()
@@ -49,11 +56,10 @@ export function ExplorePage() {
       <section className="hero">
         <div className="page-container hero__inner">
           <div className="hero__content">
-            <p className="eyebrow">Madrid · partidas cercanas</p>
-            <h1>Tu próxima mesa empieza aquí.</h1>
+            <p className="eyebrow">Comunidad de juegos de mesa · Madrid</p>
+            <h1>Encuentra gente con quien jugar.</h1>
             <p className="hero__lead">
-              Encuentra gente, elige una partida y solicita tu plaza. Sin grupos
-              eternos ni planes que se pierden en el chat.
+              Explora partidas de juegos de mesa en Madrid y solicita tu plaza.
             </p>
           </div>
           <div className="hero__table" aria-hidden="true">
@@ -79,37 +85,59 @@ export function ExplorePage() {
         <div className="filters" aria-label="Filtros de partidas">
           <div className="field filters__game">
             <label htmlFor="game-filter">Juego</label>
-            <input
-              id="game-filter"
-              list="game-options"
-              onChange={(event) => setGame(event.target.value)}
-              placeholder="Buscar un juego"
-              type="search"
-              value={game}
+            <div className="search-control">
+              <input
+                id="game-filter"
+                onChange={(event) => setGame(event.target.value)}
+                placeholder="Ej. Wingspan"
+                type="search"
+                value={game}
+              />
+              {game ? (
+                <button
+                  aria-label="Limpiar filtro de juego"
+                  className="search-control__clear"
+                  onClick={() => setGame('')}
+                  type="button"
+                >
+                  <span aria-hidden="true">×</span>
+                </button>
+              ) : null}
+            </div>
+          </div>
+          <fieldset className="filter-field filters__date">
+            <legend>Fecha</legend>
+            <div className="date-chips">
+              {dateOptions.map((option) => {
+                const isSelected = date === option.value
+
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className={`date-chip${isSelected ? ' is-selected' : ''}`}
+                    key={option.value}
+                    onClick={() => setDate(option.value)}
+                    type="button"
+                  >
+                    {isSelected ? <span aria-hidden="true">✓</span> : null}
+                    {option.label}
+                  </button>
+                )
+              })}
+            </div>
+          </fieldset>
+          <div className="field filters__zone">
+            <label htmlFor="zone-filter" id="zone-filter-label">Zona o distrito</label>
+            <VisualSelect
+              ariaLabelledBy="zone-filter-label"
+              id="zone-filter"
+              onChange={setZone}
+              options={[
+                { value: 'all', label: 'Todas las zonas' },
+                ...zones.map((item) => ({ value: item, label: item })),
+              ]}
+              value={zone}
             />
-            <datalist id="game-options">
-              {gameOptions.map((option) => <option key={option} value={option} />)}
-            </datalist>
-          </div>
-          <div className="field">
-            <label htmlFor="date-filter">Fecha</label>
-            <select
-              id="date-filter"
-              onChange={(event) => setDate(event.target.value as DateFilter)}
-              value={date}
-            >
-              <option value="all">Cualquier fecha</option>
-              <option value="today">Hoy</option>
-              <option value="seven-days">Próximos 7 días</option>
-              <option value="weekend">Este fin de semana</option>
-            </select>
-          </div>
-          <div className="field">
-            <label htmlFor="zone-filter">Zona o distrito</label>
-            <select id="zone-filter" onChange={(event) => setZone(event.target.value)} value={zone}>
-              <option value="all">Todas las zonas</option>
-              {zones.map((item) => <option key={item}>{item}</option>)}
-            </select>
           </div>
           <button
             className="button button--ghost filters__clear"

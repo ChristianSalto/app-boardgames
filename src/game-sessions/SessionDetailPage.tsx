@@ -18,9 +18,21 @@ const stateLabels = {
   past: 'Pasada',
 } as const
 
+type ProfileNavigationState = {
+  readonly from: string
+  readonly fromLabel: string
+  readonly rootFrom: string
+  readonly rootLabel: string
+}
+
 export function SessionDetailPage() {
   const { sessionId } = useParams()
   const location = useLocation()
+  const locationState = location.state as {
+    readonly created?: boolean
+    readonly from?: string
+    readonly fromLabel?: string
+  } | null
   const {
     acceptRequest,
     currentPlayerId,
@@ -31,7 +43,7 @@ export function SessionDetailPage() {
   } = usePrototype()
   const [confirmingDecline, setConfirmingDecline] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState(
-    (location.state as { readonly created?: boolean } | null)?.created
+    locationState?.created
       ? 'Partida publicada correctamente.'
       : '',
   )
@@ -64,6 +76,14 @@ export function SessionDetailPage() {
   const displayState = getSessionDisplayState(session)
   const remainingSeats = getRemainingSeats(session)
   const isOrganizer = relation === 'organizer'
+  const originPath = locationState?.from ?? (isOrganizer ? '/my-sessions' : '/')
+  const originLabel = locationState?.fromLabel ?? (isOrganizer ? 'Mis partidas' : 'Explorar')
+  const profileNavigationState = {
+    from: location.pathname,
+    fromLabel: session.game,
+    rootFrom: originPath,
+    rootLabel: originLabel,
+  }
 
   const handleRequest = () => {
     requestSeat(session.id)
@@ -94,7 +114,12 @@ export function SessionDetailPage() {
 
   return (
     <section className="page-container detail-page">
-      <Link className="back-link" to={isOrganizer ? '/my-sessions' : '/'}>← Volver</Link>
+      <nav aria-label="Migas de pan" className="breadcrumb">
+        <ol>
+          <li><Link to={originPath}>{originLabel}</Link></li>
+          <li aria-current="page">{session.game}</li>
+        </ol>
+      </nav>
 
       {actionMessage ? (
         <div className="feedback-banner" role="status" tabIndex={-1}>
@@ -110,6 +135,9 @@ export function SessionDetailPage() {
               <span>{getGameInitials(session.game)}</span>
             </div>
             <div>
+              <p className="detail-context">
+                {isOrganizer ? 'Gestionar partida' : 'Detalle de partida'}
+              </p>
               <div className="detail-heading__meta">
                 <span className={`status-pill status-pill--${displayState}`}>
                   {stateLabels[displayState]}
@@ -117,7 +145,7 @@ export function SessionDetailPage() {
                 {isOrganizer ? <span className="status-pill status-pill--organizer">Organizada por ti</span> : null}
               </div>
               <h1>{session.game}</h1>
-              <p>Una mesa organizada por {organizer?.name ?? 'un jugador de la comunidad'}.</p>
+              <p>Encuentro de juegos de mesa en {session.zone}.</p>
             </div>
           </div>
 
@@ -128,13 +156,47 @@ export function SessionDetailPage() {
             </div>
             <div>
               <dt><AppIcon name="location" /> Dónde</dt>
-              <dd>{session.zone} · Madrid</dd>
+              <dd className="detail-location">
+                <strong>{session.place || 'Lugar por confirmar'}</strong>
+                <span>{session.zone} · Madrid</span>
+              </dd>
             </div>
             <div>
               <dt><AppIcon name="people" /> Aforo</dt>
               <dd>{session.participantIds.length}/{session.capacity} confirmados · {remainingSeats} {remainingSeats === 1 ? 'plaza' : 'plazas'}</dd>
             </div>
           </dl>
+
+          {organizer ? (
+            <section className="organizer-trust" aria-labelledby="organizer-title">
+              <div className="organizer-trust__identity">
+                <span className="avatar" aria-hidden="true">{getInitials(organizer.name)}</span>
+                <div>
+                  <h2 id="organizer-title">{organizer.name}</h2>
+                  <p>Organiza esta partida</p>
+                </div>
+              </div>
+              <div className="organizer-trust__content">
+                <dl className="organizer-trust__signals">
+                  <div>
+                    <dt>Reputación</dt>
+                    <dd>{formatRating(organizer.trust.averageRating)} <span aria-hidden="true">★</span> · {organizer.trust.ratingCount} valoraciones</dd>
+                  </div>
+                  <div>
+                    <dt>Fiabilidad</dt>
+                    <dd>{organizer.trust.attendedGames}/{organizer.trust.gamesPlayed} asistencias · {organizer.trust.noShows} {organizer.trust.noShows === 1 ? 'ausencia' : 'ausencias'} sin aviso</dd>
+                  </div>
+                </dl>
+                <Link
+                  className="text-link"
+                  state={organizer.id === currentPlayerId ? undefined : profileNavigationState}
+                  to={organizer.id === currentPlayerId ? '/profile' : `/players/${organizer.id}`}
+                >
+                  Ver perfil y opiniones <AppIcon name="arrow" size={17} />
+                </Link>
+              </div>
+            </section>
+          ) : null}
 
           <div className="content-block">
             <h2>Sobre la partida</h2>
@@ -149,7 +211,11 @@ export function SessionDetailPage() {
             <ul className="people-list">
               {participants.map((player) => (
                 <li key={player.id}>
-                  <Link className="person-row" to={player.id === currentPlayerId ? '/profile' : `/players/${player.id}`}>
+                  <Link
+                    className="person-row"
+                    state={player.id === currentPlayerId ? undefined : profileNavigationState}
+                    to={player.id === currentPlayerId ? '/profile' : `/players/${player.id}`}
+                  >
                     <span className="avatar" aria-hidden="true">{getInitials(player.name)}</span>
                     <span>
                       <strong>{player.name}</strong>
@@ -173,6 +239,7 @@ export function SessionDetailPage() {
                 playerId: request.playerId,
                 player: playerById.get(request.playerId),
               }))}
+              profileNavigationState={profileNavigationState}
               sessionIsComplete={displayState === 'complete'}
             />
           ) : null}
@@ -188,7 +255,7 @@ export function SessionDetailPage() {
           />
           <p className="privacy-note">
             <AppIcon name="location" size={18} />
-            Por privacidad, este prototipo solo muestra la zona aproximada.
+            El lugar mostrado es simulado. La visibilidad de una dirección exacta real se decidirá con criterios de privacidad.
           </p>
         </aside>
       </div>
@@ -265,6 +332,7 @@ type OrganizerRequestsProps = {
     readonly playerId: string
     readonly player: ReturnType<Map<string, ReturnType<typeof usePrototype>['players'][number]>['get']>
   }[]
+  readonly profileNavigationState: ProfileNavigationState
   readonly sessionIsComplete: boolean
 }
 
@@ -275,6 +343,7 @@ function OrganizerRequests({
   onConfirmDecline,
   onStartDecline,
   pendingRequests,
+  profileNavigationState,
   sessionIsComplete,
 }: OrganizerRequestsProps) {
   return (
@@ -301,7 +370,13 @@ function OrganizerRequests({
                   <strong>{player?.name ?? 'Perfil no disponible'}</strong>
                   <small>{player?.zone ? `${player.zone} · Madrid` : 'Madrid'}</small>
                 </span>
-                <Link className="text-link" to={`/players/${playerId}`}>Ver perfil</Link>
+                <Link
+                  className="text-link"
+                  state={profileNavigationState}
+                  to={`/players/${playerId}`}
+                >
+                  Ver perfil
+                </Link>
               </div>
               {player?.description ? <p>{player.description}</p> : null}
               {confirmingDecline === playerId ? (
@@ -326,3 +401,8 @@ function OrganizerRequests({
 
 const getInitials = (name: string) =>
   name.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('')
+
+const formatRating = (rating: number) => rating.toLocaleString('es-ES', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+})
