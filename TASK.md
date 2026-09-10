@@ -1,19 +1,19 @@
 # Estado actual
 
 **Fase actual:**  
-Fase 4 — Arquitectura técnica detallada
+Fase 5 — Firebase y persistencia
 
 **Tarea:**  
-PROMPT-005D — Architecture Review & Consolidation.
+PROMPT-006A — Firebase Local Foundation.
 
 **Estado:**  
-Completada.
+En progreso.
 
 **Resultado:**  
-Baseline arquitectónico aprobado.
+Base local de Firebase preparada para revisión, sin autenticación ni persistencia funcional.
 
-**Siguiente fase:**  
-Fase 5 — Firebase y persistencia.
+**Siguiente tarea:**  
+Pendiente de definición tras la revisión de PROMPT-006A.
 
 **Restricción:**  
-La Fase 5 todavía no ha comenzado y Firebase no se ha configurado.
+PROMPT-006B no ha comenzado; no existe autenticación ni persistencia de funcionalidades.

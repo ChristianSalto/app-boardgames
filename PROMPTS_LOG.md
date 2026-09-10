@@ -113,3 +113,10 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** revisar y consolidar las decisiones de dominio, frontend y Firebase como baseline técnico coherente antes de su implementación.
 - **Agentes:** SoftwareArchitectAgent y QAReviewerAgent.
 - **Resultado:** recomendación GO y Fase 4 completada; se aclararon `PlayerId` compartido y la responsabilidad de concurrencia sin introducir código, Firebase o sobreingeniería. Fase 5 queda como siguiente fase, todavía no iniciada.
+
+## PROMPT-006A — Firebase Local Foundation
+
+- **Fecha:** 2026-09-10
+- **Objetivo:** preparar SDK, tooling y emuladores locales de Firebase sin implementar autenticación, persistencia de funcionalidades ni un esquema Firestore.
+- **Agentes:** FrontendAgent y FirebaseAgent.
+- **Resultado:** base local configurada con project ID demo, Auth Emulator, Firestore Emulator e inicialización confinada al composition root; Fase 5 permanece en progreso y PROMPT-006B no ha comenzado.

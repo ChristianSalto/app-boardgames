@@ -12,6 +12,19 @@ Stack previsto:
 - Firebase Emulator Suite;
 - Cloud Storage solo cuando exista un archivo necesario para un caso de uso aprobado.
 
+## Base local implementada
+
+La Fase 5 incorpora una base local sin datos ni funcionalidades Firebase:
+
+- `firebase.json` configura Auth Emulator en `127.0.0.1:9099` y Firestore Emulator en `127.0.0.1:8080`;
+- `.firebaserc` usa exclusivamente `demo-mesa-abierta`, un project ID local que no representa ningún proyecto de producción;
+- `src/app/composition/firebase.ts` inicializa Firebase desde el composition root y, solo en desarrollo, conecta los SDKs a los emuladores;
+- el proyecto puede sobreescribir la configuración mediante variables `VITE_FIREBASE_*` locales, que permanecen ignoradas por Git;
+- Firestore Emulator requiere un JDK local compatible; la base se ha validado con Temurin 21 y `java` debe estar disponible en `PATH` al abrir una nueva terminal;
+- la SPA continúa usando datos simulados: no existe autenticación, repositorio Firestore, modelo de datos ni lectura o escritura de funcionalidades.
+
+El script `npm run emulators` inicia únicamente Auth y Firestore locales. No configura Hosting remoto, Storage ni Cloud Functions.
+
 ## Frontera Firebase y aplicación
 
 Se mantiene la dirección:
