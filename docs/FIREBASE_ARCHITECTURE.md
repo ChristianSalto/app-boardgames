@@ -33,7 +33,15 @@ La primera integración funcional utiliza exclusivamente email/password contra A
 
 Mientras los perfiles sigan siendo mocks, el composition root vincula de forma determinista cada `AuthenticatedUser` a un `Player` simulado únicamente para hacer funcional el prototipo. No persiste esa relación, no convierte el `uid` en `PlayerId` y no representa el modelo final de perfiles. La vinculación real se decidirá con Firestore.
 
-Firebase Auth mantiene su sesión local de navegador; por eso una recarga restaura la identidad cuando Auth Emulator sigue disponible. Google, alta de perfil y cualquier acceso a Firestore permanecen fuera de esta iteración.
+Firebase Auth mantiene su sesión local de navegador; por eso una recarga restaura la identidad cuando Auth Emulator sigue disponible. Google y cualquier acceso Firestore distinto de `players` permanecen fuera de esta iteración.
+
+## Persistencia inicial de Player
+
+`players/application` define un port reducido para obtener y crear un perfil. `FirestorePlayerRepository`, en Infrastructure, guarda únicamente `players/{uid}` y traduce su documento al modelo interno `Player`. El `uid` se usa como asociación estable autorizada, sin exponer `Firebase User` fuera de Infrastructure ni convertir Authentication en Player.
+
+Tras autenticarse, la aplicación busca el perfil propio. Si no existe, muestra una pantalla mínima para crear nombre visible, Madrid fijo, distrito y descripción opcionales. Hasta que Auth y Player se resuelven no se muestra la SPA. La reputación, partidas, solicitudes y perfiles ajenos siguen siendo datos simulados.
+
+`firestore.rules` contiene una regla temporal de mínimo privilegio para esta iteración: solo el usuario autenticado puede leer o crear su propio `players/{uid}`; no hay listados, actualizaciones ni acceso a otros documentos. Se sustituirá por Rules completas cuando se definan las operaciones y audiencias restantes.
 
 ## Frontera Firebase y aplicación
 
@@ -283,7 +291,7 @@ Antes de conectar un entorno remoto deberán superarse pruebas de Rules para acc
 - representación de solicitudes y participantes que permita atomicidad;
 - consultas definitivas e índices requeridos;
 - incorporación futura de Google u otros providers de Authentication;
-- creación y vinculación inicial del perfil de jugador;
+- actualización del perfil propio y política de lectura pública de perfiles;
 - coincidencia o separación material entre `uid` y `PlayerId`;
 - campos públicos y privados definitivos del perfil;
 - política exacta de visibilidad, revelación y retención del lugar;

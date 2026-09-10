@@ -1,7 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { getPrototypePlayerId } from './composition/prototypeAuthenticatedPlayer'
 import { PrototypeProvider } from './PrototypeContext'
-import type { AuthenticatedUser } from '../authentication/application/authentication'
 import { useAuthentication } from '../authentication/presentation/AuthenticationProvider'
 import { LoginPage, RegisterPage } from '../authentication/presentation/AuthenticationPages'
 import { CreateSessionPage } from '../game-sessions/CreateSessionPage'
@@ -9,12 +7,16 @@ import { ExplorePage } from '../game-sessions/ExplorePage'
 import { MySessionsPage } from '../game-sessions/MySessionsPage'
 import { SessionDetailPage } from '../game-sessions/SessionDetailPage'
 import { PlayerProfilePage } from '../players/PlayerProfilePage'
+import type { Player } from '../players/types'
+import { CompleteProfilePage } from '../players/presentation/CompleteProfilePage'
+import { useCurrentPlayer } from '../players/presentation/CurrentPlayerProvider'
 import { AppShell } from '../shared/AppShell'
 
 export function App() {
   const { status, user } = useAuthentication()
+  const { player, status: playerStatus } = useCurrentPlayer()
 
-  if (status === 'resolving') {
+  if (status === 'resolving' || (status === 'authenticated' && playerStatus === 'loading')) {
     return (
       <main className="auth-state" aria-live="polite">
         <p>Comprobando tu sesión…</p>
@@ -26,21 +28,20 @@ export function App() {
     <Routes>
       <Route path="/login" element={user ? <Navigate replace to="/" /> : <LoginPage />} />
       <Route path="/register" element={user ? <Navigate replace to="/" /> : <RegisterPage />} />
+      <Route path="/complete-profile" element={user && playerStatus === 'missing' ? <CompleteProfilePage /> : <Navigate replace to="/" />} />
       <Route
         path="*"
         element={
-          user ? <AuthenticatedPrototype user={user} /> : <Navigate replace to="/login" />
+          user && player ? <AuthenticatedPrototype player={player} /> : user && playerStatus === 'missing' ? <Navigate replace to="/complete-profile" /> : <Navigate replace to="/login" />
         }
       />
     </Routes>
   )
 }
 
-function AuthenticatedPrototype({ user }: { readonly user: AuthenticatedUser }) {
-  const currentPlayerId = getPrototypePlayerId(user)
-
+function AuthenticatedPrototype({ player }: { readonly player: Player }) {
   return (
-    <PrototypeProvider currentPlayerId={currentPlayerId} key={user.id}>
+    <PrototypeProvider currentPlayer={player} key={player.id}>
       <AppShell>
         <Routes>
           <Route path="/" element={<ExplorePage />} />

@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -18,7 +19,7 @@ import {
   initialPlayers,
   prototypeTones,
 } from '../mock-data/prototypeData'
-import type { Player, PlayerProfileInput } from '../players/types'
+import type { Player } from '../players/types'
 
 type PrototypeContextValue = {
   readonly currentPlayerId: string
@@ -28,21 +29,25 @@ type PrototypeContextValue = {
   readonly acceptRequest: (sessionId: string, playerId: string) => void
   readonly declineRequest: (sessionId: string, playerId: string) => void
   readonly createSession: (input: CreateSessionInput) => string
-  readonly updateCurrentPlayer: (input: PlayerProfileInput) => void
 }
 
 const PrototypeContext = createContext<PrototypeContextValue | undefined>(undefined)
 
 export function PrototypeProvider({
   children,
-  currentPlayerId,
+  currentPlayer,
 }: {
   readonly children: ReactNode
-  readonly currentPlayerId: string
+  readonly currentPlayer: Player
 }) {
-  const [players, setPlayers] = useState<readonly Player[]>(initialPlayers)
+  const currentPlayerId = currentPlayer.id
+  const [players, setPlayers] = useState<readonly Player[]>(() => upsertPlayer(initialPlayers, currentPlayer))
   const [sessions, setSessions] =
     useState<readonly GameSession[]>(createInitialSessions)
+
+  useEffect(() => {
+    setPlayers((current) => upsertPlayer(current, currentPlayer))
+  }, [currentPlayer])
 
   const requestSeat = useCallback((sessionId: string) => {
     setSessions((current) =>
@@ -85,21 +90,6 @@ export function PrototypeProvider({
     return id
   }, [currentPlayerId])
 
-  const updateCurrentPlayer = useCallback((input: PlayerProfileInput) => {
-    setPlayers((current) =>
-      current.map((player) =>
-        player.id === currentPlayerId
-          ? {
-              ...player,
-              name: input.name.trim(),
-              zone: input.zone,
-              description: input.description.trim(),
-            }
-          : player,
-      ),
-    )
-  }, [currentPlayerId])
-
   const value = useMemo<PrototypeContextValue>(
     () => ({
       currentPlayerId,
@@ -109,7 +99,6 @@ export function PrototypeProvider({
       acceptRequest,
       declineRequest,
       createSession,
-      updateCurrentPlayer,
     }),
     [
       players,
@@ -118,7 +107,6 @@ export function PrototypeProvider({
       acceptRequest,
       declineRequest,
       createSession,
-      updateCurrentPlayer,
     ],
   )
 
@@ -127,6 +115,13 @@ export function PrototypeProvider({
       {children}
     </PrototypeContext.Provider>
   )
+}
+
+const upsertPlayer = (players: readonly Player[], player: Player): readonly Player[] => {
+  const hasPlayer = players.some((item) => item.id === player.id)
+  return hasPlayer
+    ? players.map((item) => (item.id === player.id ? player : item))
+    : [...players, player]
 }
 
 export const usePrototype = () => {

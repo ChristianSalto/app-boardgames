@@ -100,8 +100,8 @@ export function SessionDetailPage() {
     setConfirmingDecline(null)
     setActionMessage(
       willComplete
-        ? `${player?.name ?? 'La persona'} tiene plaza confirmada. La partida está completa${requestsClosed > 0 ? ` y ${requestsClosed} ${requestsClosed === 1 ? 'solicitud restante se ha cerrado' : 'solicitudes restantes se han cerrado'} por falta de plazas` : ''}.`
-        : `${player?.name ?? 'La persona'} tiene ahora una plaza confirmada.`,
+        ? `${player?.displayName ?? 'La persona'} tiene plaza confirmada. La partida está completa${requestsClosed > 0 ? ` y ${requestsClosed} ${requestsClosed === 1 ? 'solicitud restante se ha cerrado' : 'solicitudes restantes se han cerrado'} por falta de plazas` : ''}.`
+        : `${player?.displayName ?? 'La persona'} tiene ahora una plaza confirmada.`,
     )
   }
 
@@ -109,7 +109,7 @@ export function SessionDetailPage() {
     const player = playerById.get(playerId)
     declineRequest(session.id, playerId)
     setConfirmingDecline(null)
-    setActionMessage(`La solicitud de ${player?.name ?? 'esta persona'} no ha sido aceptada.`)
+    setActionMessage(`La solicitud de ${player?.displayName ?? 'esta persona'} no ha sido aceptada.`)
   }
 
   return (
@@ -170,13 +170,14 @@ export function SessionDetailPage() {
           {organizer ? (
             <section className="organizer-trust" aria-labelledby="organizer-title">
               <div className="organizer-trust__identity">
-                <span className="avatar" aria-hidden="true">{getInitials(organizer.name)}</span>
+                <span className="avatar" aria-hidden="true">{getInitials(organizer.displayName)}</span>
                 <div>
-                  <h2 id="organizer-title">{organizer.name}</h2>
+                  <h2 id="organizer-title">{organizer.displayName}</h2>
                   <p>Organiza esta partida</p>
                 </div>
               </div>
               <div className="organizer-trust__content">
+                {organizer.trust ? (
                 <dl className="organizer-trust__signals">
                   <div>
                     <dt>Reputación</dt>
@@ -187,6 +188,7 @@ export function SessionDetailPage() {
                     <dd>{organizer.trust.attendedGames}/{organizer.trust.gamesPlayed} asistencias · {organizer.trust.noShows} {organizer.trust.noShows === 1 ? 'ausencia' : 'ausencias'} sin aviso</dd>
                   </div>
                 </dl>
+                ) : <p>Las señales de confianza aún no están disponibles para este perfil.</p>}
                 <Link
                   className="text-link"
                   state={organizer.id === currentPlayerId ? undefined : profileNavigationState}
@@ -216,10 +218,10 @@ export function SessionDetailPage() {
                     state={player.id === currentPlayerId ? undefined : profileNavigationState}
                     to={player.id === currentPlayerId ? '/profile' : `/players/${player.id}`}
                   >
-                    <span className="avatar" aria-hidden="true">{getInitials(player.name)}</span>
+                    <span className="avatar" aria-hidden="true">{getInitials(player.displayName)}</span>
                     <span>
-                      <strong>{player.name}</strong>
-                      <small>{player.id === session.organizerId ? 'Organiza la partida' : player.zone ?? 'Madrid'}</small>
+                      <strong>{player.displayName}</strong>
+                      <small>{player.id === session.organizerId ? 'Organiza la partida' : player.district ?? 'Madrid'}</small>
                     </span>
                     <AppIcon name="arrow" size={18} />
                   </Link>
@@ -365,10 +367,10 @@ function OrganizerRequests({
           {pendingRequests.map(({ playerId, player }) => (
             <li className="request-card" key={playerId}>
               <div className="person-row person-row--static">
-                <span className="avatar" aria-hidden="true">{getInitials(player?.name ?? '?')}</span>
+                <span className="avatar" aria-hidden="true">{getInitials(player?.displayName ?? '?')}</span>
                 <span>
-                  <strong>{player?.name ?? 'Perfil no disponible'}</strong>
-                  <small>{player?.zone ? `${player.zone} · Madrid` : 'Madrid'}</small>
+                  <strong>{player?.displayName ?? 'Perfil no disponible'}</strong>
+                  <small>{player?.district ? `${player.district} · Madrid` : 'Madrid'}</small>
                 </span>
                 <Link
                   className="text-link"
@@ -380,7 +382,7 @@ function OrganizerRequests({
               </div>
               {player?.description ? <p>{player.description}</p> : null}
               {confirmingDecline === playerId ? (
-                <div className="inline-confirm" role="group" aria-label={`Confirmar rechazo de ${player?.name ?? 'la solicitud'}`}>
+                <div className="inline-confirm" role="group" aria-label={`Confirmar rechazo de ${player?.displayName ?? 'la solicitud'}`}>
                   <p>¿Rechazar esta solicitud?</p>
                   <button className="button button--danger" onClick={() => onConfirmDecline(playerId)} type="button">Sí, rechazar</button>
                   <button className="button button--ghost" onClick={onCancelDecline} type="button">Volver</button>

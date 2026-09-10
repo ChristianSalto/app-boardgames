@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { AppIcon } from './AppIcon'
 import { useAuthentication } from '../authentication/presentation/AuthenticationProvider'
+import { useCurrentPlayer } from '../players/presentation/CurrentPlayerProvider'
 
 const desktopNavigation = [
   { to: '/', label: 'Explorar', icon: 'explore', end: true },
@@ -43,6 +44,7 @@ function PrimaryNavigation({ mobile = false }: { readonly mobile?: boolean }) {
 export function AppShell({ children }: { readonly children: ReactNode }) {
   const { pathname } = useLocation()
   const { logout } = useAuthentication()
+  const { player } = useCurrentPlayer()
 
   useEffect(() => {
     window.scrollTo({ top: 0 })
@@ -74,6 +76,7 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
             <button className="header-logout-action" onClick={() => { void logout() }} type="button">
               Cerrar sesión
             </button>
+            {player ? <span className="header-player"><span className="header-player__avatar" aria-hidden="true">{player.displayName.slice(0, 1).toUpperCase()}</span>{player.displayName}</span> : null}
           </div>
         </div>
       </header>

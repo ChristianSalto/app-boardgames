@@ -4,9 +4,9 @@ import type { Player } from '../players/types'
 export const initialPlayers: readonly Player[] = [
   {
     id: 'alex',
-    name: 'Alex Martín',
+    displayName: 'Alex Martín',
     city: 'Madrid',
-    zone: 'Chamberí',
+    district: 'Chamberí',
     description: 'Me gustan los juegos de estrategia y las partidas tranquilas.',
     trust: {
       averageRating: 4.8,
@@ -23,9 +23,9 @@ export const initialPlayers: readonly Player[] = [
   },
   {
     id: 'lucia',
-    name: 'Lucía Santos',
+    displayName: 'Lucía Santos',
     city: 'Madrid',
-    zone: 'Centro',
+    district: 'Centro',
     description: 'Organizo mesas abiertas y explico las reglas antes de empezar.',
     trust: {
       averageRating: 4.9,
@@ -42,9 +42,9 @@ export const initialPlayers: readonly Player[] = [
   },
   {
     id: 'diego',
-    name: 'Diego Romero',
+    displayName: 'Diego Romero',
     city: 'Madrid',
-    zone: 'Retiro',
+    district: 'Retiro',
     description: 'Disfruto los juegos tácticos y conocer grupos nuevos.',
     trust: {
       averageRating: 4.5,
@@ -60,9 +60,9 @@ export const initialPlayers: readonly Player[] = [
   },
   {
     id: 'sara',
-    name: 'Sara Vega',
+    displayName: 'Sara Vega',
     city: 'Madrid',
-    zone: 'Arganzuela',
+    district: 'Arganzuela',
     description: 'Me gustan los euros medios y aprender juegos nuevos.',
     trust: {
       averageRating: 4.7,
@@ -78,9 +78,9 @@ export const initialPlayers: readonly Player[] = [
   },
   {
     id: 'javier',
-    name: 'Javier Molina',
+    displayName: 'Javier Molina',
     city: 'Madrid',
-    zone: 'Moncloa',
+    district: 'Moncloa',
     description: 'Busco partidas relajadas entre semana.',
     trust: {
       averageRating: 4.2,
@@ -96,9 +96,9 @@ export const initialPlayers: readonly Player[] = [
   },
   {
     id: 'irene',
-    name: 'Irene Gil',
+    displayName: 'Irene Gil',
     city: 'Madrid',
-    zone: 'Salamanca',
+    district: 'Salamanca',
     description: 'Prefiero partidas estratégicas y grupos pequeños.',
     trust: {
       averageRating: 4.6,
@@ -114,9 +114,9 @@ export const initialPlayers: readonly Player[] = [
   },
   {
     id: 'nadia',
-    name: 'Nadia López',
+    displayName: 'Nadia López',
     city: 'Madrid',
-    zone: 'Getafe',
+    district: 'Getafe',
     description: 'Siempre llevo algún juego fácil de enseñar.',
     trust: {
       averageRating: 4.8,
@@ -132,9 +132,9 @@ export const initialPlayers: readonly Player[] = [
   },
   {
     id: 'marcos',
-    name: 'Marcos Ruiz',
+    displayName: 'Marcos Ruiz',
     city: 'Madrid',
-    zone: 'Alcobendas',
+    district: 'Alcobendas',
     description: 'Jugador habitual de euros y juegos de cartas.',
     trust: {
       averageRating: 4.3,

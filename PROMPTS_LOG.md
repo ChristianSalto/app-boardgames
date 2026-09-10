@@ -127,3 +127,10 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** sustituir la identidad simulada global por autenticación local con email/password mediante Firebase Auth Emulator, sin persistencia Firestore.
 - **Agentes:** FirebaseAgent y FrontendAgent.
 - **Resultado:** registro, login, logout, observación y restauración de sesión integrados tras una frontera de Application; la SPA queda protegida y mantiene un puente temporal hacia perfiles simulados. Fase 5 continúa en progreso y PROMPT-006C no ha comenzado.
+
+## PROMPT-006C-1 — Player Persistence
+
+- **Fecha:** 2026-09-10
+- **Objetivo:** sustituir el puente de Player simulado por perfiles mínimos persistidos en Firestore Emulator y asociados a Auth.
+- **Agentes:** FirebaseAgent y FrontendAgent.
+- **Resultado:** `players/{uid}` se crea y recupera mediante un port de Application y adaptador Firestore; el flujo de completar perfil precede a la SPA y las Rules temporales limitan el acceso al propio perfil. Fase 5 continúa en progreso y PROMPT-006C-2 no ha comenzado.

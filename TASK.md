@@ -4,16 +4,16 @@
 Fase 5 — Firebase y persistencia
 
 **Tarea:**  
-PROMPT-006B — Authentication.
+PROMPT-006C-1 — Player Persistence.
 
 **Estado:**  
 En progreso.
 
 **Resultado:**  
-Autenticación local con email/password integrada mediante Auth Emulator; sin perfiles persistidos ni persistencia de funcionalidades.
+Player mínimo persistido en Firestore Emulator y asociado a Auth; partidas y reputación continúan simuladas.
 
 **Siguiente tarea:**  
-Pendiente de definición tras la revisión de PROMPT-006B.
+Pendiente de definición tras la revisión de PROMPT-006C-1.
 
 **Restricción:**  
-PROMPT-006C no ha comenzado; no existe Firestore funcional ni persistencia de perfiles o partidas.
+PROMPT-006C-2 no ha comenzado; no existe persistencia de partidas, solicitudes ni reputación.

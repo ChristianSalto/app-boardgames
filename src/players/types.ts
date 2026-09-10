@@ -18,15 +18,18 @@ export type PlayerTrustSignals = {
 
 export type Player = {
   readonly id: string
-  readonly name: string
+  readonly displayName: string
   readonly city: string
-  readonly zone?: string
+  readonly district?: string
   readonly description?: string
-  readonly trust: PlayerTrustSignals
+  readonly avatarUrl?: string
+  readonly trust?: PlayerTrustSignals
 }
 
-export type PlayerProfileInput = {
-  readonly name: string
-  readonly zone: string
-  readonly description: string
+export type CreatePlayerInput = {
+  readonly id: string
+  readonly displayName: string
+  readonly city: 'Madrid'
+  readonly district?: string
+  readonly description?: string
 }
