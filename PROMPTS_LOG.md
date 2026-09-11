@@ -197,3 +197,10 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** alinear visualmente el estado de error recuperable del Player con la familia de autenticación aprobada, sin cambiar su comportamiento.
 - **Agente:** FrontendAgent.
 - **Resultado:** el error reutiliza fondo, card, cabecera, jerarquía y acciones de la familia Auth; `Reintentar` y `Cerrar sesión` mantienen sus handlers existentes.
+
+## PROMPT-006E-2 — Stale Auth Session Recovery (verificación adicional)
+
+- **Fecha:** 2026-09-11
+- **Objetivo:** confirmar la recuperación correcta de sesiones Auth locales obsoletas sin confundirlas con un Player pendiente de crear.
+- **Agente:** FrontendAgent.
+- **Resultado:** la validación de identidad restaurada sigue ocurriendo en el adaptador Firebase antes de cargar Player; códigos explícitos de sesión inválida cierran Auth, mientras que errores de infraestructura preservan el estado recuperable. Rules validadas sin alterar datos persistentes.

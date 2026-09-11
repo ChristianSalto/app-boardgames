@@ -4,13 +4,13 @@
 Fase 5 — Firebase y persistencia
 
 **Tarea:**  
-PROMPT-006F-Auth-UI-4 — Auth Failure State Visual Alignment.
+PROMPT-006E-2 — Stale Auth Session Recovery (verificación adicional).
 
 **Estado:**  
 Completada.
 
 **Resultado:**  
-Firebase, autenticación, persistencia y Security Rules integrados y validados localmente. El estado recuperable de fallo de carga del Player comparte el lenguaje visual de autenticación sin alterar sus acciones de reintento o cierre de sesión.
+Firebase, autenticación, persistencia y Security Rules integrados y validados localmente. La restauración valida la identidad contra Auth antes de consultar Player: una sesión obsoleta se limpia y llega a Login; onboarding y el estado recuperable ante Firestore no disponible permanecen diferenciados.
 
 **Siguiente fase:**  
 Fase 6 — Primer vertical slice real / consolidación del MVP.
