@@ -162,3 +162,38 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** sustituir las reglas temporales por una baseline de mínimo privilegio para los perfiles, partidas y solicitudes ya implementados, validada contra Firestore Emulator.
 - **Agentes:** FirebaseAgent y QAReviewerAgent.
 - **Resultado:** reglas `deny by default` con autenticación obligatoria, propiedad, forma de documentos, transiciones y aforo protegidos; tests automatizados `ALLOW`/`DENY` superados. Fase 5 continúa en progreso y 006E no ha comenzado.
+
+## PROMPT-006E — Firebase Integration & Phase 5 Closeout
+
+- **Fecha:** 2026-09-10
+- **Objetivo:** validar localmente la integración de Auth, Player, partidas, solicitudes, ciclo de vida y Security Rules antes de cerrar Fase 5.
+- **Agentes:** QAReviewerAgent y FirebaseAgent.
+- **Resultado:** flujo A/B end-to-end, rechazo, edición, cancelación, restauración tras recarga y Rules validados en Emulator Suite. Se corrigió la redirección transitoria durante la resolución de Player; Fase 5 queda completada y Fase 6 no ha comenzado.
+
+## PROMPT-006E-1 — Firebase Failure State
+
+- **Fecha:** 2026-09-11
+- **Objetivo:** evitar una pantalla vacía cuando falla la carga del Player por indisponibilidad de Firestore y permitir la recuperación de la sesión.
+- **Agentes:** FrontendAgent y FirebaseAgent.
+- **Resultado:** los estados `loading`, `ready`, `missing` y `error` quedan diferenciados; el fallo muestra una pantalla accesible con reintento y cierre de sesión. La recuperación local y las Security Rules fueron validadas; Fase 5 sigue completada y Fase 6 no ha comenzado.
+
+## PROMPT-006E-2 — Stale Auth Session Recovery
+
+- **Fecha:** 2026-09-11
+- **Objetivo:** distinguir una identidad Auth válida sin Player de una sesión local restaurada cuyo usuario ya no existe en Authentication.
+- **Agentes:** FrontendAgent y FirebaseAgent.
+- **Resultado:** la restauración valida la identidad mediante el adaptador Firebase; una sesión confirmada como inválida se limpia y llega a Login, mientras que el onboarding sin Player y el estado de error de Firestore se mantienen. Fase 5 sigue completada y Fase 6 no ha comenzado.
+
+## PROMPT-006F-Auth-UI-3 — Register + Complete Profile Visual Alignment
+
+- **Fecha:** 2026-09-11
+- **Objetivo:** alinear visualmente Registro y Completar perfil con el Login aprobado, sin modificar autenticación, Player ni rutas.
+- **Agente:** FrontendAgent.
+- **Resultado:** ambas pantallas reutilizan la misma envolvente de autenticación, fondo, cabecera, formulario y remate editorial; el flujo de registro, onboarding y persistencia permanece intacto.
+
+## PROMPT-006F-Auth-UI-4 — Auth Failure State Visual Alignment
+
+- **Fecha:** 2026-09-11
+- **Objetivo:** alinear visualmente el estado de error recuperable del Player con la familia de autenticación aprobada, sin cambiar su comportamiento.
+- **Agente:** FrontendAgent.
+- **Resultado:** el error reutiliza fondo, card, cabecera, jerarquía y acciones de la familia Auth; `Reintentar` y `Cerrar sesión` mantienen sus handlers existentes.

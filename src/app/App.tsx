@@ -13,6 +13,7 @@ import type { ParticipationRequestRepository } from '../game-sessions/applicatio
 import type { PlayerRepository } from '../players/application/playerRepository'
 import { CompleteProfilePage } from '../players/presentation/CompleteProfilePage'
 import { useCurrentPlayer } from '../players/presentation/CurrentPlayerProvider'
+import { AuthPageLayout } from '../shared/AuthPageLayout'
 import { AppShell } from '../shared/AppShell'
 
 export function App({
@@ -24,14 +25,38 @@ export function App({
   readonly participationRequestRepository: ParticipationRequestRepository
   readonly playerRepository: PlayerRepository
 }) {
-  const { status, user } = useAuthentication()
-  const { player, status: playerStatus } = useCurrentPlayer()
+  const { status, user, logout } = useAuthentication()
+  const { player, status: playerStatus, retryCurrentPlayer } = useCurrentPlayer()
 
-  if (status === 'resolving' || (status === 'authenticated' && playerStatus === 'loading')) {
+  if (
+    status === 'resolving'
+    || (status === 'authenticated' && (playerStatus === 'idle' || playerStatus === 'loading'))
+  ) {
     return (
       <main className="auth-state" aria-live="polite">
         <p>Comprobando tu sesión…</p>
       </main>
+    )
+  }
+
+  if (status === 'authenticated' && playerStatus === 'error') {
+    return (
+      <AuthPageLayout
+        brandHref={null}
+        cardClassName="auth-card--failure"
+        description="Comprueba tu conexión e inténtalo de nuevo."
+        eyebrow="Estado de conexión"
+        title="No hemos podido cargar tus datos"
+      >
+        <div className="form-card auth-form auth-form--branded auth-failure-actions">
+          <button type="button" className="button button--primary button--wide auth-submit" onClick={() => void retryCurrentPlayer()}>
+            Reintentar
+          </button>
+          <button type="button" className="button button--secondary button--wide" onClick={() => void logout()}>
+            Cerrar sesión
+          </button>
+        </div>
+      </AuthPageLayout>
     )
   }
 

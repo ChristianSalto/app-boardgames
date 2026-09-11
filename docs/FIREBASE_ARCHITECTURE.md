@@ -21,7 +21,7 @@ La Fase 5 incorpora una base local sin datos ni funcionalidades Firebase:
 - `src/app/composition/firebase.ts` inicializa Firebase desde el composition root y, solo en desarrollo, conecta los SDKs a los emuladores;
 - el proyecto puede sobreescribir la configuración mediante variables `VITE_FIREBASE_*` locales, que permanecen ignoradas por Git;
 - Firestore Emulator requiere un JDK local compatible; la base se ha validado con Temurin 21 y `java` debe estar disponible en `PATH` al abrir una nueva terminal;
-- la SPA continúa usando datos simulados: no existe autenticación, repositorio Firestore, modelo de datos ni lectura o escritura de funcionalidades.
+- esta fundación no introdujo por sí misma flujos de producto; las iteraciones posteriores incorporaron autenticación, perfiles, partidas y solicitudes persistidas sobre la misma frontera.
 
 El script `npm run emulators` inicia únicamente Auth y Firestore locales. No configura Hosting remoto, Storage ni Cloud Functions.
 
@@ -31,9 +31,9 @@ La primera integración funcional utiliza exclusivamente email/password contra A
 
 `authentication/application` define el puerto y las operaciones de registro, inicio de sesión, cierre y observación de sesión. `AuthenticationProvider` consume ese puerto en React, espera la primera resolución antes de decidir la ruta y protege la SPA hasta que haya una identidad autenticada. Los errores del proveedor se traducen a un vocabulario de aplicación y a mensajes propios en la interfaz.
 
-Mientras los perfiles sigan siendo mocks, el composition root vincula de forma determinista cada `AuthenticatedUser` a un `Player` simulado únicamente para hacer funcional el prototipo. No persiste esa relación, no convierte el `uid` en `PlayerId` y no representa el modelo final de perfiles. La vinculación real se decidirá con Firestore.
+El puente inicial hacia un `Player` simulado se ha sustituido por `players/{uid}` persistido. Cada `AuthenticatedUser` resuelve su propio perfil antes de mostrar la SPA; la identidad de Auth y el tipo `Player` siguen siendo modelos distintos, aunque el MVP use el mismo valor estable de `uid` para vincularlos.
 
-Firebase Auth mantiene su sesión local de navegador; por eso una recarga restaura la identidad cuando Auth Emulator sigue disponible. Google y cualquier acceso Firestore distinto de `players` permanecen fuera de esta iteración.
+Firebase Auth mantiene su sesión local de navegador; por eso una recarga restaura la identidad cuando Auth Emulator sigue disponible. Google continúa fuera del MVP actual; Firestore cubre ya los perfiles, las partidas y las solicitudes aprobadas.
 
 ## Persistencia inicial de Player
 
@@ -316,6 +316,14 @@ El desarrollo local y la integración automatizada usarán Emulator Suite como r
 Hosting Emulator podrá utilizarse para validar la entrega integrada de la SPA cuando aporte valor. Storage Emulator solo se incorporará si se aprueba un caso de uso con archivos.
 
 Antes de conectar un entorno remoto deberán superarse pruebas de Rules para accesos permitidos y denegados, además de los escenarios concurrentes de la última plaza.
+
+## Validación integrada local de Fase 5
+
+La validación end-to-end contra Auth Emulator y Firestore Emulator cubre dos cuentas aisladas: creación y restauración de sesión, creación de `Player`, publicación y recarga de una partida, solicitud, aceptación, rechazo, edición de hora y cancelación. Las cuentas de prueba se vinculan a sus propios perfiles persistidos; la identidad activa no depende del antiguo perfil global simulado.
+
+La revisión detectó una carrera visual al restaurar una ruta protegida: Auth ya podía estar autenticado mientras `Player` aún permanecía en estado `idle`, lo que provocaba una redirección transitoria a Explorar. La composición espera ahora ese estado antes de decidir la ruta, preservando detalle y solicitudes tras F5.
+
+El prototipo recupera datos al volver a entrar o recargar. No implementa sincronización en tiempo real entre pestañas, notificaciones ni listeners en vivo; esa limitación no bloquea los flujos actuales y deberá reevaluarse cuando exista un requisito de actualización inmediata.
 
 ## Decisiones pendientes
 

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { madridZones } from '../../mock-data/prototypeData'
+import { AuthPageLayout } from '../../shared/AuthPageLayout'
 import { useCurrentPlayer } from './CurrentPlayerProvider'
 
 type FormErrors = {
@@ -36,14 +37,14 @@ export function CompleteProfilePage() {
   }
 
   return (
-    <main className="auth-page page-container">
-      <section className="auth-card" aria-labelledby="complete-profile-title">
-        <div className="auth-card__heading">
-          <p className="eyebrow">Tu perfil en Mesa Abierta</p>
-          <h1 id="complete-profile-title">Completa tu perfil</h1>
-          <p>Usaremos estos datos para identificarte cuando organices o participes en una partida.</p>
-        </div>
-        <form className="form-card auth-form" noValidate onSubmit={handleSubmit}>
+    <AuthPageLayout
+      brandHref={null}
+      cardClassName="auth-card--profile"
+      description="Usaremos estos datos para identificarte cuando organices o participes en una partida."
+      eyebrow="Tu perfil en Mesa Abierta"
+      title="Completa tu perfil"
+    >
+        <form className="form-card auth-form auth-form--branded auth-form--profile" noValidate onSubmit={handleSubmit}>
           {errors.form ? <div className="error-summary" role="alert"><p>{errors.form}</p></div> : null}
           <div className="field">
             <label className="field__label" htmlFor="display-name">Nombre visible</label>
@@ -78,11 +79,10 @@ export function CompleteProfilePage() {
               value={description}
             />
           </div>
-          <button className="button button--primary button--wide" disabled={isSubmitting} type="submit">
+          <button className="button button--primary button--wide auth-submit" disabled={isSubmitting} type="submit">
             {isSubmitting ? 'Guardando perfil…' : 'Entrar en Mesa Abierta'}
           </button>
         </form>
-      </section>
-    </main>
+    </AuthPageLayout>
   )
 }

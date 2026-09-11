@@ -17,6 +17,7 @@ type CurrentPlayerContextValue = Readonly<{
   status: CurrentPlayerStatus
   player: Player | null
   createCurrentPlayer: (input: Omit<CreatePlayerInput, 'id' | 'city'>) => Promise<boolean>
+  retryCurrentPlayer: () => Promise<void>
 }>
 
 const CurrentPlayerContext = createContext<CurrentPlayerContextValue | undefined>(undefined)
@@ -32,31 +33,27 @@ export function CurrentPlayerProvider({
   const [status, setStatus] = useState<CurrentPlayerStatus>('idle')
   const [player, setPlayer] = useState<Player | null>(null)
 
-  useEffect(() => {
+  const loadCurrentPlayer = useCallback(async () => {
     if (authenticationStatus !== 'authenticated' || !user) {
       setPlayer(null)
       setStatus('idle')
-      return undefined
+      return
     }
 
-    let isCurrent = true
     setStatus('loading')
-    getPlayerById(repository, user.id)
-      .then((nextPlayer) => {
-        if (!isCurrent) return
-        setPlayer(nextPlayer)
-        setStatus(nextPlayer ? 'ready' : 'missing')
-      })
-      .catch(() => {
-        if (!isCurrent) return
-        setPlayer(null)
-        setStatus('error')
-      })
-
-    return () => {
-      isCurrent = false
+    try {
+      const nextPlayer = await getPlayerById(repository, user.id)
+      setPlayer(nextPlayer)
+      setStatus(nextPlayer ? 'ready' : 'missing')
+    } catch {
+      setPlayer(null)
+      setStatus('error')
     }
   }, [authenticationStatus, repository, user])
+
+  useEffect(() => {
+    void loadCurrentPlayer()
+  }, [loadCurrentPlayer])
 
   const createCurrentPlayer = useCallback(async (
     input: Omit<CreatePlayerInput, 'id' | 'city'>,
@@ -81,7 +78,8 @@ export function CurrentPlayerProvider({
     status,
     player,
     createCurrentPlayer,
-  }), [createCurrentPlayer, player, status])
+    retryCurrentPlayer: loadCurrentPlayer,
+  }), [createCurrentPlayer, loadCurrentPlayer, player, status])
 
   return (
     <CurrentPlayerContext.Provider value={value}>

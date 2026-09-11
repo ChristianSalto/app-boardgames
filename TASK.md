@@ -4,16 +4,16 @@
 Fase 5 — Firebase y persistencia
 
 **Tarea:**  
-PROMPT-006D — Firestore Security Rules & Security Tests.
+PROMPT-006F-Auth-UI-4 — Auth Failure State Visual Alignment.
 
 **Estado:**  
-En progreso.
+Completada.
 
 **Resultado:**  
-Baseline de Security Rules del MVP implementada con mínimo privilegio y validada mediante tests automatizados contra Firestore Emulator.
+Firebase, autenticación, persistencia y Security Rules integrados y validados localmente. El estado recuperable de fallo de carga del Player comparte el lenguaje visual de autenticación sin alterar sus acciones de reintento o cierre de sesión.
 
-**Siguiente tarea:**  
-Pendiente de definición tras la revisión de PROMPT-006D.
+**Siguiente fase:**  
+Fase 6 — Primer vertical slice real / consolidación del MVP.
 
 **Restricción:**  
-Fase 5 continúa en progreso; no iniciar 006E. Reputación, reviews y capacidades futuras siguen fuera de esta tarea.
+No iniciar Fase 6. Reputación, reviews y capacidades futuras siguen fuera de esta tarea.

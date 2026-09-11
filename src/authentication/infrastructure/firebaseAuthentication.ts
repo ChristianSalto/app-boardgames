@@ -19,6 +19,37 @@ const toAuthenticatedUser = (user: User): AuthenticatedUser => ({
   email: user.email ?? '',
 })
 
+const invalidRestoredSessionCodes = new Set([
+  'auth/invalid-credential',
+  'auth/invalid-id-token',
+  'auth/invalid-user-token',
+  'auth/user-disabled',
+  'auth/user-not-found',
+  'auth/user-token-expired',
+  'auth/user-token-revoked',
+])
+
+const getFirebaseErrorCode = (error: unknown) => (
+  error instanceof Error && 'code' in error && typeof error.code === 'string'
+    ? error.code
+    : ''
+)
+
+const validateRestoredUser = async (auth: Auth, user: User) => {
+  try {
+    await user.getIdToken(true)
+    await user.reload()
+    return toAuthenticatedUser(user)
+  } catch (error) {
+    if (invalidRestoredSessionCodes.has(getFirebaseErrorCode(error))) {
+      await signOut(auth).catch(() => undefined)
+      return null
+    }
+
+    return toAuthenticatedUser(user)
+  }
+}
+
 const toAuthenticationError = (code: string): AuthenticationErrorCode => {
   switch (code) {
     case 'auth/email-already-in-use':
@@ -47,10 +78,7 @@ const createResult = async (
   try {
     return { ok: true, user: toAuthenticatedUser(await operation()) }
   } catch (error) {
-    const code = error instanceof Error && 'code' in error && typeof error.code === 'string'
-      ? error.code
-      : ''
-    return { ok: false, error: toAuthenticationError(code) }
+    return { ok: false, error: toAuthenticationError(getFirebaseErrorCode(error)) }
   }
 }
 
@@ -66,14 +94,16 @@ export const createFirebaseAuthenticationGateway = (
       await signOut(auth)
       return { ok: true }
     } catch (error) {
-      const code = error instanceof Error && 'code' in error && typeof error.code === 'string'
-        ? error.code
-        : ''
-      return { ok: false, error: toAuthenticationError(code) }
+      return { ok: false, error: toAuthenticationError(getFirebaseErrorCode(error)) }
     }
   },
   observeAuthState: (listener) => onAuthStateChanged(auth, (user) => {
-    listener(user ? toAuthenticatedUser(user) : null)
+    if (!user) {
+      listener(null)
+      return
+    }
+
+    void validateRestoredUser(auth, user).then(listener)
   }, () => {
     listener(null)
   }),
