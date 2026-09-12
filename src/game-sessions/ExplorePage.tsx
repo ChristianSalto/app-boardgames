@@ -9,6 +9,7 @@ import {
   sortSessionsByDate,
 } from './model'
 import { SessionCard } from './SessionCard'
+import { CommunityListingsSection } from '../game-listings/presentation/CommunityListingsSection'
 import type { DateFilter } from './types'
 
 const dateOptions = [
@@ -179,6 +180,7 @@ export function ExplorePage() {
           </div>
         )}
       </section>
+      <div className="page-container"><CommunityListingsSection /></div>
     </>
   )
 }

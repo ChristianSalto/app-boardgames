@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "test:game-listings": "node --experimental-strip-types --test tests/game-listings.domain.test.ts tests/game-listings.application.test.ts",
     "test:rules": "firebase emulators:exec --only firestore \"node --test tests/firestore.rules.test.mjs\"",
     "preview": "vite preview",
     "emulators": "firebase emulators:start --only auth,firestore"

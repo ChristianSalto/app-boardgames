@@ -9,6 +9,7 @@ import { createFirestorePlayerRepository } from './players/infrastructure/firest
 import { createFirestoreGameSessionRepository } from './game-sessions/infrastructure/firestoreGameSessionRepository'
 import { createFirestoreParticipationRequestRepository } from './game-sessions/infrastructure/firestoreParticipationRequestRepository'
 import { CurrentPlayerProvider } from './players/presentation/CurrentPlayerProvider'
+import { createInMemoryGameListingStore } from './game-listings/infrastructure/inMemoryGameListingStore'
 import './styles/main.scss'
 
 const rootElement = document.getElementById('root')
@@ -22,6 +23,11 @@ const authenticationGateway = createFirebaseAuthenticationGateway(firebaseInfras
 const playerRepository = createFirestorePlayerRepository(firebaseInfrastructure.firestore)
 const gameSessionRepository = createFirestoreGameSessionRepository(firebaseInfrastructure.firestore)
 const participationRequestRepository = createFirestoreParticipationRequestRepository(firebaseInfrastructure.firestore)
+const gameListingStore = createInMemoryGameListingStore()
+const listingCommandDependencies = {
+  createId: () => `listing-${crypto.randomUUID()}`,
+  now: () => new Date().toISOString(),
+}
 
 createRoot(rootElement).render(
   <StrictMode>
@@ -32,6 +38,9 @@ createRoot(rootElement).render(
             gameSessionRepository={gameSessionRepository}
             participationRequestRepository={participationRequestRepository}
             playerRepository={playerRepository}
+            gameListingRepository={gameListingStore.gameListingRepository}
+            listingInterestRepository={gameListingStore.listingInterestRepository}
+            listingCommandDependencies={listingCommandDependencies}
           />
         </CurrentPlayerProvider>
       </AuthenticationProvider>

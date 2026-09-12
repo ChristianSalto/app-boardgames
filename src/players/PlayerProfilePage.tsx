@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
 import { AppIcon } from '../shared/AppIcon'
 import type { PlayerTrustSignals } from './types'
+import { MyListingsSection } from '../game-listings/presentation/MyListingsSection'
 
 export function PlayerProfilePage() {
   const { playerId } = useParams()
@@ -26,6 +27,7 @@ export function PlayerProfilePage() {
       <div className="profile-about"><h2>Sobre {isOwnProfile ? 'ti' : player.displayName.split(' ')[0]}</h2><p>{player.description || 'Esta persona todavía no ha añadido una descripción.'}</p></div>
       {player.trust ? <TrustProfile trust={player.trust} /> : <section className="trust-profile"><h2>Señales de confianza</h2><p>Las valoraciones y señales de fiabilidad aún no están disponibles para este perfil.</p></section>}
       <dl className="profile-stats profile-stats--activity"><div><dt>Organizadas en la app</dt><dd>{activity.organized}</dd></div><div><dt>Participaciones en la app</dt><dd>{activity.confirmed}</dd></div></dl>
+      {isOwnProfile ? <MyListingsSection /> : null}
     </article>
   </section>
 }

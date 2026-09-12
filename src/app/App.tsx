@@ -11,6 +11,13 @@ import type { Player } from '../players/types'
 import type { GameSessionRepository } from '../game-sessions/application/gameSessionRepository'
 import type { ParticipationRequestRepository } from '../game-sessions/application/participationRequestRepository'
 import type { PlayerRepository } from '../players/application/playerRepository'
+import type { GameListingRepository } from '../game-listings/application/gameListingRepository'
+import type { ListingInterestRepository } from '../game-listings/application/listingInterestRepository'
+import type { GameListingCommandDependencies } from '../game-listings/application/gameListings'
+import { GameListingDetailPage } from '../game-listings/presentation/GameListingDetailPage'
+import { GameListingsPage } from '../game-listings/presentation/GameListingsPage'
+import { GameListingsProvider } from '../game-listings/presentation/GameListingsProvider'
+import { ListingFormPage } from '../game-listings/presentation/ListingFormPage'
 import { CompleteProfilePage } from '../players/presentation/CompleteProfilePage'
 import { useCurrentPlayer } from '../players/presentation/CurrentPlayerProvider'
 import { AuthPageLayout } from '../shared/AuthPageLayout'
@@ -20,10 +27,16 @@ export function App({
   gameSessionRepository,
   participationRequestRepository,
   playerRepository,
+  gameListingRepository,
+  listingInterestRepository,
+  listingCommandDependencies,
 }: {
   readonly gameSessionRepository: GameSessionRepository
   readonly participationRequestRepository: ParticipationRequestRepository
   readonly playerRepository: PlayerRepository
+  readonly gameListingRepository: GameListingRepository
+  readonly listingInterestRepository: ListingInterestRepository
+  readonly listingCommandDependencies: GameListingCommandDependencies
 }) {
   const { status, user, logout } = useAuthentication()
   const { player, status: playerStatus, retryCurrentPlayer } = useCurrentPlayer()
@@ -73,6 +86,9 @@ export function App({
             repository={gameSessionRepository}
             participationRequestRepository={participationRequestRepository}
             playerRepository={playerRepository}
+            gameListingRepository={gameListingRepository}
+            listingInterestRepository={listingInterestRepository}
+            listingCommandDependencies={listingCommandDependencies}
           /> : user && playerStatus === 'missing' ? <Navigate replace to="/complete-profile" /> : <Navigate replace to="/login" />
         }
       />
@@ -85,11 +101,17 @@ function AuthenticatedPrototype({
   repository,
   participationRequestRepository,
   playerRepository,
+  gameListingRepository,
+  listingInterestRepository,
+  listingCommandDependencies,
 }: {
   readonly player: Player
   readonly repository: GameSessionRepository
   readonly participationRequestRepository: ParticipationRequestRepository
   readonly playerRepository: PlayerRepository
+  readonly gameListingRepository: GameListingRepository
+  readonly listingInterestRepository: ListingInterestRepository
+  readonly listingCommandDependencies: GameListingCommandDependencies
 }) {
   return (
     <PrototypeProvider
@@ -99,18 +121,29 @@ function AuthenticatedPrototype({
       playerRepository={playerRepository}
       key={player.id}
     >
-      <AppShell>
-        <Routes>
-          <Route path="/" element={<ExplorePage />} />
-          <Route path="/sessions/:sessionId" element={<SessionDetailPage />} />
-          <Route path="/sessions/:sessionId/edit" element={<CreateSessionPage />} />
-          <Route path="/my-sessions" element={<MySessionsPage />} />
-          <Route path="/create" element={<CreateSessionPage />} />
-          <Route path="/profile" element={<PlayerProfilePage />} />
-          <Route path="/players/:playerId" element={<PlayerProfilePage />} />
-          <Route path="*" element={<Navigate replace to="/" />} />
-        </Routes>
-      </AppShell>
+      <GameListingsProvider
+        commandDependencies={listingCommandDependencies}
+        currentPlayerId={player.id}
+        gameListingRepository={gameListingRepository}
+        listingInterestRepository={listingInterestRepository}
+      >
+        <AppShell>
+          <Routes>
+            <Route path="/" element={<ExplorePage />} />
+            <Route path="/sessions/:sessionId" element={<SessionDetailPage />} />
+            <Route path="/sessions/:sessionId/edit" element={<CreateSessionPage />} />
+            <Route path="/my-sessions" element={<MySessionsPage />} />
+            <Route path="/create" element={<CreateSessionPage />} />
+            <Route path="/profile" element={<PlayerProfilePage />} />
+            <Route path="/players/:playerId" element={<PlayerProfilePage />} />
+            <Route path="/listings" element={<GameListingsPage />} />
+            <Route path="/listings/create" element={<ListingFormPage />} />
+            <Route path="/listings/:listingId/edit" element={<ListingFormPage />} />
+            <Route path="/listings/:listingId" element={<GameListingDetailPage />} />
+            <Route path="*" element={<Navigate replace to="/" />} />
+          </Routes>
+        </AppShell>
+      </GameListingsProvider>
     </PrototypeProvider>
   )
 }

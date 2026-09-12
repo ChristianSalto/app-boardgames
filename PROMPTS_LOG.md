@@ -218,3 +218,10 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** definir el boundary, modelo de dominio, casos de uso, ports y persistencia conceptual de Game Listings sin implementar UI ni Firebase.
 - **Agente:** ArchitectureAgent.
 - **Resultado:** `game-listings` queda delimitado con anuncios, intereses privados y handoff de contacto separado; se recomienda persistencia por subcolecciones, reglas de dependencia del baseline y Security boundaries para una implementación posterior. PROMPT-007C no ha comenzado.
+
+## PROMPT-007C — Game Listings Product Prototype
+
+- **Fecha:** 2026-09-12
+- **Objetivo:** validar el vertical slice de anuncios de venta/intercambio dentro de la SPA con Domain/Application reales y datos solo en memoria.
+- **Agente:** FrontendAgent.
+- **Resultado:** Explorar incorpora un bloque secundario de Juegos de la comunidad; existen listado, detalle, interés privado pendiente, formulario de publicar/editar/cerrar y Mis anuncios dentro de Perfil. No se conecta Firestore, Storage ni Rules; los datos se pierden al recargar y queda pendiente revisión humana.
