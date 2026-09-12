@@ -35,7 +35,7 @@
 
 **Límite:** el prototipo no decide la arquitectura productiva ni integra servicios reales.
 
-**Estado:** en revisión. No completada todavía.
+**Estado:** completada. Prototipo funcional aprobado.
 
 ## Fase 3 — Validación UX/UI
 
@@ -45,6 +45,8 @@
 
 **Criterio de salida orientativo:** flujos críticos comprensibles, riesgos de accesibilidad revisados y preguntas de producto necesarias para arquitectura respondidas o aceptadas explícitamente.
 
+**Estado:** completada con recomendación GO.
+
 ## Fase 4 — Arquitectura técnica detallada
 
 **Objetivo:** definir límites de dominio y estructura técnica a partir de flujos validados.
@@ -52,6 +54,8 @@
 **Resultados previstos:** dominios, casos de uso, contratos, dirección de dependencias, estrategia de pruebas, estructura de proyecto y ADRs necesarios.
 
 **Límite:** aplicar Clean/Screaming Architecture y programación funcional con la mínima complejidad; no diseñar funcionalidades posteriores.
+
+**Estado:** completada. Baseline arquitectónico aprobado.
 
 ## Fase 5 — Firebase y emuladores
 
@@ -61,21 +65,25 @@
 
 **Límite:** el esquema de datos y las reglas se diseñan en esta fase conforme a contratos reales, no en Foundation.
 
-## Fase 6 — Primer vertical slice
+**Estado:** completada. Authentication, Players, partidas, solicitudes, ciclo de vida y Security Rules validados localmente.
 
-**Objetivo:** entregar un recorrido extremo a extremo pequeño que pruebe arquitectura e infraestructura.
+## Fase 6 — Marketplace MVP / Juegos de la comunidad
 
-**Orientación:** seleccionar después de las fases anteriores el corte de mayor aprendizaje, previsiblemente identidad/perfil mínimo y publicación o consulta de una partida.
+**Objetivo:** definir y, tras las aprobaciones correspondientes, implementar un segundo eje acotado para publicar y descubrir juegos en venta o intercambio dentro de la comunidad.
 
-**Resultados previstos:** incremento funcional, pruebas de dominio/integración/UI pertinentes y revisión completa de QA.
+**Orientación:** las partidas mantienen prioridad en Explorar. Marketplace comienza como bloque secundario y flujo contextual, sin pagos, envíos, reservas, alquiler ni chat global.
 
-## Fase 7 — Buscar y unirse a partidas
+**Resultados previstos:** definición de producto, arquitectura específica posterior, UX proporcionada y un vertical slice de anuncios e interés privado sujeto a revisión.
 
-**Objetivo:** completar el núcleo de descubrimiento y participación.
+**Estado:** en progreso. PROMPT-007A define el alcance de producto; PROMPT-007B todavía no ha comenzado.
 
-**Resultados previstos:** listado, filtros aprobados, detalle, participación, control de aforo, participantes y partidas propias en el alcance definido.
+## Fase 7 — Validación y consolidación del Marketplace
 
-**Criterio de salida orientativo:** recorrido principal verificable de extremo a extremo, accesible, seguro y medible.
+**Objetivo:** validar el incremento de Juegos de la comunidad y corregir únicamente los bloqueos necesarios sin reducir la calidad del núcleo de partidas.
+
+**Resultados previstos:** evidencia sobre publicación, descubrimiento, comprensión de modalidad/condición y utilidad de «Me interesa», además de riesgos operativos priorizados.
+
+**Criterio de salida orientativo:** flujo secundario comprensible, accesible y seguro en su alcance, con decisión explícita sobre coordinación antes de una prueba pública.
 
 ## Fase 8 — Perfil y consolidación del MVP
 
@@ -83,12 +91,12 @@
 
 **Resultados previstos:** perfil básico consolidado según el PRD, correcciones de los flujos del MVP respaldadas por evidencia y preparación de su cierre.
 
-**Nota:** la colección de juegos es una capacidad POST-MVP y requiere una nueva decisión explícita de producto. Esta fase no debe usarse para introducir colección, intercambio, feed u otras funciones sociales.
+**Nota:** la colección de juegos continúa siendo una capacidad POST-MVP y requiere una nueva decisión explícita de producto. Los anuncios simples de venta/intercambio aprobados en Fase 6 no implican colección personal ni autorizan feed u otras funciones sociales.
 
 ## Fases posteriores — Orientación
 
-Según los resultados del MVP podrían abordarse operación y lanzamiento controlado, mejoras de confianza, coordinación, colecciones, comunidades, funciones sociales o intercambio. Su orden y contenido no están decididos. Cada iniciativa necesitará evidencia, actualización del PRD/MVP y planificación propia.
+Según los resultados del MVP podrían abordarse operación y lanzamiento controlado, mejoras de confianza, coordinación, colecciones, comunidades, funciones sociales o Marketplace avanzado. Su orden y contenido no están decididos. Cada iniciativa necesitará evidencia, actualización del PRD/MVP y planificación propia.
 
 ## Puerta inmediata
 
-La Fase 2 está en revisión. La Fase 3 es la siguiente fase prevista, pero todavía no ha comenzado y requiere el cierre y la aprobación explícita de esta fase.
+La Fase 6 está en progreso con PROMPT-007A — Marketplace MVP Product Definition. Su definición queda preparada para revisión; PROMPT-007B no ha comenzado y requiere aprobación explícita.

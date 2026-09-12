@@ -1,16 +1,18 @@
 # Inventario de pantallas — Fase 1
 
+Las pantallas SCR-01–05 documentan el núcleo aprobado en Fase 1. PROMPT-007A añade el inventario conceptual SCR-M01–M03 para revisión en Fase 6; no representa pantallas implementadas.
+
 ## Criterio de reducción
 
-El MVP se resuelve con cinco pantallas principales. Los estados de solicitud, la gestión del organizador y la edición de perfil son variantes contextuales, no pantallas independientes. Esto reduce navegación y evita una administración prematura.
+El núcleo de partidas se resuelve con cinco pantallas principales. Los estados de solicitud, la gestión del organizador y la edición de perfil son variantes contextuales, no pantallas independientes. El Marketplace añade tres destinos contextuales y una subsección «Mis anuncios» dentro del Perfil, sin ampliar la navegación principal.
 
 ## SCR-01 — Explorar partidas
 
 - **Objetivo:** descubrir partidas disponibles y llegar a su detalle.
 - **Usuario:** cualquier persona que busca partida; en el prototipo se usa una identidad simulada.
 - **Punto de entrada:** apertura de la aplicación o navegación «Explorar».
-- **Acciones principales:** buscar juego, filtrar fecha, filtrar zona/distrito, limpiar filtros, ver partida, crear partida desde un vacío general.
-- **Información principal:** propuesta de valor explícita sobre encontrar personas con quienes jugar a juegos de mesa, Madrid, filtros activos y tarjetas con juego, fecha/hora, zona, organizador, confirmados/aforo y plazas disponibles.
+- **Acciones principales:** buscar juego, filtrar fecha, filtrar zona/distrito, limpiar filtros, ver partida, crear partida desde un vacío general, abrir un anuncio reciente o «Ver todos» en Juegos de la comunidad.
+- **Información principal:** propuesta de valor explícita sobre encontrar personas con quienes jugar a juegos de mesa, Madrid, filtros activos y tarjetas con juego, fecha/hora, zona, organizador, confirmados/aforo y plazas disponibles. Después de las partidas aparece un bloque secundario y compacto de anuncios activos.
 - **Estados importantes:** loading, listado con resultados, sin partidas disponibles, sin coincidencias de filtros y error de carga.
 
 No muestra completas, canceladas o pasadas. No necesita orden avanzado ni mapa.
@@ -68,6 +70,41 @@ Los estados se muestran solo cuando explican la situación. No se modelan transi
 
 No incluye email/teléfono públicos, seguidores, amistades, badges o nivel. Las opiniones son de solo lectura y se presentan como procedentes de partidas finalizadas compartidas por participantes confirmados; no existe acción para valorar.
 
+El Perfil propio incorpora «Mis anuncios» como subsección contextual para consultar anuncios activos/cerrados, publicar, editar, cerrar y revisar intereses recibidos. No se convierte en un panel comercial ni añade un destino permanente al menú.
+
+## SCR-M01 — Juegos de la comunidad
+
+- **Objetivo:** descubrir anuncios activos más allá del bloque reducido de Explorar.
+- **Usuario:** persona identificada de la comunidad.
+- **Punto de entrada:** «Ver todos» en Explorar o acceso contextual desde un anuncio.
+- **Acciones principales:** buscar por juego, reducir por modalidad o zona cuando sea necesario, abrir detalle y acceder a publicar o Mis anuncios.
+- **Información principal:** imagen, juego, condición, venta/intercambio, precio cuando exista, Madrid + zona y fecha de publicación.
+- **Estados importantes:** listado, sin anuncios, sin coincidencias y error de carga.
+
+No incluye orden comercial, promociones, favoritos, tiendas, envíos ni alquiler.
+
+## SCR-M02 — Detalle de anuncio
+
+- **Objetivo:** comprender qué se ofrece, en qué condiciones y quién es el propietario antes de expresar interés.
+- **Usuario:** persona interesada o propietaria.
+- **Punto de entrada:** card de Explorar, listado completo o Mis anuncios.
+- **Acciones principales:** «Me interesa», abrir perfil; para el propietario, editar, cerrar y revisar intereses.
+- **Información principal:** imagen, juego, modalidad, precio si corresponde, condición, descripción, Madrid + zona, propietario, fecha de publicación y estado.
+- **Estados importantes:** activo sin relación, interés pendiente/aceptado/no aceptado, vista del propietario, cerrado, error o no encontrado.
+
+No muestra email, teléfono, dirección exacta ni garantiza reserva o transacción.
+
+## SCR-M03 — Publicar o editar anuncio
+
+- **Objetivo:** crear o mantener un anuncio mediante un formulario breve.
+- **Usuario:** propietario identificado.
+- **Punto de entrada:** Mis anuncios o acceso contextual desde el listado Marketplace.
+- **Acciones principales:** añadir una imagen, juego, descripción, condición, modalidad, precio cuando sea venta, Madrid fijo y zona; publicar o guardar cambios.
+- **Información principal:** requisitos visibles, diferencia entre venta/intercambio y explicación de que el anuncio no procesa pagos.
+- **Estados importantes:** inicial, edición, validación, envío, error y éxito con navegación al detalle.
+
+No incluye galería, catálogo externo obligatorio, envíos, alquiler, reserva ni configuración comercial.
+
 ## Matriz resumida de estados
 
 | Estado | SCR-01 | SCR-02 | SCR-03 | SCR-04 | SCR-05 |
@@ -83,6 +120,15 @@ No incluye email/teléfono públicos, seguidores, amistades, badges o nivel. Las
 | Past | Se excluye | Sí | No | Sí | No |
 
 «No aplica» evita crear estados sin una necesidad real.
+
+| Estado Marketplace | SCR-01 | SCR-M01 | SCR-M02 | SCR-M03 | Perfil / Mis anuncios |
+|---|---:|---:|---:|---:|---:|
+| Loading | Bloque secundario | Sí | Sí | Al publicar | Sí |
+| Empty | Se omite o explica brevemente | Sí | No aplica | No aplica | Sí |
+| Error | Sin ocultar partidas | Sí | Sí | Sí | Sí |
+| Active | Sí | Sí | Sí | Tras publicar | Sí |
+| Closed | No | No | Sí | Tras cerrar | Sí |
+| Interés pendiente/resultado | No | No | Sí | No | Sí |
 
 ## Comportamiento responsive común
 

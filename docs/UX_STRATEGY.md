@@ -9,6 +9,8 @@
 
 Este documento traduce el MVP a una experiencia coherente antes del prototipo. No define UI visual, modelo de datos ni arquitectura técnica. Durante la Fase 2, Madrid será el contexto geográfico fijo y preseleccionado: Explorar muestra partidas de Madrid y los usuarios filtran o crean por zona/distrito. Esto no limita el producto futuro ni debe bloquear una ampliación arquitectónica posterior a múltiples ciudades.
 
+PROMPT-007A amplía posteriormente este documento con la estrategia conceptual del Marketplace MVP. Las decisiones históricas de Fase 1 sobre partidas permanecen aprobadas; la nueva sección de Juegos de la comunidad está en revisión y no implica implementación.
+
 ## Objetivo UX
 
 La experiencia debe responder con rapidez a: «Quiero jugar a un juego de mesa y necesito encontrar gente con quien jugar».
@@ -62,14 +64,18 @@ La propuesta usa cuatro elementos porque cada uno soporta una intención princip
 - Detalle de partida y perfil ajeno son destinos contextuales.
 - Filtros pertenecen a Explorar.
 - Solicitudes pendientes pertenecen a la partida organizada.
-- No existen navegación de feed, mensajes, colección, comunidad o notificaciones.
+- No existen navegación de feed, mensajes, colección o notificaciones.
+- Marketplace no requiere todavía un destino permanente: «Juegos de la comunidad» se descubre después de las partidas en Explorar, y «Mis anuncios» vive dentro del Perfil propio.
 
 ### Mapa sencillo
 
 ```text
 Explorar
-└── Detalle de partida
-    └── Perfil de organizador o participante
+├── Detalle de partida
+│   └── Perfil de organizador o participante
+└── Juegos de la comunidad
+    ├── Ver todos
+    └── Detalle de anuncio
 
 Mis partidas
 ├── Organizadas por mí
@@ -81,8 +87,29 @@ Crear
 └── Detalle de la partida publicada
 
 Perfil
-└── Edición básica del propio perfil
+├── Edición básica del propio perfil
+└── Mis anuncios
 ```
+
+## Estrategia UX del Marketplace MVP
+
+### Jerarquía en Explorar
+
+Las partidas siguen siendo el primer contenido y el principal motivo para visitar Explorar. Después del listado o bloque principal aparece «Juegos de la comunidad» con pocas publicaciones activas y recientes, seguido de «Ver todos». Marketplace no usa un hero propio ni compite con la acción de encontrar o crear una partida.
+
+En móvil se recomienda una lista vertical compacta de dos o tres anuncios: evita ocultar contenido esencial en un carrusel y conserva navegación por teclado y lectura lineal. En desktop puede utilizarse una cuadrícula reducida de hasta tres elementos. El listado completo mantiene el mismo orden por publicación reciente y solo incorpora búsqueda por juego, modalidad o zona si la cantidad de anuncios lo justifica.
+
+### Información para decidir
+
+La card permite reconocer imagen, juego, condición, venta/intercambio, precio cuando corresponda y Madrid + zona. El detalle amplía descripción, propietario, perfil, fecha y estado. No muestra dirección exacta, email ni teléfono.
+
+### Publicar y gestionar
+
+Publicar utiliza un formulario corto con una imagen, nombre del juego, descripción, condición, modalidad, precio condicionado a venta y zona dentro de Madrid. El propietario gestiona sus anuncios en «Perfil → Mis anuncios», donde puede editar, cerrar y consultar intereses. Cerrar sustituye al hard-delete y no equivale a reservar.
+
+### Interés privado
+
+«Me interesa» registra una señal privada y no vinculante. El propietario puede aceptar o declinar y ambos ven el resultado, pero la aceptación no promete una venta ni revela contacto personal. No hay chat, negociación o pago. La suficiencia de esta señal y la necesidad de un mecanismo de coordinación seguro son hipótesis que deben validarse antes de pruebas públicas.
 
 ## Dirección de la iteración visual
 
@@ -279,10 +306,10 @@ No se identifica una pregunta adicional que impida construir un prototipo con da
 - Necesidad y fuente de un catálogo externo.
 - Experiencia multi-ciudad real y selector futuro de ciudad.
 - Usuario prioritario, requisitos legales, compatibilidad objetivo y métricas de validación.
-- Colección, intercambio, chat, votación de juegos y el sistema productivo de reputación/fiabilidad, que siguen fuera del alcance implementado y requieren decisiones futuras independientes.
+- Colección, chat, votación de juegos y el sistema productivo de reputación/fiabilidad siguen fuera del alcance implementado. La Fase 6 ha aprobado únicamente anuncios simples de venta/intercambio como iniciativa independiente.
 
 Las cuestiones de ciclo de vida deberán resolverse antes del primer vertical slice, según el PRD, pero no impiden un prototipo visual con datos simulados.
 
 ## Fuera de esta fase
 
-Intercambio, colección, feed, seguidores, amistades, chat, publicación de reviews, sistema productivo de reputación/fiabilidad, votación o elección colectiva de juegos, clubes, tiendas, gamificación, notificaciones push, IA, pagos, mapas, geolocalización y *tracking*. La Fase 2 solo incorpora señales simuladas de confianza dentro del detalle y del perfil, sin navegación adicional.
+Durante la Fase 1 quedaron fuera intercambio, colección, feed, seguidores, amistades, chat, publicación de reviews, sistema productivo de reputación/fiabilidad, votación o elección colectiva de juegos, clubes, tiendas, gamificación, notificaciones push, IA, pagos, mapas, geolocalización y *tracking*. PROMPT-007A autoriza posteriormente solo el Marketplace acotado descrito en este documento; el resto continúa excluido.

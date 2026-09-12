@@ -8,6 +8,8 @@
 - Una solicitud pendiente no es participación confirmada y no ocupa una plaza confirmada.
 - Las acciones personales presuponen una identidad simulada en UX/prototipo; no se diseña autenticación.
 
+Los flujos 01–07 conservan las decisiones aprobadas de Fase 1. Los flujos 08–09 son la definición conceptual añadida por PROMPT-007A para el Marketplace MVP y presuponen la identidad real ya existente al comenzar Fase 6; todavía no describen implementación ni arquitectura.
+
 ## FLOW-01 — Descubrir partidas
 
 **Objetivo:** encontrar partidas potencialmente interesantes con la menor fricción.
@@ -208,3 +210,57 @@ flowchart TD
 Las opiniones son solo lectura. Conceptualmente proceden de personas que compartieron una partida ya finalizada y estuvieron confirmadas; el flujo de publicación no se implementa todavía.
 
 La composición sigue siendo una hipótesis UX y no prescribe modelo de datos.
+
+## FLOW-08 — Publicar, descubrir e indicar interés por un juego
+
+**Objetivo:** conectar a una persona que ofrece un juego con otra interesada, sin convertir la experiencia en ecommerce ni exponer contacto privado.
+
+```mermaid
+flowchart TD
+    A[Perfil propio / Mis anuncios] --> B[Publicar juego]
+    B --> C[Indicar imagen, juego, descripción y condición]
+    C --> D[Elegir venta o intercambio]
+    D --> E{¿Es venta?}
+    E -- Sí --> F[Indicar precio en euros]
+    E -- No --> G[Explicar preferencias en la descripción]
+    F --> H[Confirmar Madrid y zona]
+    G --> H
+    H --> I[Publicar anuncio activo]
+    I --> J[Juegos de la comunidad en Explorar]
+    J --> K[Ver todos o abrir detalle]
+    K --> L[Revisar propietario, condición, modalidad y zona]
+    L --> M[Me interesa]
+    M --> N[Interés privado pendiente]
+    N --> O[Propietario revisa el perfil]
+    O --> P{Aceptar o declinar}
+    P -- Aceptar --> Q[Mostrar disposición mutua a continuar]
+    P -- Declinar --> R[Mostrar interés no aceptado]
+```
+
+**Reglas de producto:**
+
+- Las partidas aparecen antes que Marketplace en Explorar.
+- Solo anuncios `active` aparecen en descubrimiento; los cerrados conservan historial y no se eliminan físicamente.
+- Una persona no puede expresar interés por su propio anuncio ni duplicar su señal activa.
+- «Me interesa» no reserva el juego, no completa una compra y no revela email o teléfono.
+- Aceptar un interés no cierra automáticamente el anuncio; el propietario lo cierra cuando deja de estar disponible.
+- Si el anuncio se cierra, los intereses pendientes dejan de presentarse como accionables y se explica que ya no está disponible.
+- No existen chat, pagos, negociación, envíos ni alquiler.
+
+## FLOW-09 — Gestionar Mis anuncios
+
+**Objetivo:** permitir al propietario mantener sus publicaciones sin añadir una sección permanente a la navegación principal.
+
+```mermaid
+flowchart TD
+    A[Perfil propio] --> B[Mis anuncios]
+    B --> C{Estado}
+    C -- Activo --> D[Consultar detalle e intereses]
+    D --> E[Editar anuncio]
+    D --> F[Cerrar anuncio]
+    F --> G[Confirmar cierre]
+    G --> H[Anuncio cerrado e historial conservado]
+    C -- Cerrado --> H
+```
+
+El cierre sustituye al hard-delete. `reserved`, reapertura, eliminación física y gestión comercial por lotes quedan fuera del MVP.

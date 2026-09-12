@@ -18,6 +18,12 @@ Este documento define dirección y límites. No implementa la estructura, no dis
 
 ## Dominios y capacidades actuales
 
+### `game-listings`
+
+Es el dominio incorporado en Fase 6 para publicar y descubrir anuncios simples de juegos de mesa en venta o intercambio. Posee el ciclo de vida del anuncio, la señal privada de interés y un handoff restringido de contacto para intereses aceptados. Usa `PlayerId` para ownership, pero no posee perfiles ni Authentication.
+
+No absorbe pagos, reservas, logística, chat, reputación, catálogo global, suscripciones o tiendas. Su modelo, casos de uso, ports y persistencia conceptual se detallan en `GAME_LISTINGS_ARCHITECTURE.md` y ADR-005. La nueva capacidad mantiene las mismas reglas de dependencia del baseline: Domain puro, ports en Application, Firebase en Infrastructure y composición desde `app`.
+
 ### `game-sessions`
 
 Es el dominio central del MVP. Representa y protege las reglas de una partida y de la participación asociada.
@@ -286,6 +292,11 @@ src/
 │   ├── application/
 │   ├── presentation/
 │   └── infrastructure/       # solo al existir adaptadores reales o en memoria
+├── game-listings/
+│   ├── domain/
+│   ├── application/
+│   ├── presentation/
+│   └── infrastructure/       # solo al implementar el incremento aprobado
 ├── players/
 │   ├── domain/
 │   ├── application/
@@ -322,7 +333,7 @@ Durante la transición, `mock-data` puede seguir sirviendo al prototipo. Su sust
 Las capacidades futuras se incorporarían previsiblemente así, siempre tras una decisión de producto:
 
 - **collections:** dominio propio si gestiona colecciones personales y su ciclo de vida; no forma parte de `players` salvo una lectura resumida.
-- **trades:** dominio propio por sus estados, participantes y reglas de intercambio; podría consultar `collections` y `players` mediante contratos públicos.
+- **trades:** el anuncio simple de intercambio pertenece ya a `game-listings`; una futura transacción con negociación, reserva, entrega y estados propios podría justificar un dominio separado.
 - **game voting:** inicialmente podría ser una capacidad de `game-sessions` vinculada a una quedada. Solo se extraería si adquiere reglas y reutilización independientes.
 - **groups/clubs:** dominio propio si existen membresía, roles y gestión; una partida podría referenciar un grupo anfitrión sin absorber sus reglas.
 - **chat:** capacidad o dominio de comunicación separado; `game-sessions` aportaría contexto y permisos mediante contratos, pero no almacenaría mensajes.

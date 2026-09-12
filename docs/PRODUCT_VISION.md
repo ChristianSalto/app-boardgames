@@ -43,7 +43,7 @@ Validar el núcleo de coordinación de partidas: perfil básico, consulta y bús
 
 ### Medio plazo
 
-Si el núcleo demuestra utilidad, mejorar recurrencia y confianza mediante perfiles más completos, colecciones de juegos y mecanismos de coordinación que respondan a evidencia real de uso. Cada incorporación requiere una decisión de alcance propia.
+Si el núcleo demuestra utilidad, mejorar recurrencia y confianza mediante perfiles más completos y mecanismos de coordinación que respondan a evidencia real de uso. Como segundo eje, explorar la circulación de juegos dentro de la propia comunidad mediante anuncios sencillos de venta e intercambio. Cada incorporación requiere una decisión de alcance propia.
 
 ### Largo plazo
 
@@ -61,13 +61,25 @@ Estas capacidades pertenecen a la visión, no al MVP 1:
 - recomendaciones mediante IA;
 - gamificación;
 - gestión avanzada de colecciones;
-- intercambio de juegos;
+- alquiler de juegos y operativa avanzada de compraventa o intercambio;
 - pagos;
 - notificaciones push;
 - decisión colectiva del juego en una quedada: proponer uno o varios juegos, expresar votos o preferencias y seleccionar finalmente el juego;
 - herramientas de localización avanzadas, solo si se justifican y aprueban expresamente.
 
 Su presencia aquí evita perder la dirección a largo plazo, pero no constituye compromiso de implementación ni prioridad. La decisión colectiva del juego es exclusivamente POST-MVP: todavía no se definen algoritmo, desempates, datos, UI, casos de uso ni arquitectura. Su inclusión evita asumir que toda futura quedada deba tener un juego definitivo al crearla; no cambia el requisito del MVP 1 de indicar el juego de cada partida.
+
+## Segundo eje: Juegos de la comunidad
+
+La prioridad del producto continúa siendo encontrar personas y organizar partidas. Como extensión natural de una comunidad ya identificada, la Fase 6 define un Marketplace ligero, presentado al usuario como **«Juegos de la comunidad»**, para publicar y descubrir juegos que se venden o intercambian.
+
+Este segundo eje busca facilitar conexiones entre miembros y dar más utilidad a la comunidad; no convierte Mesa Abierta en una plataforma de comercio electrónico. El alcance inicial se limita a anuncios, descubrimiento, detalle, gestión por el propietario y una señal privada de interés. Pagos, envíos, comisiones, reservas, alquiler y negociación avanzada permanecen fuera.
+
+El bloque de Juegos de la comunidad será secundario dentro de Explorar y aparecerá después de las partidas. La experiencia esencial de descubrir, organizar, participar y evaluar confianza seguirá teniendo prioridad de producto y deberá permanecer accesible aunque en el futuro existan capacidades premium.
+
+### Monetización futura
+
+El concepto no bloquea anuncios destacados, límites ampliados de publicación, capacidades premium o servicios para jugadores avanzados, organizadores, clubes y tiendas. Estas opciones deberán pertenecer a decisiones posteriores y no introducirse como campos o reglas del anuncio básico. No se definen planes, precios, comisiones, billing ni pagos. El descubrimiento, la participación, la confianza y el uso comunitario esencial deben seguir siendo accesibles para favorecer el efecto red.
 
 ## Principios de producto
 

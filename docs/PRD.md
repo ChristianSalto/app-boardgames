@@ -3,7 +3,7 @@
 ## Estado del documento
 
 - **Fase:** 0 — Foundation
-- **Estado:** aprobada tras revisión humana; Fase 0 completada
+- **Estado:** baseline aprobada; extensión Marketplace de Fase 6 en revisión
 - **Referencia de alcance:** `MVP.md`
 - **Naturaleza:** definición inicial basada en hipótesis; requiere validación con usuarios.
 
@@ -31,12 +31,13 @@ La persona quiere jugar a juegos de mesa, pero le cuesta encontrar gente con qui
 - Permitir a cada persona consultar las partidas que organiza o en las que participa.
 - Aprender qué fricciones impiden pasar de la intención de jugar a una participación acordada.
 - Validar si señales diferenciadas de reputación y fiabilidad ayudan a decidir quedar con personas desconocidas.
+- Validar si publicar y descubrir juegos de la comunidad aporta valor como segundo eje sin reducir la prioridad de las partidas.
 - Proteger privacidad, accesibilidad y simplicidad desde el diseño.
 
 ## No objetivos
 
 - Construir una red social generalista o maximizar interacción social no vinculada a partidas.
-- Resolver compraventa, intercambio, pagos o logística de juegos.
+- Construir una plataforma de comercio electrónico completa, procesar pagos o resolver logística de compraventa e intercambio.
 - Ofrecer comunicación en tiempo real.
 - Construir un sistema productivo de reputación, publicación de reseñas, recomendación algorítmica o gamificación. El prototipo solo representa señales simuladas para validar la hipótesis de confianza.
 - Gestionar clubes, tiendas o comunidades complejas.
@@ -55,6 +56,10 @@ Quiere publicar una quedada, cubrir plazas y consultar quién participará sin u
 
 Una misma persona puede adoptar ambos roles. La segmentación por experiencia, frecuencia o tamaño de ciudad es una hipótesis pendiente de investigación.
 
+### Miembro que publica o busca un juego
+
+Como extensión secundaria, una persona de la comunidad puede ofrecer un juego en venta o intercambio, o descubrir anuncios de otras personas. Este rol no desplaza al jugador ni al organizador y no presupone una actividad comercial profesional.
+
 ## User stories principales
 
 - Como jugador, quiero crear un perfil básico para presentarme e identificar mis partidas.
@@ -66,6 +71,9 @@ Una misma persona puede adoptar ambos roles. La segmentación por experiencia, f
 - Como jugador, quiero solicitar una plaza y conocer si está pendiente o aceptada para no confundir una solicitud con una participación confirmada.
 - Como participante u organizador, quiero consultar la lista de participantes para conocer el estado de la partida.
 - Como jugador, quiero consultar las partidas que organizo o en las que participo para gestionarlas desde un único lugar.
+- Como propietario, quiero publicar y gestionar un anuncio sencillo para ofrecer un juego en venta o intercambio.
+- Como miembro de la comunidad, quiero descubrir juegos disponibles y consultar su información antes de expresar interés.
+- Como persona interesada, quiero señalar mi interés de forma privada sin exponer datos de contacto.
 
 ## Requisitos funcionales del MVP 1
 
@@ -121,6 +129,30 @@ El detalle ofrecerá un resumen compacto de la persona organizadora y el perfil 
 
 Este experimento no define un requisito funcional de producción ni su modelo técnico. Algoritmo, moderación, derecho de réplica, prevención de fraude, disputas, privacidad y persistencia siguen pendientes antes de producción.
 
+## Extensión funcional aprobada para Fase 6 — Juegos de la comunidad
+
+El Marketplace es un segundo eje subordinado al núcleo de partidas. En Explorar se representa mediante un bloque breve posterior a las partidas y un acceso «Ver todos»; no sustituye el listado principal ni añade por ahora un destino permanente a la navegación global.
+
+### RF-M01 — Publicar anuncio
+
+Una persona identificada con Player podrá publicar un juego indicando una imagen representativa, nombre, descripción, condición, modalidad de venta o intercambio, Madrid y su zona/distrito. El precio será obligatorio únicamente para venta y se expresará en euros durante el piloto; un intercambio no tendrá precio.
+
+### RF-M02 — Descubrir y consultar
+
+Explorar mostrará pocas publicaciones activas y recientes después de las partidas. «Ver todos» abrirá un listado completo, inicialmente ordenado por publicación reciente y reducible por juego, modalidad y zona si el volumen lo necesita. Cada resultado mostrará imagen, juego, condición, modalidad, precio cuando exista y ubicación aproximada. El detalle añadirá descripción, propietario con acceso a su perfil, fecha y estado.
+
+### RF-M03 — Gestionar anuncios propios
+
+El propietario podrá consultar, editar y cerrar sus anuncios desde «Mis anuncios» dentro de su Perfil. No habrá borrado físico ni estado de reserva. Un anuncio cerrado desaparecerá del descubrimiento pero conservará su detalle e historial para las personas relacionadas cuando corresponda.
+
+### RF-M04 — Expresar interés
+
+«Me interesa» creará una señal privada y no vinculante asociada al anuncio y al Player interesado. El propietario podrá verla en «Mis anuncios» y aceptar o declinar el interés; ambos verán el resultado. La aceptación no equivale a compra, reserva o intercambio completado, no revela email o teléfono y no cierra automáticamente el anuncio. El propietario lo cerrará cuando deje de estar disponible.
+
+El MVP no incorpora chat ni pretende completar la transacción dentro de Mesa Abierta. Antes de una prueba pública deberá decidirse si la señal mutua resulta suficiente o si hace falta un mecanismo de coordinación acotado y seguro.
+
+La definición no bloquea monetización futura mediante anuncios destacados, límites ampliados o capacidades premium para jugadores avanzados, organizadores, clubes y tiendas. No se añaden planes, precios, billing, pagos ni reglas comerciales al modelo básico; las funciones esenciales de comunidad deben permanecer accesibles para sostener el crecimiento de la red.
+
 ## Requisitos no funcionales
 
 - **Arquitectura:** Screaming Architecture y Clean Architecture; dominio independiente de React, Firebase, Firestore y APIs externas.
@@ -138,6 +170,8 @@ Este experimento no define un requisito funcional de producción ni su modelo t�
 
 El MVP 1 cubre el recorrido desde una identidad con perfil básico hasta encontrar o crear una partida, participar y consultar las partidas propias. Mantiene el descubrimiento público deliberadamente simple mediante ciudad, zona, distrito o granularidad equivalente. La descripción precisa de alcance y sus guardas está en `MVP.md`.
 
+La Fase 6 añade un incremento de Marketplace separado y secundario. No modifica la prioridad ni los criterios del núcleo de partidas; su alcance exacto y exclusiones se recogen también en `MVP.md`.
+
 ## Fuera de alcance
 
 - feed, seguidores y amistades complejas;
@@ -146,7 +180,7 @@ El MVP 1 cubre el recorrido desde una identidad con perfil básico hasta encontr
 - clubes y tiendas;
 - recomendaciones mediante IA;
 - gamificación;
-- colección avanzada e intercambio de juegos;
+- colección avanzada, alquiler y compraventa/intercambio más allá de los anuncios simples aprobados para Fase 6;
 - pagos y notificaciones push;
 - mapas, *tracking*, geolocalización continua, GPS en tiempo real o publicación innecesaria de ubicación precisa;
 - cualquier función social no imprescindible para completar el flujo principal.
@@ -176,6 +210,10 @@ Antes del lanzamiento de validación se definirá un plan de medición con event
 - **Confusión de participación:** si solicitud pendiente y confirmación no se distinguen claramente, pueden generarse expectativas incorrectas.
 - **Catálogo de juegos:** una fuente externa puede introducir dependencia, licencias, calidad de datos o complejidad prematura.
 - **Expansión de alcance:** funciones sociales atractivas pueden desplazar la validación del problema principal.
+- **Dilución del núcleo:** el Marketplace puede restar visibilidad a las partidas si ocupa demasiado espacio o navegación principal.
+- **Confianza comercial:** anuncios incompletos, condición ambigua o perfiles falsos pueden facilitar fraude o decepción aunque no existan pagos internos.
+- **Privacidad y coordinación:** una señal de interés sin un canal seguro posterior puede ser insuficiente, mientras que exponer contacto personal aumentaría el riesgo.
+- **Contenido e imágenes:** deben definirse derechos, límites y moderación antes de aceptar publicaciones reales a escala.
 
 ## Decisiones iniciales aceptadas
 
@@ -208,3 +246,7 @@ Estas hipótesis guían el diseño, pero no son decisiones validadas:
 8. **¿Qué medidas mínimas de confianza, bloqueo, denuncia o moderación son imprescindibles para una prueba con usuarios?** Recomendación: realizar evaluación de riesgos antes de pruebas externas; no asumir que estar fuera del núcleo funcional elimina la obligación de seguridad.
 9. **¿Qué navegadores, idiomas de interfaz y requisitos legales/regionales se aplican al piloto?** Recomendación: decidirlos antes de producción en función de la audiencia real.
 10. **¿Qué evidencia y umbrales permitirán considerar validado el problema?** Recomendación: definir el plan después de investigación inicial y antes de probar el prototipo, sin inventar métricas retrospectivas.
+11. **¿La señal privada «Me interesa» aporta valor suficiente sin chat?** Recomendación: validar intención y comprensión antes de añadir conversación; decidir un canal acotado antes de una prueba pública si la coordinación queda bloqueada.
+12. **¿Qué condiciones, fotografías y descripciones mínimas evitan anuncios engañosos?** Recomendación: comenzar con una taxonomía breve y una imagen, y revisarla con evidencia.
+13. **¿Qué controles de denuncia, moderación y artículos permitidos son imprescindibles?** Recomendación: resolverlos antes de operar con usuarios externos; no tratarlos como parte opcional de producción.
+14. **¿Cuándo debe pasar Madrid a multi-ciudad y cómo se tratarán moneda y ámbito geográfico?** Recomendación: mantener Madrid y euros en el piloto sin acoplar la visión a ese contexto.

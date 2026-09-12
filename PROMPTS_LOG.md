@@ -204,3 +204,17 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** confirmar la recuperación correcta de sesiones Auth locales obsoletas sin confundirlas con un Player pendiente de crear.
 - **Agente:** FrontendAgent.
 - **Resultado:** la validación de identidad restaurada sigue ocurriendo en el adaptador Firebase antes de cargar Player; códigos explícitos de sesión inválida cierran Auth, mientras que errores de infraestructura preservan el estado recuperable. Rules validadas sin alterar datos persistentes.
+
+## PROMPT-007A — Marketplace MVP Product Definition
+
+- **Fecha:** 2026-09-12
+- **Objetivo:** definir el alcance funcional de Juegos de la comunidad como segundo eje de producto, manteniendo las partidas como prioridad y evitando convertir Mesa Abierta en ecommerce.
+- **Agente:** ProductAgent.
+- **Resultado:** venta e intercambio quedan acotados a anuncios activos/cerrados, descubrimiento secundario, detalle, Mis anuncios e interés privado no vinculante; alquiler, pagos, envíos, reservas, chat y operativa profesional permanecen fuera. Definición preparada para revisión antes de 007B.
+
+## PROMPT-007B — Game Listings Domain & Data Architecture
+
+- **Fecha:** 2026-09-12
+- **Objetivo:** definir el boundary, modelo de dominio, casos de uso, ports y persistencia conceptual de Game Listings sin implementar UI ni Firebase.
+- **Agente:** ArchitectureAgent.
+- **Resultado:** `game-listings` queda delimitado con anuncios, intereses privados y handoff de contacto separado; se recomienda persistencia por subcolecciones, reglas de dependencia del baseline y Security boundaries para una implementación posterior. PROMPT-007C no ha comenzado.

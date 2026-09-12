@@ -1,19 +1,19 @@
 # Estado actual
 
 **Fase actual:**  
-Fase 5 — Firebase y persistencia
+Fase 6 — Marketplace MVP / Juegos de la comunidad
 
 **Tarea:**  
-PROMPT-006E-2 — Stale Auth Session Recovery (verificación adicional).
+PROMPT-007B — Game Listings Domain & Data Architecture.
 
 **Estado:**  
-Completada.
+En revisión.
 
 **Resultado:**  
-Firebase, autenticación, persistencia y Security Rules integrados y validados localmente. La restauración valida la identidad contra Auth antes de consultar Player: una sesión obsoleta se limpia y llega a Login; onboarding y el estado recuperable ante Firestore no disponible permanecen diferenciados.
+Boundary `game-listings`, modelo de dominio, casos de uso, ports y persistencia conceptual definidos conforme al baseline de Fase 4, incluyendo contacto privado separado para intereses aceptados.
 
 **Siguiente fase:**  
-Fase 6 — Primer vertical slice real / consolidación del MVP.
+PROMPT-007C — Implementación de dominio y persistencia de Game Listings, pendiente de aprobación.
 
 **Restricción:**  
-No iniciar Fase 6. Reputación, reviews y capacidades futuras siguen fuera de esta tarea.
+No escribir código ni comenzar PROMPT-007C. No se han implementado UI, adaptadores Firestore, Storage, índices ni Security Rules de Game Listings.

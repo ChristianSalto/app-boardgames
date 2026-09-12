@@ -157,6 +157,20 @@ Forman parte del dominio `game-sessions`, aunque su representación física pued
 
 No se decide todavía si estos datos serán documentos independientes, subcolecciones o parte de otra representación. La elección deberá satisfacer consultas, atomicidad y reglas sin duplicar una fuente de verdad inconsistente.
 
+## Persistencia conceptual de Game Listings
+
+La Fase 6 añade un diseño conceptual, todavía no implementado, para `game-listings`:
+
+```text
+gameListings/{listingId}
+├── interests/{playerId}
+└── contactHandoffs/{playerId}
+```
+
+El anuncio conserva solo información publicable. Los intereses son relaciones privadas subordinadas y usan `playerId` como identificador para garantizar una sola relación por anuncio y persona. El medio de contacto aportado voluntariamente por el propietario se mantiene en una subcolección separada, legible únicamente por propietario y persona aceptada; nunca se deriva del email de Firebase Auth.
+
+Firestore `Timestamp`, referencias y errores se traducirán dentro de Infrastructure. Las consultas previstas, índices, transiciones y límites de seguridad se detallan en `GAME_LISTINGS_ARCHITECTURE.md`; ADR-005 registra la decisión. Esta sección no crea colecciones reales ni autoriza Storage.
+
 ## Necesidades de consulta
 
 Los repositorios deberán cubrir las consultas del MVP sin exponer detalles de Firestore a Application.
