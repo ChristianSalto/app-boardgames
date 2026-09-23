@@ -75,7 +75,15 @@
 
 **Resultados previstos:** definición de producto, arquitectura específica posterior, UX proporcionada y un vertical slice de anuncios e interés privado sujeto a revisión.
 
-**Estado:** en progreso. PROMPT-007A define el alcance de producto; PROMPT-007B todavía no ha comenzado.
+**Estado:** completada. Producto, arquitectura, prototipo, persistencia Firestore/Storage, flujo multiusuario y Security Rules han superado la revisión de integración de PROMPT-007F.
+
+### Backlog diferido tras el cierre
+
+Este trabajo no bloquea el cierre de Fase 6 y requiere priorización explícita antes de implementarse:
+
+- **Auth visual:** conservar el background aprobado; compactar cards mediante padding y gaps, aproximar inputs y CTA a 50 px, reducir ligeramente iconos y revisar el tamaño de Complete Profile.
+- **Game Listings futuro:** valorar `Mis anuncios` como sección propia, manteniendo una futura colección `Mis juegos` separada; UI de Contact Handoff, chat, alquiler, favoritos, búsqueda/filtros avanzados, tiendas, monetización, multi-ciudad/moneda, moderación/reportes y gestión avanzada de imágenes.
+- **Técnico:** dividir el bundle cuando lo justifique la evolución del producto; valorar import/export persistente del Emulator Suite; vigilar el error de VM `startTime` observado en el entorno, actualmente no vinculado al código ni bloqueante.
 
 ## Fase 7 — Validación y consolidación del Marketplace
 
@@ -99,4 +107,4 @@ Según los resultados del MVP podrían abordarse operación y lanzamiento contro
 
 ## Puerta inmediata
 
-La Fase 6 está en progreso con PROMPT-007A — Marketplace MVP Product Definition. Su definición queda preparada para revisión; PROMPT-007B no ha comenzado y requiere aprobación explícita.
+La Fase 6 queda completada tras PROMPT-007F. Este cierre no inicia ni autoriza una fase posterior; el siguiente paso deberá decidirse explícitamente.

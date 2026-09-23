@@ -239,3 +239,10 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** endurecer y validar formalmente el acceso a anuncios, intereses, handoffs privados y portadas, sin cambiar producto ni UI.
 - **Agente:** Security/FirebaseAgent.
 - **Resultado:** baseline de mínimo privilegio aplicada y cubierta con tests ALLOW/DENY aislados para Firestore y Storage; tests de Game Listings, TypeScript y build validados sin regresiones.
+
+## PROMPT-007F — Game Listings Integration Review & Phase 6 Closeout
+
+- **Fecha:** 2026-09-23
+- **Objetivo:** revisar de extremo a extremo el Marketplace MVP, sus límites arquitectónicos, persistencia, imágenes y seguridad antes de cerrar Fase 6.
+- **Agente:** Senior ReviewAgent.
+- **Resultado:** GO tras validar en entorno aislado los flujos de venta e intercambio, 100 comprobaciones E2E multiusuario, Storage, cierre e historial; las 33 pruebas de Rules, 7 pruebas de Game Listings, TypeScript y build pasan. Se corrigió la aplicación indebida de un límite opcional que podía vaciar el descubrimiento sin límite explícito. Fase 6 completada; no se inicia una fase posterior.

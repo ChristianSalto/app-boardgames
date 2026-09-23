@@ -35,7 +35,8 @@ export const createFirestoreGameListingRepository = (firestore: Firestore): Game
     discoverActive: async ({ city, limit }) => {
       try {
         const snapshots = await getDocs(query(listings, where('status', '==', 'active'), where('city', '==', city), orderBy('createdAt', 'desc')))
-        return snapshots.docs.slice(0, limit).map((snapshot) => toListing(snapshot.id, snapshot.data() as ListingDocument))
+        const matchingListings = snapshots.docs.map((snapshot) => toListing(snapshot.id, snapshot.data() as ListingDocument))
+        return limit === undefined ? matchingListings : matchingListings.slice(0, limit)
       } catch { throw asListingError() }
     },
     getById: async (id) => { try { const snapshot = await getDoc(doc(listings, id)); return snapshot.exists() ? toListing(snapshot.id, snapshot.data() as ListingDocument) : null } catch { throw asListingError() } },
