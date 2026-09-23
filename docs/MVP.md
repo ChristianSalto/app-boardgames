@@ -2,7 +2,7 @@
 
 ## Propósito
 
-El MVP 1 valida una sola apuesta: si facilitar el descubrimiento, la creación y la participación en partidas ayuda a personas que quieren jugar pero no encuentran con quién. La Fase 6 incorpora una segunda apuesta acotada: si la misma comunidad obtiene valor al publicar y descubrir juegos en venta o intercambio sin convertir Mesa Abierta en una plataforma de comercio electrónico. Las partidas conservan prioridad funcional y visual.
+El MVP 1 valida una sola apuesta: si facilitar el descubrimiento, la creación y la participación en partidas ayuda a personas que quieren jugar pero no encuentran con quién. La Fase 6 incorpora una segunda apuesta acotada: si la misma comunidad obtiene valor al publicar y descubrir juegos en venta o intercambio sin convertir Mesa Abierta en una plataforma de comercio electrónico. La Fase 7 incorpora reviews mínimas entre personas que compartieron una partida para reducir incertidumbre al quedar. Las partidas conservan prioridad funcional y visual.
 
 ## MVP 1
 
@@ -11,13 +11,22 @@ El MVP 1 valida una sola apuesta: si facilitar el descubrimiento, la creación y
 - Disponer de una identidad para realizar acciones personales.
 - Crear y consultar un perfil mínimo, con campos y visibilidad aún por decidir.
 - Una misma cuenta puede organizar partidas y participar en partidas creadas por otras personas.
-- Durante la iteración del prototipo, mostrar señales simuladas de confianza para evaluar su utilidad: reputación subjetiva y fiabilidad observable o derivada. Esto no incorpora todavía un sistema real al MVP.
+- Mostrar reputación subjetiva separada de fiabilidad factual. La Fase 7 sustituirá progresivamente las reviews simuladas por reviews elegibles vinculadas a partidas.
 
-### Experimento de confianza en el prototipo
+### Trust & Reputation MVP
 
-Para validar si la confianza condiciona el encuentro, los perfiles simulados mostrarán una media y opiniones junto a datos separados de partidas jugadas, asistencias y ausencias sin aviso. El detalle resumirá las señales de la persona organizadora.
+El prototipo validó que confianza y fiabilidad deben presentarse por separado. La Fase 7 aprueba el primer sistema real de reviews para personas y partidas:
 
-No se podrá publicar una valoración ni se definirán cálculo, persistencia, moderación, fraude, disputas o privacidad definitiva. Como principio provisional, una futura valoración requerirá haber compartido una partida finalizada como participante confirmado.
+- puntuación entera de 1 a 5 y comentario opcional;
+- autor y persona valorada identificados mediante su Player público;
+- referencia a la partida y fecha de publicación;
+- ambos confirmados en la misma partida pasada y no cancelada;
+- organizador y participantes pueden valorarse entre sí, excepto a sí mismos;
+- una review por autor, persona valorada y partida;
+- review inmutable y no eliminable por el autor desde el flujo normal;
+- media y recuento derivados, no editables por el cliente.
+
+Un Player sin reviews se presenta como «Nuevo en Mesa Abierta», no con cero estrellas. Attendance/no-show se mantiene fuera de este incremento porque no existe todavía un mecanismo justo de verificación y disputa. La fiabilidad indicará que no hay datos verificados y no utilizará porcentajes ni un score inventado. `TRUST_REPUTATION_PRODUCT.md` contiene la política completa.
 
 ### Descubrimiento de partidas
 
@@ -158,7 +167,7 @@ Sujetas a evidencia, priorización y una fase propia:
 - gestionar colecciones personales de juegos;
 - mejorar coordinación antes o después de una partida;
 - listas de espera, recurrencia o invitaciones;
-- mecanismos proporcionados de confianza, moderación y seguridad;
+- mecanismos avanzados de confianza, attendance, moderación y seguridad;
 - descubrimiento más avanzado por intereses o compatibilidad;
 - comunidades, clubes o soporte a tiendas;
 - funciones sociales especializadas;
@@ -173,7 +182,9 @@ Esta lista conserva la visión, pero no constituye backlog aprobado.
 - sistema complejo de amigos;
 - listas de espera;
 - chat en tiempo real;
-- sistema real de reputación, publicación de reviews y cálculo productivo de fiabilidad; la representación simulada de Fase 2 es solo un experimento UX;
+- attendance/no-show público, score único de confianza y cálculo productivo de fiabilidad;
+- categorías múltiples de review, gamificación, rankings, respuestas públicas y moderación completa;
+- reputación específica de compraventa, intercambio o tiendas;
 - clubes y tiendas;
 - recomendaciones mediante IA;
 - gamificación;
@@ -193,7 +204,8 @@ Esta lista conserva la visión, pero no constituye backlog aprobado.
 - fuente de catálogo externo, si resulta necesaria después del prototipo con datos simulados;
 - forma y momento de compartir un punto concreto de encuentro con visibilidad controlada;
 - medidas mínimas de seguridad/moderación para pruebas con usuarios;
-- condiciones de producción para reputación y fiabilidad: cálculo, fraude, moderación, disputas, derecho de réplica y privacidad;
+- condiciones de producción para Trust & Reputation aún no resueltas: reporte, ocultación, moderación, disputas, derecho de réplica, eliminación de cuenta y privacidad legal;
+- mecanismo verificable para attendance/no-show, si llega a incorporarse;
 - plan de medición de la validación.
 - suficiencia de «Me interesa» sin un canal posterior, y mecanismo seguro de coordinación si fuese necesario;
 - política mínima de imágenes, contenido permitido, denuncia y moderación del Marketplace;

@@ -293,11 +293,21 @@ No se decide todavía qué dato concreto se almacena, cuándo se revela, durante
 
 ## Reputación y fiabilidad
 
-Reputación permanece conceptualmente integrada en `players`, pero sus datos calculados no son editables por el propietario del perfil ni por clientes arbitrarios.
+PROMPT-008A extrae conceptualmente **`player-trust`** de `players` porque las reviews ya tienen reglas de elegibilidad, escritura, inmutabilidad y agregación propias. `players` podrá consumir un resumen de lectura, pero ni el propietario del perfil ni un cliente arbitrario podrán editarlo.
 
-Una futura review solo podrá crearse si la persona autora y la evaluada fueron participantes confirmados de la misma partida finalizada y cumplen la política que se apruebe. La autorización no confiará en una afirmación enviada por el cliente.
+Una review solo será elegible si autor y persona valorada son Players distintos confirmados en la misma partida pasada y no cancelada, y no existe otra review en la misma dirección para esa sesión. La autorización no confiará en una afirmación enviada por el cliente.
 
-Mientras no exista un diseño de elegibilidad, moderación y cálculo, las escrituras de reputación seguirán fuera del MVP. Cuando se incorporen, es probable que agregados, fiabilidad y controles antifraude requieran operaciones confiables de servidor. No se decide todavía el algoritmo ni el esquema.
+PROMPT-008B concreta la arquitectura en `PLAYER_TRUST_ARCHITECTURE.md` y ADR-006:
+
+- colección raíz conceptual `playerReviews/{reviewId}`;
+- ID determinista mediante hash de sesión, autor y persona valorada;
+- `participantIds` de Game Sessions como evidencia autoritativa de confirmación;
+- `startsAt` Timestamp canónico y protegido como evidencia temporal;
+- creación directa desde cliente únicamente cuando las Rules validen forma y elegibilidad;
+- update/delete denegados desde cliente;
+- media y recuento calculados al leer, sin agregados editables en Player.
+
+No se necesita Cloud Function para este incremento si `startsAt` es canónico, las Rules protegen la evidencia y no se materializan agregados. Si esa precondición temporal no puede cumplirse, la creación deberá pasar a una operación server-side confiable. Attendance/no-show y moderación completa permanecen fuera.
 
 ## Monetización
 
@@ -363,7 +373,7 @@ El prototipo recupera datos al volver a entrar o recargar. No implementa sincron
 - política exacta de visibilidad, revelación y retención del lugar;
 - límites de transacciones y necesidad real de una operación server-side para aceptar la última plaza;
 - ciclo de vida completo de partidas y solicitudes;
-- elegibilidad, moderación, cálculo y persistencia de reputación;
+- implementación, índices y pruebas de Rules para `player-trust`; la elegibilidad y persistencia conceptual están definidas, mientras moderación completa sigue pendiente;
 - estrategia de caché y sincronización del cliente;
 - modelo de monetización, proveedor de billing y entitlements;
 - necesidad futura de Storage.

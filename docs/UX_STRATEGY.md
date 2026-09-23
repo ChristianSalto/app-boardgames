@@ -9,7 +9,7 @@
 
 Este documento traduce el MVP a una experiencia coherente antes del prototipo. No define UI visual, modelo de datos ni arquitectura técnica. Durante la Fase 2, Madrid será el contexto geográfico fijo y preseleccionado: Explorar muestra partidas de Madrid y los usuarios filtran o crean por zona/distrito. Esto no limita el producto futuro ni debe bloquear una ampliación arquitectónica posterior a múltiples ciudades.
 
-PROMPT-007A amplía posteriormente este documento con la estrategia conceptual del Marketplace MVP. Las decisiones históricas de Fase 1 sobre partidas permanecen aprobadas; la nueva sección de Juegos de la comunidad está en revisión y no implica implementación.
+PROMPT-007A amplió posteriormente este documento con la estrategia conceptual del Marketplace MVP. PROMPT-008A aprueba después un MVP real de reviews entre Players elegibles, definido en `TRUST_REPUTATION_PRODUCT.md`; esta estrategia histórica no prescribe todavía su UI.
 
 ## Objetivo UX
 
@@ -306,10 +306,10 @@ No se identifica una pregunta adicional que impida construir un prototipo con da
 - Necesidad y fuente de un catálogo externo.
 - Experiencia multi-ciudad real y selector futuro de ciudad.
 - Usuario prioritario, requisitos legales, compatibilidad objetivo y métricas de validación.
-- Colección, chat, votación de juegos y el sistema productivo de reputación/fiabilidad siguen fuera del alcance implementado. La Fase 6 ha aprobado únicamente anuncios simples de venta/intercambio como iniciativa independiente.
+- Colección, chat y votación de juegos siguen fuera del alcance implementado. La Fase 7 aprueba reviews simples de reputación, pero attendance/no-show y fiabilidad productiva continúan diferidos.
 
 Las cuestiones de ciclo de vida deberán resolverse antes del primer vertical slice, según el PRD, pero no impiden un prototipo visual con datos simulados.
 
 ## Fuera de esta fase
 
-Durante la Fase 1 quedaron fuera intercambio, colección, feed, seguidores, amistades, chat, publicación de reviews, sistema productivo de reputación/fiabilidad, votación o elección colectiva de juegos, clubes, tiendas, gamificación, notificaciones push, IA, pagos, mapas, geolocalización y *tracking*. PROMPT-007A autoriza posteriormente solo el Marketplace acotado descrito en este documento; el resto continúa excluido.
+Durante la Fase 1 quedaron fuera intercambio, colección, feed, seguidores, amistades, chat, publicación de reviews, sistema productivo de reputación/fiabilidad, votación o elección colectiva de juegos, clubes, tiendas, gamificación, notificaciones push, IA, pagos, mapas, geolocalización y *tracking*. PROMPT-007A autorizó posteriormente el Marketplace acotado y PROMPT-008A autoriza reviews simples ligadas a partidas; las demás capacidades continúan excluidas.

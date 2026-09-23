@@ -26,14 +26,14 @@ Permitir que un jugador encuentre o publique una partida cercana en contexto, co
 
 Para quien organiza, ofrecer una forma sencilla de publicar los datos esenciales y conocer las personas participantes.
 
-## Hipótesis prioritaria de confianza
+## Trust & Reputation para personas y partidas
 
-Quedar físicamente con personas desconocidas puede ser una fricción central del problema. Durante el prototipo se validará si mostrar señales simuladas ayuda a decidir con mayor confianza, distinguiendo:
+Quedar físicamente con personas desconocidas puede ser una fricción central del problema. Tras validar su importancia en el prototipo, la Fase 7 define un MVP real de confianza que mantiene separados:
 
 - **reputación:** valoraciones y opiniones subjetivas de personas con las que se ha compartido una partida;
-- **fiabilidad:** información de comportamiento observable o derivada, como partidas jugadas, asistencias y ausencias sin aviso.
+- **fiabilidad:** hechos verificables relacionados con participación y asistencia.
 
-Esta exploración no equivale a aprobar un sistema productivo de reputación. No se definen todavía cálculo, publicación, moderación, fraude, disputas, privacidad definitiva ni persistencia. Como principio provisional, una futura valoración solo podría emitirse tras una partida finalizada entre personas que hubieran estado confirmadas en ella.
+El primer incremento permite reviews simples entre Players confirmados que compartieron una partida pasada y no cancelada. No mezcla estrellas con actividad, no introduce un score de seguridad y no publica todavía asistencia o no-shows: presentarlos como hechos exige un mecanismo más robusto contra errores y abuso. El alcance completo está en `TRUST_REPUTATION_PRODUCT.md`.
 
 ## Horizonte del producto
 
@@ -56,7 +56,7 @@ Estas capacidades pertenecen a la visión, no al MVP 1:
 - feed social y seguidores;
 - relaciones de amistad complejas;
 - chat en tiempo real;
-- sistema productivo de reputación y reseñas;
+- mecanismos avanzados de reputación, fiabilidad y moderación;
 - clubes, tiendas y comunidades organizadas;
 - recomendaciones mediante IA;
 - gamificación;
@@ -88,6 +88,6 @@ El concepto no bloquea anuncios destacados, límites ampliados de publicación, 
 - **Simplicidad operativa:** publicar y unirse deben exigir únicamente la información necesaria.
 - **Privacidad desde el diseño:** el descubrimiento público usa inicialmente ciudad, zona, distrito o granularidad equivalente. No se contempla *tracking*, geolocalización continua, GPS en tiempo real ni publicación innecesaria de ubicación precisa. Un punto de encuentro concreto podría incorporarse posteriormente si fuese necesario, con minimización, visibilidad controlada y acceso restringido al momento y personas adecuados.
 - **Inclusión:** experiencia accesible conforme a WCAG 2.2 AA y usable desde móvil.
-- **Confianza progresiva:** validar primero si reputación subjetiva y fiabilidad observable aportan información útil; cualquier mecanismo real de seguridad o reputación deberá ser proporcional a riesgos observados y no convierte el MVP en una red social completa.
+- **Confianza progresiva:** incorporar reviews elegibles y trazables sin presentarlas como garantía de seguridad; la fiabilidad solo mostrará hechos suficientemente verificados y no convierte el MVP en una red social completa.
 - **Transparencia:** distinguir plazas, condiciones y estado de participación con lenguaje claro.
 - **Alcance protegido:** las posibilidades futuras no entran accidentalmente en el MVP.

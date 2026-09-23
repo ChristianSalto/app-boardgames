@@ -3,7 +3,7 @@
 ## Estado del documento
 
 - **Fase:** 0 — Foundation
-- **Estado:** baseline aprobada; extensión Marketplace de Fase 6 en revisión
+- **Estado:** baseline aprobada; Marketplace de Fase 6 completado; Trust & Reputation de Fase 7 en definición
 - **Referencia de alcance:** `MVP.md`
 - **Naturaleza:** definición inicial basada en hipótesis; requiere validación con usuarios.
 
@@ -30,7 +30,7 @@ La persona quiere jugar a juegos de mesa, pero le cuesta encontrar gente con qui
 - Permitir solicitar participación, gestionarla mediante aceptación o rechazo del organizador y hacer visible quién está confirmado.
 - Permitir a cada persona consultar las partidas que organiza o en las que participa.
 - Aprender qué fricciones impiden pasar de la intención de jugar a una participación acordada.
-- Validar si señales diferenciadas de reputación y fiabilidad ayudan a decidir quedar con personas desconocidas.
+- Aportar reputación subjetiva trazable entre personas que compartieron una partida, manteniéndola separada de cualquier dato factual de fiabilidad.
 - Validar si publicar y descubrir juegos de la comunidad aporta valor como segundo eje sin reducir la prioridad de las partidas.
 - Proteger privacidad, accesibilidad y simplicidad desde el diseño.
 
@@ -39,7 +39,7 @@ La persona quiere jugar a juegos de mesa, pero le cuesta encontrar gente con qui
 - Construir una red social generalista o maximizar interacción social no vinculada a partidas.
 - Construir una plataforma de comercio electrónico completa, procesar pagos o resolver logística de compraventa e intercambio.
 - Ofrecer comunicación en tiempo real.
-- Construir un sistema productivo de reputación, publicación de reseñas, recomendación algorítmica o gamificación. El prototipo solo representa señales simuladas para validar la hipótesis de confianza.
+- Construir un score opaco de confianza, gamificación, reputación comercial o un sistema completo de asistencia, disputas y moderación. La Fase 7 se limita a reviews de personas y partidas con protecciones mínimas.
 - Gestionar clubes, tiendas o comunidades complejas.
 - Rastrear al usuario, usar geolocalización continua o GPS en tiempo real, o publicar innecesariamente una ubicación precisa.
 - Optimizar todavía monetización, crecimiento viral o métricas comerciales no validadas.
@@ -67,6 +67,8 @@ Como extensión secundaria, una persona de la comunidad puede ofrecer un juego e
 - Como jugador, quiero filtrar partidas por criterios esenciales para reducir opciones irrelevantes.
 - Como jugador, quiero ver el detalle de una partida para decidir si me encaja.
 - Como jugador, quiero consultar señales comprensibles sobre quien organiza para valorar si me inspira confianza antes de solicitar plaza.
+- Como participante de una partida pasada, quiero valorar a otra persona confirmada con la que compartí mesa para aportar contexto a futuros jugadores.
+- Como jugador nuevo, quiero aparecer sin valoración de forma neutral para no ser interpretado como poco fiable.
 - Como organizador, quiero crear una partida indicando juego, fecha y hora, ciudad o zona y aforo máximo para encontrar participantes.
 - Como jugador, quiero solicitar una plaza y conocer si está pendiente o aceptada para no confundir una solicitud con una participación confirmada.
 - Como participante u organizador, quiero consultar la lista de participantes para conocer el estado de la partida.
@@ -129,6 +131,26 @@ El detalle ofrecerá un resumen compacto de la persona organizadora y el perfil 
 
 Este experimento no define un requisito funcional de producción ni su modelo técnico. Algoritmo, moderación, derecho de réplica, prevención de fraude, disputas, privacidad y persistencia siguen pendientes antes de producción.
 
+### Extensión funcional aprobada para Fase 7 — Trust & Reputation MVP
+
+#### RF-T01 — Publicar una review elegible
+
+Un Player podrá publicar una puntuación entera de 1 a 5 estrellas y un comentario opcional sobre otro Player cuando ambos estuvieron confirmados en la misma partida, la fecha/hora ya pasó, la partida no está cancelada, son personas distintas y no existe otra review del mismo autor hacia esa persona en esa sesión. El organizador cuenta como participante y puede valorar o ser valorado; participantes distintos también pueden valorarse entre sí.
+
+#### RF-T02 — Integridad y ciclo de la review
+
+La review queda vinculada al autor, persona valorada, Game Session y fecha de publicación. Será inmutable y no podrá borrarse desde la experiencia normal. Las reviews son la fuente de verdad; la media y el recuento son datos derivados que ningún cliente o propietario del perfil puede escribir arbitrariamente.
+
+#### RF-T03 — Reputación visible y estado inicial
+
+El perfil mostrará a usuarios autenticados media, número de valoraciones y opiniones recientes con identidad pública del autor, fecha y contexto de juego. Un Player sin reviews se presentará como «Nuevo en Mesa Abierta» o «Sin valoraciones todavía», nunca con cero estrellas. No se expondrán datos de Authentication, contacto o ubicación privada.
+
+#### RF-T04 — Fiabilidad separada y prudente
+
+La fiabilidad no se mezclará con las estrellas. Attendance/no-show no forma parte de este primer incremento porque todavía no existe un mecanismo proporcionado para verificar una acusación o resolver errores. Hasta entonces se mostrará «Sin datos de asistencia verificados» y, si aparece actividad pasada, no se presentará como garantía de fiabilidad.
+
+La definición completa, riesgos y exclusiones están en `TRUST_REPUTATION_PRODUCT.md`. El esquema, la operación confiable, Security Rules y UI se decidirán en tareas posteriores.
+
 ## Extensión funcional aprobada para Fase 6 — Juegos de la comunidad
 
 El Marketplace es un segundo eje subordinado al núcleo de partidas. En Explorar se representa mediante un bloque breve posterior a las partidas y un acceso «Ver todos»; no sustituye el listado principal ni añade por ahora un destino permanente a la navegación global.
@@ -172,11 +194,14 @@ El MVP 1 cubre el recorrido desde una identidad con perfil básico hasta encontr
 
 La Fase 6 añade un incremento de Marketplace separado y secundario. No modifica la prioridad ni los criterios del núcleo de partidas; su alcance exacto y exclusiones se recogen también en `MVP.md`.
 
+La Fase 7 añade reviews elegibles entre Players que compartieron una partida. No incorpora attendance/no-show público, reputación comercial ni un score único de confianza.
+
 ## Fuera de alcance
 
 - feed, seguidores y amistades complejas;
 - chat en tiempo real;
-- sistema real de reputación, publicación de reviews y cálculo de fiabilidad; el prototipo solo contiene una representación simulada para validar su utilidad;
+- attendance/no-show público, score único de confianza, categorías múltiples y moderación completa de reviews;
+- reputación de compraventa, intercambio, tiendas o comercios;
 - clubes y tiendas;
 - recomendaciones mediante IA;
 - gamificación;
@@ -224,7 +249,7 @@ Antes del lanzamiento de validación se definirá un plan de medición con event
 - **Contexto geográfico del prototipo:** Madrid es fijo y preseleccionado. Explorar muestra partidas de Madrid y Crear permite elegir solo zona/distrito; no existe selector de ciudad. Esto no limita la arquitectura futura a Madrid.
 - **Participación:** solicitar una plaza crea una solicitud pendiente. El organizador acepta o rechaza; solo la aceptación confirma al participante. Las solicitudes pendientes no cuentan dentro del aforo confirmado.
 - **Cierre por aforo:** cuando una aceptación ocupa la última plaza, la partida queda completa, sale de Explorar y las demás solicitudes dejan de estar pendientes con una explicación de falta de plazas. No existe lista de espera ni se decide todavía el nombre técnico de este resultado.
-- **Validación de confianza:** la iteración del prototipo mostrará reputación y fiabilidad simuladas como conceptos diferentes. No se habilita publicar valoraciones ni se aprueba todavía un sistema real.
+- **Trust & Reputation:** la Fase 7 habilita reviews reales simples y elegibles entre personas confirmadas de una partida pasada no cancelada. Reputación y fiabilidad permanecen separadas; attendance/no-show se difiere.
 
 ## Hipótesis iniciales
 
@@ -239,11 +264,11 @@ Estas hipótesis guían el diseño, pero no son decisiones validadas:
 1. **¿Quién es el usuario inicial más urgente dentro del contexto conceptual de Madrid?** Recomendación: entrevistar tanto a buscadores como a organizadores y priorizar según evidencia.
 2. **¿Qué datos forman el perfil básico y cuáles son públicos?** Recomendación: comenzar con nombre visible y zona general; añadir solo lo respaldado por un flujo o riesgo concreto.
 3. **¿Qué método de autenticación se usará?** Recomendación: elegir en la fase de arquitectura/Firebase según fricción, privacidad y población piloto.
-4. **¿Cómo se gestionan abandono de una participación confirmada, retirada voluntaria de una solicitud, partidas pasadas y ausencias?** Edición y cancelación básica ya están definidas; el resto del ciclo de vida debe mantenerse mínimo y no crear un sistema de reputación.
+4. **¿Cómo se gestionan abandono de una participación confirmada, retirada voluntaria de una solicitud y ausencias?** Edición y cancelación básica ya están definidas. Las reviews podrán usar partida pasada y no cancelada; attendance/no-show seguirá fuera hasta contar con verificación y tratamiento de errores proporcionados.
 5. **¿Qué catálogo externo, si alguno, se necesitará después del prototipo?** Recomendación: evaluar fuente, licencia y necesidad antes de integrar servicios externos; la Fase 2 usará datos simulados.
 6. **¿Qué granularidad y vocabulario se usarán para ciudad, zona o distrito?** Recomendación: texto o selección general normalizada para descubrimiento, sin geolocalización continua ni coordenadas públicas.
 7. **¿Cómo y cuándo se compartirá un punto concreto de encuentro sin chat en tiempo real?** Recomendación: investigarlo en los flujos y escoger el mecanismo mínimo, con visibilidad controlada, privacidad y acceso solo cuando sea necesario.
-8. **¿Qué medidas mínimas de confianza, bloqueo, denuncia o moderación son imprescindibles para una prueba con usuarios?** Recomendación: realizar evaluación de riesgos antes de pruebas externas; no asumir que estar fuera del núcleo funcional elimina la obligación de seguridad.
+8. **¿Qué medidas mínimas de bloqueo, denuncia y moderación son imprescindibles para una prueba con usuarios?** La elegibilidad e integridad de reviews ya están definidas; reporte, ocultación, tiempos de respuesta, sanciones y derecho de réplica deben resolverse antes de exposición pública.
 9. **¿Qué navegadores, idiomas de interfaz y requisitos legales/regionales se aplican al piloto?** Recomendación: decidirlos antes de producción en función de la audiencia real.
 10. **¿Qué evidencia y umbrales permitirán considerar validado el problema?** Recomendación: definir el plan después de investigación inicial y antes de probar el prototipo, sin inventar métricas retrospectivas.
 11. **¿La señal privada «Me interesa» aporta valor suficiente sin chat?** Recomendación: validar intención y comprensión antes de añadir conversación; decidir un canal acotado antes de una prueba pública si la coordinación queda bloqueada.

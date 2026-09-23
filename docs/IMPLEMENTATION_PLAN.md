@@ -85,13 +85,17 @@ Este trabajo no bloquea el cierre de Fase 6 y requiere priorización explícita 
 - **Game Listings futuro:** valorar `Mis anuncios` como sección propia, manteniendo una futura colección `Mis juegos` separada; UI de Contact Handoff, chat, alquiler, favoritos, búsqueda/filtros avanzados, tiendas, monetización, multi-ciudad/moneda, moderación/reportes y gestión avanzada de imágenes.
 - **Técnico:** dividir el bundle cuando lo justifique la evolución del producto; valorar import/export persistente del Emulator Suite; vigilar el error de VM `startTime` observado en el entorno, actualmente no vinculado al código ni bloqueante.
 
-## Fase 7 — Validación y consolidación del Marketplace
+## Fase 7 — Trust & Reputation MVP
 
-**Objetivo:** validar el incremento de Juegos de la comunidad y corregir únicamente los bloqueos necesarios sin reducir la calidad del núcleo de partidas.
+**Objetivo:** aportar señales de confianza entre personas que comparten partidas mediante reviews elegibles y trazables, manteniendo reputación subjetiva y fiabilidad factual como conceptos separados.
 
-**Resultados previstos:** evidencia sobre publicación, descubrimiento, comprensión de modalidad/condición y utilidad de «Me interesa», además de riesgos operativos priorizados.
+**Resultados previstos:** definición de producto, arquitectura, UX e implementación incremental de reviews vinculadas a partidas; resumen de reputación íntegro y estados neutrales para Players sin valoraciones.
 
-**Criterio de salida orientativo:** flujo secundario comprensible, accesible y seguro en su alcance, con decisión explícita sobre coordinación antes de una prueba pública.
+**Límite:** no incluir attendance/no-shows públicos sin un mecanismo justo de verificación, ni reputación comercial, gamificación, score único de confianza o moderación completa.
+
+**Criterio de salida orientativo:** las reglas de elegibilidad, publicación, visibilidad, agregación y mínimo privilegio están implementadas y validadas sin permitir que el cliente manipule reputación.
+
+**Estado:** en progreso. PROMPT-008A ha definido el alcance de producto y PROMPT-008B la arquitectura; PROMPT-008C todavía no ha comenzado.
 
 ## Fase 8 — Perfil y consolidación del MVP
 
@@ -107,4 +111,4 @@ Según los resultados del MVP podrían abordarse operación y lanzamiento contro
 
 ## Puerta inmediata
 
-La Fase 6 queda completada tras PROMPT-007F. Este cierre no inicia ni autoriza una fase posterior; el siguiente paso deberá decidirse explícitamente.
+La Fase 7 dispone de definición de producto y arquitectura aprobadas tras PROMPT-008A y PROMPT-008B. El siguiente paso recomendado es PROMPT-008C, limitado a Domain/Application y prototipo UI sin persistencia real; no queda iniciado por este documento.

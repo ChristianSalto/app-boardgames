@@ -1,19 +1,19 @@
 # Estado actual
 
 **Fase actual:**  
-Fase 6 — Marketplace MVP / Juegos de la comunidad
+Fase 7 — Trust & Reputation MVP
 
 **Tarea:**  
-PROMPT-007F — Game Listings Integration Review & Phase 6 Closeout.
+PROMPT-008B — Player Trust Architecture & Trusted Review Eligibility.
 
 **Estado:**  
-Completada.
+En progreso.
 
 **Resultado:**  
-Marketplace MVP integrado y validado: publicación, descubrimiento, imágenes, edición/cierre e intereses multiusuario funcionan con Firebase y mínimo privilegio. Fase 6 completada.
+Arquitectura de `player-trust` definida: review inmutable y única, elegibilidad basada en participantes confirmados, tiempo canónico de sesión y agregados calculados desde la fuente de verdad.
 
-**Siguiente fase:**  
-No definida en este cierre.
+**Siguiente tarea:**
+PROMPT-008C — Domain/Application & UI Prototype, pendiente de inicio.
 
 **Restricción:**  
-No comenzar una fase posterior sin una nueva decisión explícita de producto.
+PROMPT-008C no ha comenzado. No implementar código, Firestore ni Security Rules mediante esta tarea.

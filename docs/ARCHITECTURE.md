@@ -85,14 +85,16 @@ Debe permanecer pequeño y explícito. Puede alojar:
 
 No admite cajones genéricos llamados `utils`, `helpers`, `common`, servicios de negocio ni abstracciones creadas para un único consumidor. Por defecto, una pieza permanece dentro del dominio que la necesita.
 
-## Recomendación sobre reputación
+## Boundary de confianza entre Players
 
-Reputación debe permanecer inicialmente integrada en `players` como información de confianza de solo lectura asociada al perfil. El prototipo solo necesita mostrar:
+Durante el prototipo, reputación permaneció integrada en `players` como información simulada de solo lectura. PROMPT-008A introduce elegibilidad, publicación, inmutabilidad, agregados y un ciclo futuro de moderación, por lo que se aprueba conceptualmente un capability propio **`player-trust`** que distingue:
 
 - reputación subjetiva: valoración y opiniones;
 - fiabilidad observable o derivada: partidas, asistencias y ausencias sin aviso.
 
-Crear ahora un dominio superior `reputation` obligaría a definir prematuramente elegibilidad, publicación, moderación, disputas, cálculo y persistencia. Se extraerá a un dominio propio si esas capacidades se aprueban y adquieren reglas, comandos, ciclo de vida o responsables independientes. La extracción deberá preservar un contrato de lectura compacto para `players` y `game-sessions`.
+`player-trust` posee las reglas y el historial de Review y expone un resumen de lectura compacto a `players`. Consume `PlayerId` y evidencia mínima de `game-sessions` para comprobar la relación entre personas, pero no posee perfiles ni partidas. Attendance/no-show no entra todavía en el boundary implementable. PROMPT-008B define su estructura, ports y persistencia conceptual sin crear carpetas ni modificar código.
+
+PROMPT-008B consolida este límite en `PLAYER_TRUST_ARCHITECTURE.md` y ADR-006. Las reviews usan una identidad determinista, consultan `participantIds` como evidencia de confirmación y requieren un `startsAt` canónico en Game Sessions. El resumen se calcula desde reviews al leer y no se persiste dentro de Player. La implementación continúa pendiente.
 
 ## Clean Architecture pragmática
 
@@ -250,6 +252,7 @@ Cada paso debe tener un alcance revisable y no mezclar reorganización masiva, c
 - Una presentación no importa infraestructura ni SDKs de Firebase.
 - Un dominio no importa la presentación ni los detalles internos de otro dominio.
 - La coordinación entre dominios se hace mediante una API pública de aplicación o un puerto estrecho; nunca mediante imports profundos a carpetas internas.
+- `player-trust` define su propia proyección `ReviewSessionEvidence`; no importa `GameSession` ni interpreta `ParticipationRequest`.
 - Los tipos externos se traducen en el adaptador. `Firebase User`, snapshots, timestamps y documentos no cruzan hacia dominio.
 - Las dependencias de tiempo y generación de identificadores son explícitas cuando afectan reglas o pruebas.
 - No se permiten ciclos entre dominios.
@@ -323,7 +326,7 @@ src/
 
 - carpetas `infrastructure` con adaptadores Firebase en Fase 5;
 - contratos adicionales para integraciones externas;
-- extracción de `reputation`;
+- diseño e implementación de `player-trust`, aprobado conceptualmente en PROMPT-008A;
 - nuevos dominios aprobados después del MVP.
 
 Durante la transición, `mock-data` puede seguir sirviendo al prototipo. Su sustitución o reubicación se decidirá al implementar adaptadores; este documento no prescribe un movimiento inmediato.
@@ -374,6 +377,6 @@ Los detalles completos se recogen en `FIREBASE_ARCHITECTURE.md` y en ADR-003.
 - concurrencia y atomicidad para aforo y solicitudes;
 - ciclo de vida ampliado: editar, cancelar, abandonar o retirar solicitudes;
 - política de privacidad y momento de revelar el lugar exacto;
-- algoritmo, elegibilidad, moderación y persistencia de reputación;
+- arquitectura, persistencia y operación confiable de `player-trust`; la elegibilidad de producto está definida y la moderación completa sigue pendiente;
 - proveedor de billing y diseño definitivo de monetización;
 - catálogo externo de juegos, si llega a ser necesario.

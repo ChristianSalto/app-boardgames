@@ -246,3 +246,17 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** revisar de extremo a extremo el Marketplace MVP, sus límites arquitectónicos, persistencia, imágenes y seguridad antes de cerrar Fase 6.
 - **Agente:** Senior ReviewAgent.
 - **Resultado:** GO tras validar en entorno aislado los flujos de venta e intercambio, 100 comprobaciones E2E multiusuario, Storage, cierre e historial; las 33 pruebas de Rules, 7 pruebas de Game Listings, TypeScript y build pasan. Se corrigió la aplicación indebida de un límite opcional que podía vaciar el descubrimiento sin límite explícito. Fase 6 completada; no se inicia una fase posterior.
+
+## PROMPT-008A — Trust & Reputation Product Definition
+
+- **Fecha:** 2026-09-23
+- **Objetivo:** definir el MVP real de confianza entre Players y partidas, con reviews elegibles, reputación subjetiva separada de fiabilidad factual y protecciones proporcionadas contra abuso.
+- **Agente:** Senior ProductAgent.
+- **Resultado:** `player-trust` queda aprobado como boundary conceptual; se define una review simple, inmutable y ligada a participantes confirmados de una partida pasada no cancelada. Attendance/no-show se difiere por falta de verificación justa y PROMPT-008B queda recomendado, pero no iniciado.
+
+## PROMPT-008B — Player Trust Architecture & Trusted Review Eligibility
+
+- **Fecha:** 2026-09-23
+- **Objetivo:** definir el modelo, límites, elegibilidad confiable, persistencia conceptual y estrategia de integridad de reviews sin implementar código ni Security Rules.
+- **Agente:** Senior Architecture/SecurityAgent.
+- **Resultado:** `player-trust` queda preparado para implementación incremental con reviews raíz, ID determinista, `participantIds` como evidencia y `startsAt` canónico como requisito previo; los agregados se calculan al leer y no se requiere Cloud Function en el MVP bajo estas precondiciones. PROMPT-008C no ha comenzado.
