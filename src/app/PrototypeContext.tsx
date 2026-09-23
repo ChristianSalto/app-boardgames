@@ -37,6 +37,7 @@ type PrototypeContextValue = {
   readonly createSession: (input: CreateSessionInput) => Promise<string>
   readonly updateSession: (id: string, input: UpdateSessionInput) => Promise<void>
   readonly cancelSession: (id: string) => Promise<void>
+  readonly getPlayer: (id: string) => Promise<Player | null>
   readonly sessionsLoading: boolean
 }
 
@@ -129,6 +130,12 @@ export function PrototypeProvider({
     await refreshSessions()
   }, [currentPlayerId, refreshSessions, sessionRepository])
 
+  const getPlayer = useCallback(async (id: string) => {
+    const player = await getPlayerById(playerRepository, id)
+    if (player) setPlayers((current) => upsertPlayer(current, player))
+    return player
+  }, [playerRepository])
+
   const value = useMemo<PrototypeContextValue>(
     () => ({
       currentPlayerId,
@@ -140,6 +147,7 @@ export function PrototypeProvider({
       createSession,
       updateSession,
       cancelSession,
+      getPlayer,
       sessionsLoading,
     }),
     [
@@ -151,6 +159,7 @@ export function PrototypeProvider({
       createSession,
       updateSession,
       cancelSession,
+      getPlayer,
       sessionsLoading,
     ],
   )

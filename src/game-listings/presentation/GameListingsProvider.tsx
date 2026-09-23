@@ -9,16 +9,21 @@ import {
 } from 'react'
 import {
   closeGameListing,
-  createGameListing,
+  createGameListingWithImage,
   discoverGameListings,
   getGameListing,
   getMyGameListings,
+  type GameListingCommandResult,
   type GameListingCommandDependencies,
-  updateGameListing,
+  updateGameListingWithOptionalImage,
 } from '../application/gameListings'
 import type { GameListingRepository } from '../application/gameListingRepository'
+import type { ListingImageRepository, ListingImageUpload } from '../application/listingImageRepository'
 import {
+  acceptListingInterest,
+  declineListingInterest,
   expressListingInterest,
+  getListingInterestsForOwner,
   getMyListingInterest,
 } from '../application/listingInterests'
 import type { ListingInterestRepository } from '../application/listingInterestRepository'
@@ -29,18 +34,22 @@ import type {
   ListingResult,
   PlayerId,
 } from '../domain/gameListing'
-import type { ListingInterest, ListingInterestResult } from '../domain/listingInterest'
+import type { ListingInterest, ListingInterestResolutionResult, ListingInterestResult } from '../domain/listingInterest'
 
 type GameListingsContextValue = Readonly<{
   activeListings: readonly GameListing[]
   ownListings: readonly GameListing[]
   loading: boolean
-  createListing: (input: GameListingInput) => Promise<ListingResult<GameListing>>
-  updateListing: (id: GameListingId, input: GameListingInput) => Promise<ListingResult<GameListing>>
+  loadError: boolean
+  createListing: (input: Omit<GameListingInput, 'imageUrl'>, image: ListingImageUpload) => Promise<GameListingCommandResult<GameListing>>
+  updateListing: (id: GameListingId, input: Omit<GameListingInput, 'imageUrl'>, image?: ListingImageUpload) => Promise<GameListingCommandResult<GameListing>>
   closeListing: (id: GameListingId) => Promise<ListingResult<GameListing>>
   getListing: (id: GameListingId) => Promise<GameListing | null>
   getInterest: (id: GameListingId) => Promise<ListingInterest | null>
+  getOwnerInterests: (id: GameListingId) => Promise<readonly ListingInterest[]>
   expressInterest: (id: GameListingId) => Promise<ListingInterestResult>
+  acceptInterest: (listingId: GameListingId, playerId: PlayerId) => Promise<ListingInterestResolutionResult>
+  declineInterest: (listingId: GameListingId, playerId: PlayerId) => Promise<ListingInterestResolutionResult>
 }>
 
 const GameListingsContext = createContext<GameListingsContextValue | undefined>(undefined)
@@ -51,16 +60,19 @@ export function GameListingsProvider({
   currentPlayerId,
   gameListingRepository,
   listingInterestRepository,
+  listingImageRepository,
 }: {
   readonly children: ReactNode
   readonly commandDependencies: GameListingCommandDependencies
   readonly currentPlayerId: PlayerId
   readonly gameListingRepository: GameListingRepository
   readonly listingInterestRepository: ListingInterestRepository
+  readonly listingImageRepository: ListingImageRepository
 }) {
   const [activeListings, setActiveListings] = useState<readonly GameListing[]>([])
   const [ownListings, setOwnListings] = useState<readonly GameListing[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   const refresh = useCallback(async () => {
     const [active, own] = await Promise.all([
@@ -69,6 +81,7 @@ export function GameListingsProvider({
     ])
     setActiveListings(active)
     setOwnListings(own)
+    setLoadError(false)
   }, [currentPlayerId, gameListingRepository])
 
   useEffect(() => {
@@ -79,6 +92,7 @@ export function GameListingsProvider({
         if (mounted) {
           setActiveListings([])
           setOwnListings([])
+          setLoadError(true)
         }
       })
       .finally(() => {
@@ -87,22 +101,24 @@ export function GameListingsProvider({
     return () => { mounted = false }
   }, [refresh])
 
-  const createListing = useCallback(async (input: GameListingInput) => {
-    const result = await createGameListing(
+  const createListing = useCallback(async (input: Omit<GameListingInput, 'imageUrl'>, image: ListingImageUpload) => {
+    const result = await createGameListingWithImage(
       gameListingRepository,
+      listingImageRepository,
       input,
+      image,
       currentPlayerId,
       commandDependencies,
     )
     if (result.ok) await refresh()
     return result
-  }, [commandDependencies, currentPlayerId, gameListingRepository, refresh])
+  }, [commandDependencies, currentPlayerId, gameListingRepository, listingImageRepository, refresh])
 
-  const updateListing = useCallback(async (id: GameListingId, input: GameListingInput) => {
-    const result = await updateGameListing(gameListingRepository, id, input, currentPlayerId)
+  const updateListing = useCallback(async (id: GameListingId, input: Omit<GameListingInput, 'imageUrl'>, image?: ListingImageUpload) => {
+    const result = await updateGameListingWithOptionalImage(gameListingRepository, listingImageRepository, id, input, image, currentPlayerId)
     if (result.ok) await refresh()
     return result
-  }, [currentPlayerId, gameListingRepository, refresh])
+  }, [currentPlayerId, gameListingRepository, listingImageRepository, refresh])
 
   const closeListing = useCallback(async (id: GameListingId) => {
     const result = await closeGameListing(gameListingRepository, id, currentPlayerId)
@@ -131,24 +147,64 @@ export function GameListingsProvider({
     [commandDependencies.now, currentPlayerId, gameListingRepository, listingInterestRepository],
   )
 
+  const getOwnerInterests = useCallback(
+    (id: GameListingId) => getListingInterestsForOwner(
+      gameListingRepository,
+      listingInterestRepository,
+      id,
+      currentPlayerId,
+    ),
+    [currentPlayerId, gameListingRepository, listingInterestRepository],
+  )
+
+  const acceptInterest = useCallback(
+    (listingId: GameListingId, playerId: PlayerId) => acceptListingInterest(
+      gameListingRepository,
+      listingInterestRepository,
+      listingId,
+      playerId,
+      currentPlayerId,
+    ),
+    [currentPlayerId, gameListingRepository, listingInterestRepository],
+  )
+
+  const declineInterest = useCallback(
+    (listingId: GameListingId, playerId: PlayerId) => declineListingInterest(
+      gameListingRepository,
+      listingInterestRepository,
+      listingId,
+      playerId,
+      currentPlayerId,
+    ),
+    [currentPlayerId, gameListingRepository, listingInterestRepository],
+  )
+
   const value = useMemo<GameListingsContextValue>(() => ({
     activeListings,
     ownListings,
     loading,
+    loadError,
     createListing,
     updateListing,
     closeListing,
     getListing,
     getInterest,
+    getOwnerInterests,
     expressInterest,
+    acceptInterest,
+    declineInterest,
   }), [
     activeListings,
     closeListing,
     createListing,
     expressInterest,
+    acceptInterest,
+    declineInterest,
     getInterest,
+    getOwnerInterests,
     getListing,
     loading,
+    loadError,
     ownListings,
     updateListing,
   ])

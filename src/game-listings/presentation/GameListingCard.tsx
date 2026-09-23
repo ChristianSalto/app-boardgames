@@ -1,18 +1,23 @@
 import { Link } from 'react-router-dom'
+import type { ReactNode } from 'react'
 import type { GameListing } from '../domain/gameListing'
 import { formatListingPrice, getListingConditionLabel } from './listingPresentation'
 
 export function GameListingCard({
+  className = '',
+  footer,
   listing,
   showStatus = false,
 }: {
+  readonly className?: string
+  readonly footer?: ReactNode
   readonly listing: GameListing
   readonly showStatus?: boolean
 }) {
   const price = formatListingPrice(listing.price)
 
   return (
-    <article className="listing-card">
+    <article className={`listing-card${className ? ` ${className}` : ''}`}>
       <img alt={`Imagen de ${listing.gameName}`} className="listing-card__image" src={listing.imageUrl} />
       <div className="listing-card__body">
         <div className="listing-card__meta">
@@ -34,6 +39,7 @@ export function GameListingCard({
         <Link className="text-link" to={`/listings/${listing.id}`}>
           Ver anuncio <span aria-hidden="true">→</span>
         </Link>
+        {footer}
       </div>
     </article>
   )

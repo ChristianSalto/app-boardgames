@@ -13,11 +13,13 @@ import type { ParticipationRequestRepository } from '../game-sessions/applicatio
 import type { PlayerRepository } from '../players/application/playerRepository'
 import type { GameListingRepository } from '../game-listings/application/gameListingRepository'
 import type { ListingInterestRepository } from '../game-listings/application/listingInterestRepository'
+import type { ListingImageRepository } from '../game-listings/application/listingImageRepository'
 import type { GameListingCommandDependencies } from '../game-listings/application/gameListings'
 import { GameListingDetailPage } from '../game-listings/presentation/GameListingDetailPage'
 import { GameListingsPage } from '../game-listings/presentation/GameListingsPage'
 import { GameListingsProvider } from '../game-listings/presentation/GameListingsProvider'
 import { ListingFormPage } from '../game-listings/presentation/ListingFormPage'
+import { MyListingsPage } from '../game-listings/presentation/MyListingsPage'
 import { CompleteProfilePage } from '../players/presentation/CompleteProfilePage'
 import { useCurrentPlayer } from '../players/presentation/CurrentPlayerProvider'
 import { AuthPageLayout } from '../shared/AuthPageLayout'
@@ -29,6 +31,7 @@ export function App({
   playerRepository,
   gameListingRepository,
   listingInterestRepository,
+  listingImageRepository,
   listingCommandDependencies,
 }: {
   readonly gameSessionRepository: GameSessionRepository
@@ -36,6 +39,7 @@ export function App({
   readonly playerRepository: PlayerRepository
   readonly gameListingRepository: GameListingRepository
   readonly listingInterestRepository: ListingInterestRepository
+  readonly listingImageRepository: ListingImageRepository
   readonly listingCommandDependencies: GameListingCommandDependencies
 }) {
   const { status, user, logout } = useAuthentication()
@@ -88,6 +92,7 @@ export function App({
             playerRepository={playerRepository}
             gameListingRepository={gameListingRepository}
             listingInterestRepository={listingInterestRepository}
+            listingImageRepository={listingImageRepository}
             listingCommandDependencies={listingCommandDependencies}
           /> : user && playerStatus === 'missing' ? <Navigate replace to="/complete-profile" /> : <Navigate replace to="/login" />
         }
@@ -103,6 +108,7 @@ function AuthenticatedPrototype({
   playerRepository,
   gameListingRepository,
   listingInterestRepository,
+  listingImageRepository,
   listingCommandDependencies,
 }: {
   readonly player: Player
@@ -111,6 +117,7 @@ function AuthenticatedPrototype({
   readonly playerRepository: PlayerRepository
   readonly gameListingRepository: GameListingRepository
   readonly listingInterestRepository: ListingInterestRepository
+  readonly listingImageRepository: ListingImageRepository
   readonly listingCommandDependencies: GameListingCommandDependencies
 }) {
   return (
@@ -126,6 +133,7 @@ function AuthenticatedPrototype({
         currentPlayerId={player.id}
         gameListingRepository={gameListingRepository}
         listingInterestRepository={listingInterestRepository}
+        listingImageRepository={listingImageRepository}
       >
         <AppShell>
           <Routes>
@@ -137,6 +145,7 @@ function AuthenticatedPrototype({
             <Route path="/profile" element={<PlayerProfilePage />} />
             <Route path="/players/:playerId" element={<PlayerProfilePage />} />
             <Route path="/listings" element={<GameListingsPage />} />
+            <Route path="/listings/my" element={<MyListingsPage />} />
             <Route path="/listings/create" element={<ListingFormPage />} />
             <Route path="/listings/:listingId/edit" element={<ListingFormPage />} />
             <Route path="/listings/:listingId" element={<GameListingDetailPage />} />

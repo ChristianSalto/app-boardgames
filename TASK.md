@@ -4,16 +4,16 @@
 Fase 6 — Marketplace MVP / Juegos de la comunidad
 
 **Tarea:**  
-PROMPT-007C — Game Listings Product Prototype.
+PROMPT-007D — Game Listings Firestore & Storage Integration.
 
 **Estado:**  
-En revisión.
+En progreso.
 
 **Resultado:**  
-Vertical slice visual y funcional de `game-listings` implementado con Domain/Application y repositorios en memoria: descubrimiento secundario, detalle, interés, publicación, edición, cierre y Mis anuncios.
+Integración local de Firestore y Storage en progreso: `game-listings` sustituye su fuente runtime en memoria por adaptadores Firebase y el formulario prepara subida de imagen real.
 
 **Siguiente fase:**  
-PROMPT-007D — Persistencia de imágenes y siguiente incremento de Game Listings, pendiente de aprobación.
+PROMPT-007E — Security Rules Hardening, pendiente de aprobación.
 
 **Restricción:**  
-No conectar Firestore, Firebase Storage ni Security Rules de Game Listings, ni comenzar PROMPT-007D. El repositorio temporal solo conserva datos en memoria durante la sesión.
+No comenzar PROMPT-007E. Las Rules de Game Listings son provisionales y deben endurecerse y probarse formalmente en esa tarea.

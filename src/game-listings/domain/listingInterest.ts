@@ -19,6 +19,16 @@ export type ListingInterestResult =
   | Readonly<{ ok: true; value: ListingInterest }>
   | Readonly<{ ok: false; error: ListingInterestError }>
 
+export type ListingInterestResolutionError =
+  | 'listing-not-found'
+  | 'interest-not-found'
+  | 'not-listing-owner'
+  | 'interest-not-pending'
+
+export type ListingInterestResolutionResult =
+  | Readonly<{ ok: true; value: ListingInterest }>
+  | Readonly<{ ok: false; error: ListingInterestResolutionError }>
+
 export const expressListingInterest = (
   listing: GameListing | null,
   playerId: PlayerId,
@@ -39,4 +49,18 @@ export const expressListingInterest = (
       createdAt,
     },
   }
+}
+
+export const resolveListingInterest = (
+  listing: GameListing | null,
+  interest: ListingInterest | null,
+  ownerId: PlayerId,
+  status: Extract<ListingInterestStatus, 'accepted' | 'declined'>,
+): ListingInterestResolutionResult => {
+  if (!listing) return { ok: false, error: 'listing-not-found' }
+  if (!interest) return { ok: false, error: 'interest-not-found' }
+  if (listing.ownerId !== ownerId) return { ok: false, error: 'not-listing-owner' }
+  if (interest.status !== 'pending') return { ok: false, error: 'interest-not-pending' }
+
+  return { ok: true, value: { ...interest, status } }
 }

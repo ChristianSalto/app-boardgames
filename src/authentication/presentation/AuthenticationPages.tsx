@@ -94,6 +94,7 @@ export function LoginPage() {
 
   return (
     <AuthPageLayout
+      cardClassName="auth-card--login"
       description="Inicia sesión para organizar partidas y solicitar plaza en Mesa Abierta."
       eyebrow="Comunidad de juegos de mesa"
       title="Bienvenido de nuevo"
@@ -184,6 +185,7 @@ export function RegisterPage() {
 
   return (
     <AuthPageLayout
+      cardClassName="auth-card--register"
       description="Crea una cuenta para empezar a organizar y compartir partidas."
       eyebrow="Comunidad de juegos de mesa"
       title="Crea tu cuenta"

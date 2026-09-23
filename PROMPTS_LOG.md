@@ -225,3 +225,10 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** validar el vertical slice de anuncios de venta/intercambio dentro de la SPA con Domain/Application reales y datos solo en memoria.
 - **Agente:** FrontendAgent.
 - **Resultado:** Explorar incorpora un bloque secundario de Juegos de la comunidad; existen listado, detalle, interés privado pendiente, formulario de publicar/editar/cerrar y Mis anuncios dentro de Perfil. No se conecta Firestore, Storage ni Rules; los datos se pierden al recargar y queda pendiente revisión humana.
+
+## PROMPT-007D — Game Listings Firestore & Storage Integration
+
+- **Fecha:** 2026-09-12
+- **Objetivo:** sustituir la infraestructura runtime en memoria de anuncios por Firestore y Storage Emulator, manteniendo los límites de Domain/Application y habilitando anuncios compartidos entre sesiones autenticadas.
+- **Agente:** FrontendAgent especializado en Firebase.
+- **Resultado:** adaptadores Firestore/Storage, subida de una portada y estructura de subcolecciones incorporados; Rules e índices de base añadidos para desarrollo local. El endurecimiento formal queda para 007E.

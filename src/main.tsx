@@ -9,7 +9,9 @@ import { createFirestorePlayerRepository } from './players/infrastructure/firest
 import { createFirestoreGameSessionRepository } from './game-sessions/infrastructure/firestoreGameSessionRepository'
 import { createFirestoreParticipationRequestRepository } from './game-sessions/infrastructure/firestoreParticipationRequestRepository'
 import { CurrentPlayerProvider } from './players/presentation/CurrentPlayerProvider'
-import { createInMemoryGameListingStore } from './game-listings/infrastructure/inMemoryGameListingStore'
+import { createFirestoreGameListingRepository } from './game-listings/infrastructure/firestoreGameListingRepository'
+import { createFirestoreListingInterestRepository } from './game-listings/infrastructure/firestoreListingInterestRepository'
+import { createFirebaseListingImageRepository } from './game-listings/infrastructure/firebaseListingImageRepository'
 import './styles/main.scss'
 
 const rootElement = document.getElementById('root')
@@ -23,7 +25,9 @@ const authenticationGateway = createFirebaseAuthenticationGateway(firebaseInfras
 const playerRepository = createFirestorePlayerRepository(firebaseInfrastructure.firestore)
 const gameSessionRepository = createFirestoreGameSessionRepository(firebaseInfrastructure.firestore)
 const participationRequestRepository = createFirestoreParticipationRequestRepository(firebaseInfrastructure.firestore)
-const gameListingStore = createInMemoryGameListingStore()
+const gameListingRepository = createFirestoreGameListingRepository(firebaseInfrastructure.firestore)
+const listingInterestRepository = createFirestoreListingInterestRepository(firebaseInfrastructure.firestore)
+const listingImageRepository = createFirebaseListingImageRepository(firebaseInfrastructure.storage)
 const listingCommandDependencies = {
   createId: () => `listing-${crypto.randomUUID()}`,
   now: () => new Date().toISOString(),
@@ -38,8 +42,9 @@ createRoot(rootElement).render(
             gameSessionRepository={gameSessionRepository}
             participationRequestRepository={participationRequestRepository}
             playerRepository={playerRepository}
-            gameListingRepository={gameListingStore.gameListingRepository}
-            listingInterestRepository={gameListingStore.listingInterestRepository}
+            gameListingRepository={gameListingRepository}
+            listingInterestRepository={listingInterestRepository}
+            listingImageRepository={listingImageRepository}
             listingCommandDependencies={listingCommandDependencies}
           />
         </CurrentPlayerProvider>

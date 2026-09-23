@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { usePrototype } from '../../app/PrototypeContext'
 import type { GameListing } from '../domain/gameListing'
-import type { ListingInterest } from '../domain/listingInterest'
+import type { ListingInterest, ListingInterestStatus } from '../domain/listingInterest'
+import type { Player } from '../../players/types'
 import { useGameListings } from './GameListingsProvider'
 import { formatListingPrice, getListingConditionLabel } from './listingPresentation'
 
@@ -12,15 +13,26 @@ export function GameListingDetailPage() {
   const { listingId } = useParams()
   const location = useLocation()
   const locationState = location.state as DetailLocationState | null
-  const { currentPlayerId, players } = usePrototype()
-  const { closeListing, expressInterest, getInterest, getListing } = useGameListings()
+  const { currentPlayerId, getPlayer, players } = usePrototype()
+  const {
+    acceptInterest,
+    closeListing,
+    declineInterest,
+    expressInterest,
+    getInterest,
+    getListing,
+    getOwnerInterests,
+  } = useGameListings()
   const [listing, setListing] = useState<GameListing | null>(null)
   const [interest, setInterest] = useState<ListingInterest | null>(null)
+  const [ownerInterests, setOwnerInterests] = useState<readonly ListingInterest[]>([])
+  const [interestedPlayers, setInterestedPlayers] = useState<Readonly<Record<string, Player>>>({})
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState(
     locationState?.created ? 'Anuncio publicado correctamente.' : locationState?.edited ? 'Cambios guardados correctamente.' : '',
   )
   const [confirmingClose, setConfirmingClose] = useState(false)
+  const [resolvingInterestId, setResolvingInterestId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!listingId) return
@@ -29,17 +41,25 @@ export function GameListingDetailPage() {
     Promise.all([
       getListing(listingId),
       getInterest(listingId),
-    ]).then(([nextListing, nextInterest]) => {
+    ]).then(async ([nextListing, nextInterest]) => {
+      const nextOwnerInterests = nextListing?.ownerId === currentPlayerId
+        ? await getOwnerInterests(listingId)
+        : []
+      const profiles = await Promise.all(nextOwnerInterests.map((item) => getPlayer(item.playerId)))
       if (!mounted) return
       setListing(nextListing)
       setInterest(nextInterest)
+      setOwnerInterests(nextOwnerInterests)
+      setInterestedPlayers(profiles.reduce<Readonly<Record<string, Player>>>((byId, player) => (
+        player ? { ...byId, [player.id]: player } : byId
+      ), {}))
     }).catch(() => {
       if (mounted) setListing(null)
     }).finally(() => {
       if (mounted) setLoading(false)
     })
     return () => { mounted = false }
-  }, [getInterest, getListing, listingId])
+  }, [currentPlayerId, getInterest, getListing, getOwnerInterests, getPlayer, listingId])
 
   const owner = useMemo(
     () => players.find((player) => player.id === listing?.ownerId),
@@ -82,10 +102,35 @@ export function GameListingDetailPage() {
     setMessage('No se ha podido cerrar el anuncio. Inténtalo de nuevo.')
   }
 
+  const handleResolveInterest = async (
+    playerId: string,
+    status: Extract<ListingInterestStatus, 'accepted' | 'declined'>,
+  ) => {
+    if (!listing) return
+    setResolvingInterestId(playerId)
+    try {
+      const result = status === 'accepted'
+        ? await acceptInterest(listing.id, playerId)
+        : await declineInterest(listing.id, playerId)
+      if (!result.ok) {
+        setMessage('No hemos podido actualizar este interés. Inténtalo de nuevo.')
+        return
+      }
+      setOwnerInterests((current) => current.map((item) => (
+        item.playerId === playerId ? result.value : item
+      )))
+      setMessage(status === 'accepted'
+        ? 'Has aceptado el interés. El juego sigue disponible hasta que decidas cerrarlo.'
+        : 'Has rechazado el interés.')
+    } finally {
+      setResolvingInterestId(null)
+    }
+  }
+
   return (
     <section className="page-container listing-detail-page">
       <nav aria-label="Migas de pan" className="breadcrumb">
-        <ol><li><Link to="/listings">Juegos de la comunidad</Link></li><li aria-current="page">{listing.gameName}</li></ol>
+        <ol><li><Link to="/">Explorar</Link></li><li aria-current="page">{listing.gameName}</li></ol>
       </nav>
       {message ? <div className="feedback-banner" role="status"><span aria-hidden="true">✓</span><p>{message}</p></div> : null}
 
@@ -110,6 +155,7 @@ export function GameListingDetailPage() {
 
         <aside className="listing-detail-aside" aria-label="Acciones del anuncio">
           {isOwner ? (
+            <>
             <div className="participation-panel">
               <p className="eyebrow">Tu anuncio</p>
               <h2>{listing.status === 'active' ? 'Gestiona tu publicación' : 'Anuncio cerrado'}</h2>
@@ -118,6 +164,13 @@ export function GameListingDetailPage() {
               {confirmingClose ? <div className="inline-confirm" role="group" aria-label="Confirmar cierre del anuncio"><p>¿Cerrar este anuncio? Dejará de aparecer en descubrimiento.</p><button className="button button--danger" onClick={() => void handleClose()} type="button">Sí, cerrar anuncio</button><button className="button button--ghost" onClick={() => setConfirmingClose(false)} type="button">Volver</button></div> : null}
               <ListingPrivacyNote />
             </div>
+            <OwnerInterestPanel
+              interests={ownerInterests}
+              onResolve={handleResolveInterest}
+              players={interestedPlayers}
+              resolvingInterestId={resolvingInterestId}
+            />
+            </>
           ) : <InterestPanel interest={interest} listing={listing} onInterest={handleInterest} />}
         </aside>
 
@@ -149,12 +202,51 @@ function InterestPanel({
   readonly onInterest: () => Promise<void>
 }) {
   if (listing.status === 'closed') return <div className="participation-panel participation-panel--muted"><p className="eyebrow">No disponible</p><h2>Este anuncio está cerrado</h2><p>Ya no admite nuevos intereses.</p><ListingPrivacyNote /></div>
-  if (interest?.status === 'pending') return <div className="participation-panel participation-panel--pending"><p className="eyebrow">Tu interés</p><h2>Interés enviado</h2><p>La persona propietaria puede revisarlo. No es una reserva del juego.</p><ListingPrivacyNote /></div>
-  if (interest?.status === 'accepted') return <div className="participation-panel participation-panel--success"><p className="eyebrow">Interés aceptado</p><h2>Podéis continuar fuera de la app</h2><p>La operación sigue sin estar gestionada por Mesa Abierta.</p><ListingPrivacyNote /></div>
-  if (interest?.status === 'declined') return <div className="participation-panel participation-panel--muted"><p className="eyebrow">Interés no aceptado</p><h2>Esta vez no ha seguido adelante</h2><p>El anuncio puede seguir disponible para otras personas.</p><ListingPrivacyNote /></div>
+  if (interest?.status === 'pending') return <div className="participation-panel participation-panel--pending"><p className="eyebrow">Tu interés</p><h2>Interés enviado</h2><p>Has mostrado interés. Pendiente de respuesta.</p><ListingPrivacyNote /></div>
+  if (interest?.status === 'accepted') return <div className="participation-panel participation-panel--success"><p className="eyebrow">Interés aceptado</p><h2>Tu interés ha sido aceptado</h2><p>El propietario ha aceptado tu interés.</p><ListingPrivacyNote /></div>
+  if (interest?.status === 'declined') return <div className="participation-panel participation-panel--muted"><p className="eyebrow">Interés no aceptado</p><h2>Esta vez no ha seguido adelante</h2><p>El propietario no ha aceptado tu interés.</p><ListingPrivacyNote /></div>
 
   return <div className="participation-panel"><p className="eyebrow">Anuncio activo</p><h2>¿Te interesa este juego?</h2><p>Envía una señal privada a la persona propietaria. No supone una reserva.</p><button className="button button--primary button--wide" onClick={() => void onInterest()} type="button">Me interesa</button><ListingPrivacyNote /></div>
 }
+
+function OwnerInterestPanel({
+  interests,
+  onResolve,
+  players,
+  resolvingInterestId,
+}: {
+  readonly interests: readonly ListingInterest[]
+  readonly onResolve: (playerId: string, status: Extract<ListingInterestStatus, 'accepted' | 'declined'>) => Promise<void>
+  readonly players: Readonly<Record<string, Player>>
+  readonly resolvingInterestId: string | null
+}) {
+  return (
+    <section className="content-block requests-block" aria-labelledby="listing-interests-title">
+      <h2 id="listing-interests-title">Personas interesadas</h2>
+      {interests.length === 0 ? <p className="inline-empty">No hay personas interesadas todavía.</p> : (
+        <ul className="request-list">
+          {interests.map((item) => {
+            const isResolving = resolvingInterestId === item.playerId
+            return <li className="request-card" key={item.playerId}>
+              <strong>{players[item.playerId]?.displayName ?? 'Miembro de Mesa Abierta'}</strong>
+              <p>Estado: {interestStatusLabel(item.status)}</p>
+              {item.status === 'pending' ? <div className="request-card__actions">
+                <button className="button button--primary" disabled={isResolving} onClick={() => void onResolve(item.playerId, 'accepted')} type="button">Aceptar</button>
+                <button className="button button--secondary" disabled={isResolving} onClick={() => void onResolve(item.playerId, 'declined')} type="button">Rechazar</button>
+              </div> : null}
+            </li>
+          })}
+        </ul>
+      )}
+    </section>
+  )
+}
+
+const interestStatusLabel = (status: ListingInterestStatus) => ({
+  pending: 'Pendiente',
+  accepted: 'Aceptado',
+  declined: 'Rechazado',
+}[status])
 
 function ListingPrivacyNote() {
   return <p className="listing-privacy-note">No se muestran teléfonos ni emails. Un interés no reserva el juego ni completa una operación.</p>

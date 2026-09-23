@@ -7,11 +7,12 @@ import {
   type ListingCondition,
   type ListingType,
 } from '../domain/gameListing'
+import type { GameListingCommandError } from '../application/gameListings'
 import { useGameListings } from './GameListingsProvider'
 
 type FormState = Readonly<{
   gameName: string
-  imageUrl: string
+  imageFile: File | null
   description: string
   condition: ListingCondition
   listingType: ListingType
@@ -30,7 +31,7 @@ const conditionLabels: Record<ListingCondition, string> = {
 
 const initialForm: FormState = {
   gameName: '',
-  imageUrl: '',
+  imageFile: null,
   description: '',
   condition: 'good',
   listingType: 'sale',
@@ -38,10 +39,14 @@ const initialForm: FormState = {
   district: '',
 }
 
-const validate = (form: FormState): FormErrors => {
+const validImageTypes = ['image/jpeg', 'image/png', 'image/webp'] as const
+
+const validate = (form: FormState, requiresImage: boolean): FormErrors => {
   const errors: FormErrors = {}
   if (!form.gameName.trim()) errors.gameName = 'Indica el nombre del juego.'
-  if (!form.imageUrl.trim()) errors.imageUrl = 'Añade una URL para la imagen representativa.'
+  if (requiresImage && !form.imageFile) errors.imageFile = 'Selecciona una imagen representativa.'
+  if (form.imageFile && !validImageTypes.includes(form.imageFile.type as (typeof validImageTypes)[number])) errors.imageFile = 'Usa una imagen JPEG, PNG o WebP.'
+  if (form.imageFile && form.imageFile.size > 5 * 1024 * 1024) errors.imageFile = 'La imagen no puede superar 5 MB.'
   if (!form.description.trim()) errors.description = 'Añade una breve descripción del juego.'
   if (!form.district) errors.district = 'Selecciona una zona o distrito.'
   if (form.listingType === 'sale') {
@@ -51,9 +56,8 @@ const validate = (form: FormState): FormErrors => {
   return errors
 }
 
-const asInput = (form: FormState): GameListingInput => ({
+const asInput = (form: FormState): Omit<GameListingInput, 'imageUrl'> => ({
   gameName: form.gameName,
-  imageUrl: form.imageUrl,
   description: form.description,
   condition: form.condition,
   listingType: form.listingType,
@@ -61,6 +65,26 @@ const asInput = (form: FormState): GameListingInput => ({
   city: 'Madrid',
   district: form.district,
 })
+
+const asImageUpload = async (file: File) => ({
+  bytes: new Uint8Array(await file.arrayBuffer()),
+  contentType: file.type as (typeof validImageTypes)[number],
+})
+
+const submissionErrorMessage = (error: GameListingCommandError) => {
+  switch (error) {
+    case 'image-upload-failed':
+      return 'No hemos podido subir la imagen. Comprueba tu conexión e inténtalo de nuevo.'
+    case 'image-url-failed':
+      return 'La imagen se ha subido, pero no hemos podido prepararla para el anuncio. Inténtalo de nuevo.'
+    case 'listing-persistence-failed':
+      return 'No hemos podido publicar el anuncio. Inténtalo de nuevo.'
+    case 'invalid-input':
+      return 'Revisa los datos del anuncio e inténtalo de nuevo.'
+    default:
+      return 'Ha ocurrido un problema inesperado al publicar el anuncio. Inténtalo de nuevo.'
+  }
+}
 
 export function ListingFormPage() {
   const { listingId } = useParams()
@@ -70,12 +94,13 @@ export function ListingFormPage() {
   const isEditing = Boolean(listingId)
   const [form, setForm] = useState<FormState>(initialForm)
   const [errors, setErrors] = useState<FormErrors>({})
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     if (!editingListing) return
     setForm({
       gameName: editingListing.gameName,
-      imageUrl: editingListing.imageUrl,
+      imageFile: null,
       description: editingListing.description,
       condition: editingListing.condition,
       listingType: editingListing.listingType,
@@ -85,7 +110,7 @@ export function ListingFormPage() {
   }, [editingListing])
 
   if (isEditing && (!editingListing || editingListing.status === 'closed')) {
-    return <section className="page-container page-section"><div className="empty-state"><h1>No puedes editar este anuncio</h1><p>Solo puedes editar un anuncio activo que te pertenezca.</p><Link className="button button--primary" to="/profile">Volver a Mis anuncios</Link></div></section>
+    return <section className="page-container page-section"><div className="empty-state"><h1>No puedes editar este anuncio</h1><p>Solo puedes editar un anuncio activo que te pertenezca.</p><Link className="button button--primary" to="/">Volver a Explorar</Link></div></section>
   }
 
   const update = <Key extends keyof FormState>(key: Key, value: FormState[Key]) => {
@@ -99,21 +124,29 @@ export function ListingFormPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const nextErrors = validate(form)
+    const nextErrors = validate(form, !isEditing)
     if (Object.keys(nextErrors).length > 0) {
       setErrors(nextErrors)
       requestAnimationFrame(() => document.getElementById('listing-form-errors')?.focus())
       return
     }
 
-    const result = isEditing && editingListing
-      ? await updateListing(editingListing.id, asInput(form))
-      : await createListing(asInput(form))
-    if (!result.ok) {
-      setErrors({ gameName: 'No se ha podido guardar el anuncio. Revisa la información e inténtalo de nuevo.' })
-      return
+    setErrors({})
+    setSubmitting(true)
+    try {
+      const result = isEditing && editingListing
+        ? await updateListing(editingListing.id, asInput(form), form.imageFile ? await asImageUpload(form.imageFile) : undefined)
+        : await createListing(asInput(form), await asImageUpload(form.imageFile!))
+      if (!result.ok) {
+        setErrors({ imageFile: submissionErrorMessage(result.error) })
+        return
+      }
+      navigate(`/listings/${result.value.id}`, { state: { [isEditing ? 'edited' : 'created']: true } })
+    } catch {
+      setErrors({ imageFile: 'No se ha podido procesar la imagen seleccionada. Inténtalo de nuevo.' })
+    } finally {
+      setSubmitting(false)
     }
-    navigate(`/listings/${result.value.id}`, { state: { [isEditing ? 'edited' : 'created']: true } })
   }
 
   return (
@@ -135,9 +168,10 @@ export function ListingFormPage() {
           </div>
           <div className="field form-field--wide">
             <label className="field__label" htmlFor="listing-image"><span>Imagen representativa</span><span className="field__requirement">Obligatorio</span></label>
-            <input aria-describedby={`listing-image-help${errors.imageUrl ? ' listing-image-error' : ''}`} aria-invalid={Boolean(errors.imageUrl)} id="listing-image" onChange={(event) => update('imageUrl', event.target.value)} placeholder="https://ejemplo.com/mi-juego.jpg" required type="url" value={form.imageUrl} />
-            <p className="field__help" id="listing-image-help">En este prototipo se usa una URL de imagen. La subida real se resolverá más adelante.</p>
-            {errors.imageUrl ? <p className="field__error" id="listing-image-error">{errors.imageUrl}</p> : null}
+            <input accept="image/jpeg,image/png,image/webp" aria-describedby={`listing-image-help${errors.imageFile ? ' listing-image-error' : ''}`} aria-invalid={Boolean(errors.imageFile)} id="listing-image" onChange={(event) => update('imageFile', event.target.files?.[0] ?? null)} required={!isEditing} type="file" />
+            <p className="field__help" id="listing-image-help">JPEG, PNG o WebP, hasta 5 MB.{isEditing ? ' Si no eliges otra imagen, se conservará la actual.' : ''}</p>
+            {form.imageFile ? <p className="field__help">Archivo seleccionado: {form.imageFile.name}</p> : null}
+            {errors.imageFile ? <p className="field__error" id="listing-image-error">{errors.imageFile}</p> : null}
           </div>
           <div className="field form-field--wide">
             <label className="field__label" htmlFor="listing-description"><span>Descripción</span><span className="field__requirement">Obligatorio</span></label>
@@ -161,7 +195,7 @@ export function ListingFormPage() {
             {errors.district ? <p className="field__error" id="listing-district-error">{errors.district}</p> : null}
           </div>
         </div>
-        <div className="form-actions"><button className="button button--primary form-submit" type="submit">{isEditing ? 'Guardar cambios' : 'Publicar anuncio'}</button></div>
+        <div className="form-actions"><button className="button button--primary form-submit" disabled={submitting} type="submit">{submitting ? 'Guardando…' : isEditing ? 'Guardar cambios' : 'Publicar anuncio'}</button></div>
       </form>
     </section>
   )

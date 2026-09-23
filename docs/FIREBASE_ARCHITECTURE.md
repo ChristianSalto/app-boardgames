@@ -77,6 +77,14 @@ El modelo actual conserva una lista desnormalizada de identificadores pendientes
 
 ## Frontera Firebase y aplicación
 
+## Game Listings: persistencia local (PROMPT-007D)
+
+`game-listings` persiste anuncios en `gameListings/{listingId}` e intereses y handoffs en las subcolecciones `interests/{playerId}` y `contactHandoffs/{playerId}`. Los adaptadores Firestore convierten `Timestamp` a ISO antes de cruzar hacia Application.
+
+La portada se sube al Storage Emulator en `game-listings/{ownerId}/{listingId}/cover`; Firestore conserva solo `imageUrl`. Presentation transforma el archivo elegido en bytes y tipo MIME permitido; Domain no recibe `File`, `Blob`, referencias Storage ni tipos Firebase. Auth, Firestore y Storage usan `demo-mesa-abierta` localmente.
+
+Las Rules de estas rutas son una baseline temporal de autenticación y ownership. 007E deberá endurecerlas y cubrirlas formalmente con escenarios ALLOW/DENY.
+
 Se mantiene la dirección:
 
 ```mermaid

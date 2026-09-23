@@ -228,5 +228,72 @@ service cloud.firestore {
         && hasValidRequestShape(request.resource.data)
         && isOrganizerResolution();
     }
+
+    match /gameListings/{listingId} {
+      function listingShape(data) {
+        return data.keys().hasAll(['ownerId', 'gameName', 'imageUrl', 'description', 'condition', 'listingType', 'city', 'district', 'status', 'createdAt'])
+          && data.keys().hasOnly(['ownerId', 'gameName', 'imageUrl', 'description', 'condition', 'listingType', 'priceInCents', 'city', 'district', 'status', 'createdAt'])
+          && data.ownerId is string
+          && isNonEmptyString(data.gameName, 120)
+          && isNonEmptyString(data.imageUrl, 1500)
+          && isNonEmptyString(data.description, 500)
+          && data.condition in ['new', 'likeNew', 'good', 'used']
+          && data.city == 'Madrid'
+          && isNonEmptyString(data.district, 80)
+          && data.status in ['active', 'closed']
+          && data.createdAt is timestamp
+          && ((data.listingType == 'sale' && data.priceInCents is int && data.priceInCents > 0)
+            || (data.listingType == 'trade' && !data.keys().hasAny(['priceInCents'])));
+      }
+
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.auth.uid == request.resource.data.ownerId
+        && request.resource.data.status == 'active'
+        && listingShape(request.resource.data);
+      allow update: if isAuthenticated()
+        && request.auth.uid == resource.data.ownerId
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && resource.data.status == 'active'
+        && request.resource.data.status in ['active', 'closed']
+        && listingShape(request.resource.data);
+
+      match /interests/{playerId} {
+        function interestShape(data) {
+          return data.keys().hasOnly(['playerId', 'status', 'createdAt'])
+            && data.playerId == playerId
+            && data.status in ['pending', 'accepted', 'declined']
+            && data.createdAt is timestamp;
+        }
+
+        allow get, list: if isAuthenticated()
+          && (request.auth.uid == playerId || request.auth.uid == get(/databases/$(database)/documents/gameListings/$(listingId)).data.ownerId);
+        allow create: if isAuthenticated()
+          && request.auth.uid == playerId
+          && get(/databases/$(database)/documents/gameListings/$(listingId)).data.status == 'active'
+          && get(/databases/$(database)/documents/gameListings/$(listingId)).data.ownerId != playerId
+          && request.resource.data.status == 'pending'
+          && interestShape(request.resource.data);
+        allow update: if isAuthenticated()
+          && request.auth.uid == get(/databases/$(database)/documents/gameListings/$(listingId)).data.ownerId
+          && resource.data.status == 'pending'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+          && request.resource.data.status in ['accepted', 'declined']
+          && interestShape(request.resource.data);
+      }
+
+      match /contactHandoffs/{playerId} {
+        allow get: if isAuthenticated()
+          && (request.auth.uid == playerId || request.auth.uid == resource.data.sharedByOwnerId);
+        allow create, update: if isAuthenticated()
+          && request.auth.uid == get(/databases/$(database)/documents/gameListings/$(listingId)).data.ownerId
+          && request.resource.data.interestedPlayerId == playerId
+          && request.resource.data.sharedByOwnerId == request.auth.uid
+          && request.resource.data.method in ['email', 'phone', 'other']
+          && isNonEmptyString(request.resource.data.value, 200)
+          && get(/databases/$(database)/documents/gameListings/$(listingId)/interests/$(playerId)).data.status == 'accepted';
+      }
+    }
   }
 }

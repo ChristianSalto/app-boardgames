@@ -20,7 +20,7 @@ import {
   writeBatch,
 } from 'firebase/firestore'
 
-const projectId = 'demo-mesa-abierta'
+const projectId = process.env.MESA_ABIERTA_RULES_PROJECT_ID ?? 'demo-mesa-abierta'
 const rules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8')
 let environment
 

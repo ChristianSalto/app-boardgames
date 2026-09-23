@@ -2,6 +2,7 @@ import type { GameListingRepository } from '../application/gameListingRepository
 import type { ListingInterestRepository } from '../application/listingInterestRepository.ts'
 import type { GameListing } from '../domain/gameListing.ts'
 import type { ListingInterest } from '../domain/listingInterest.ts'
+import type { ListingContactHandoff } from '../domain/listingContactHandoff.ts'
 
 export type InMemoryGameListingStore = Readonly<{
   gameListingRepository: GameListingRepository
@@ -58,6 +59,7 @@ const sampleListings: readonly GameListing[] = [
 export const createInMemoryGameListingStore = (): InMemoryGameListingStore => {
   let listings: readonly GameListing[] = sampleListings
   let interests: readonly ListingInterest[] = []
+  let handoffs: readonly ListingContactHandoff[] = []
 
   const gameListingRepository: GameListingRepository = {
     create: async (listing) => {
@@ -89,6 +91,18 @@ export const createInMemoryGameListingStore = (): InMemoryGameListingStore => {
     },
     getByListingAndPlayer: async (listingId, playerId) => interests.find(
       (interest) => interest.listingId === listingId && interest.playerId === playerId,
+    ) ?? null,
+    getForListing: async (listingId) => interests.filter((interest) => interest.listingId === listingId),
+    resolve: async (interest) => {
+      interests = interests.map((item) => item.listingId === interest.listingId && item.playerId === interest.playerId ? interest : item)
+      return interest
+    },
+    saveContactHandoff: async (handoff) => {
+      handoffs = [...handoffs.filter((item) => item.listingId !== handoff.listingId || item.interestedPlayerId !== handoff.interestedPlayerId), handoff]
+      return handoff
+    },
+    getContactHandoff: async (listingId, playerId) => handoffs.find(
+      (handoff) => handoff.listingId === listingId && handoff.interestedPlayerId === playerId,
     ) ?? null,
   }
 
