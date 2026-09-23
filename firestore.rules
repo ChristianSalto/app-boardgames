@@ -22,6 +22,14 @@ service cloud.firestore {
       return /databases/$(database)/documents/participationRequests/$(requestId);
     }
 
+    function gameListingPath(listingId) {
+      return /databases/$(database)/documents/gameListings/$(listingId);
+    }
+
+    function listingInterestPath(listingId, playerId) {
+      return /databases/$(database)/documents/gameListings/$(listingId)/interests/$(playerId);
+    }
+
     function isSessionOrganizer(sessionId) {
       return isAuthenticated()
         && get(sessionPath(sessionId)).data.organizerId == request.auth.uid;
@@ -246,37 +254,65 @@ service cloud.firestore {
             || (data.listingType == 'trade' && !data.keys().hasAny(['priceInCents'])));
       }
 
-      allow read: if isAuthenticated();
+      function canReadListing() {
+        return isAuthenticated()
+          && (
+            resource.data.status == 'active'
+            || resource.data.ownerId == request.auth.uid
+            || exists(listingInterestPath(listingId, request.auth.uid))
+          );
+      }
+
+      function isOwnerUpdate() {
+        let changedFields = request.resource.data.diff(resource.data).affectedKeys();
+        return request.auth.uid == resource.data.ownerId
+          && request.resource.data.ownerId == resource.data.ownerId
+          && request.resource.data.createdAt == resource.data.createdAt
+          && resource.data.status == 'active'
+          && (
+            (request.resource.data.status == 'active'
+              && changedFields.hasOnly([
+                'gameName', 'imageUrl', 'description', 'condition', 'listingType',
+                'priceInCents', 'city', 'district'
+              ]))
+            || (request.resource.data.status == 'closed'
+              && changedFields.hasOnly(['status']))
+          );
+      }
+
+      allow get, list: if canReadListing();
       allow create: if isAuthenticated()
         && request.auth.uid == request.resource.data.ownerId
         && request.resource.data.status == 'active'
         && listingShape(request.resource.data);
       allow update: if isAuthenticated()
-        && request.auth.uid == resource.data.ownerId
-        && request.resource.data.ownerId == resource.data.ownerId
-        && request.resource.data.createdAt == resource.data.createdAt
-        && resource.data.status == 'active'
-        && request.resource.data.status in ['active', 'closed']
-        && listingShape(request.resource.data);
+        && listingShape(request.resource.data)
+        && isOwnerUpdate();
 
       match /interests/{playerId} {
         function interestShape(data) {
-          return data.keys().hasOnly(['playerId', 'status', 'createdAt'])
+          return data.keys().hasAll(['playerId', 'status', 'createdAt'])
+            && data.keys().hasOnly(['playerId', 'status', 'createdAt'])
             && data.playerId == playerId
             && data.status in ['pending', 'accepted', 'declined']
             && data.createdAt is timestamp;
         }
 
+        function parentListing() {
+          return get(gameListingPath(listingId)).data;
+        }
+
         allow get, list: if isAuthenticated()
-          && (request.auth.uid == playerId || request.auth.uid == get(/databases/$(database)/documents/gameListings/$(listingId)).data.ownerId);
+          && (request.auth.uid == playerId || request.auth.uid == parentListing().ownerId);
         allow create: if isAuthenticated()
           && request.auth.uid == playerId
-          && get(/databases/$(database)/documents/gameListings/$(listingId)).data.status == 'active'
-          && get(/databases/$(database)/documents/gameListings/$(listingId)).data.ownerId != playerId
+          && parentListing().status == 'active'
+          && parentListing().ownerId != playerId
           && request.resource.data.status == 'pending'
           && interestShape(request.resource.data);
         allow update: if isAuthenticated()
-          && request.auth.uid == get(/databases/$(database)/documents/gameListings/$(listingId)).data.ownerId
+          && request.auth.uid == parentListing().ownerId
+          && parentListing().status == 'active'
           && resource.data.status == 'pending'
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
           && request.resource.data.status in ['accepted', 'declined']
@@ -284,15 +320,38 @@ service cloud.firestore {
       }
 
       match /contactHandoffs/{playerId} {
+        function handoffShape(data) {
+          return data.keys().hasAll([
+              'interestedPlayerId', 'sharedByOwnerId', 'method', 'value', 'createdAt'
+            ])
+            && data.keys().hasOnly([
+              'interestedPlayerId', 'sharedByOwnerId', 'method', 'value', 'createdAt'
+            ])
+            && data.interestedPlayerId == playerId
+            && data.sharedByOwnerId == get(gameListingPath(listingId)).data.ownerId
+            && data.method in ['email', 'phone', 'other']
+            && isNonEmptyString(data.value, 200)
+            && data.createdAt is timestamp;
+        }
+
+        function hasAcceptedInterest() {
+          return get(listingInterestPath(listingId, playerId)).data.status == 'accepted';
+        }
+
+        function isListingOwner() {
+          return isAuthenticated()
+            && request.auth.uid == get(gameListingPath(listingId)).data.ownerId;
+        }
+
         allow get: if isAuthenticated()
-          && (request.auth.uid == playerId || request.auth.uid == resource.data.sharedByOwnerId);
-        allow create, update: if isAuthenticated()
-          && request.auth.uid == get(/databases/$(database)/documents/gameListings/$(listingId)).data.ownerId
-          && request.resource.data.interestedPlayerId == playerId
-          && request.resource.data.sharedByOwnerId == request.auth.uid
-          && request.resource.data.method in ['email', 'phone', 'other']
-          && isNonEmptyString(request.resource.data.value, 200)
-          && get(/databases/$(database)/documents/gameListings/$(listingId)/interests/$(playerId)).data.status == 'accepted';
+          && (request.auth.uid == playerId || isListingOwner());
+        allow create: if isListingOwner()
+          && hasAcceptedInterest()
+          && handoffShape(request.resource.data);
+        allow update: if isListingOwner()
+          && hasAcceptedInterest()
+          && handoffShape(request.resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['method', 'value']);
       }
     }
   }

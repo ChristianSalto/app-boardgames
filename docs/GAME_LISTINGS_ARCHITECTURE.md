@@ -212,7 +212,7 @@ gameListings/{listingId}
 └── contactHandoffs/{playerId}
 ```
 
-El documento de anuncio contiene únicamente su representación publicable. El identificador del documento se mapea a `GameListing.id`; `createdAt` se persiste como `Timestamp` y se convierte al instante interno en Infrastructure. `price` se persiste como cantidad en céntimos y moneda, y queda ausente para intercambio.
+El documento de anuncio contiene únicamente su representación publicable. El identificador del documento se mapea a `GameListing.id`; `createdAt` se persiste como `Timestamp` y se convierte al instante interno en Infrastructure. Para venta, el precio se persiste como `priceInCents`; la moneda continúa fijada a EUR por el contrato de Domain y no se duplica en el documento. Para intercambio, `priceInCents` queda ausente.
 
 El documento de interés usa `playerId` como identificador de documento y conserva también los campos de dominio necesarios. Esto hace idempotente la unicidad por anuncio/Player. El handoff usa el mismo identificador y permanece en una subcolección distinta para aplicar reglas y lecturas más restrictivas.
 
@@ -241,7 +241,7 @@ Se eligen subcolecciones porque las consultas actuales son por anuncio o por par
 
 No se crea una combinación para cada filtro posible. 007C debe introducir únicamente los índices que exijan las consultas realmente implementadas y registrar los enlaces de error del Emulator cuando correspondan. La búsqueda parcial por nombre no se resuelve eficientemente con Firestore; para el volumen inicial puede filtrarse sobre una página acotada o utilizar un campo normalizado si el caso de uso lo exige. Un motor de búsqueda queda fuera.
 
-## Security boundaries para 007E
+## Security boundaries consolidados en 007E
 
 ### Anuncios
 
@@ -275,6 +275,16 @@ No se crea una combinación para cada filtro posible. 007C debe introducir únic
 - no derivar el valor de claims o email de Firebase Auth.
 
 Las Rules no sustituyen las invariantes de Domain. Las operaciones sensibles deberán ejecutarse en batch o transacción cuando necesiten comprobar varios documentos. El modelo actual puede mantenerse client-only; no se justifica Cloud Functions para estas transiciones mientras las Rules puedan verificarlas de forma completa.
+
+### Baseline aplicada en 007E
+
+- Los anuncios `active` son legibles por cualquier persona autenticada. Un anuncio `closed` queda limitado a su propietario y a personas que conserven un documento de interés previo en ese anuncio; no existe lectura anónima.
+- Cerrar es una actualización exclusiva de `status`. Un anuncio cerrado no puede reabrirse, editarse ni borrarse desde el cliente.
+- Los intereses solo nacen como `pending` en un anuncio activo y son terminales tras `accepted` o `declined`. No pueden resolverse una vez cerrado el anuncio ni eliminarse desde el cliente.
+- El handoff tiene forma cerrada. Solo el propietario puede crearlo o cambiar `method`/`value` para un interés aceptado; propietario y destinatario pueden leer el documento por ruta conocida, pero no listar la subcolección ni borrarla.
+- Las portadas se limitan a la ruta `game-listings/{ownerId}/{listingId}/cover`, a propietario autenticado, JPEG/PNG/WebP y 5 MB. Su lectura requiere autenticación, igual que el discovery actual.
+- `createdAt` se protege por tipo e inmutabilidad. No se exige igualdad con `request.time` porque el adaptador actual genera el instante antes de escribir; una política de timestamp de servidor requeriría cambiar expresamente ese contrato.
+- Storage Rules no pueden verificar de forma atómica la existencia o el estado de un documento Firestore. Application/Infrastructure conservan la responsabilidad de limpiar subidas fallidas; los objetos huérfanos siguen siendo un riesgo operativo conocido.
 
 ## Estructura objetivo
 

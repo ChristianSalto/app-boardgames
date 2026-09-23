@@ -53,16 +53,20 @@ export const createFirestoreListingInterestRepository = (firestore: Firestore): 
   },
   saveContactHandoff: async (handoff) => {
     try {
-      await runTransaction(firestore, async (transaction) => {
+      return await runTransaction(firestore, async (transaction) => {
         const listingSnapshot = await transaction.get(listingReference(firestore, handoff.listingId))
         const interestSnapshot = await transaction.get(interestReference(firestore, handoff.listingId, handoff.interestedPlayerId))
+        const reference = handoffReference(firestore, handoff.listingId, handoff.interestedPlayerId)
+        const existingHandoff = await transaction.get(reference)
         if (!listingSnapshot.exists() || !interestSnapshot.exists()) throw persistenceError()
         const listing = listingSnapshot.data() as ListingDocument
         const interest = interestSnapshot.data() as InterestDocument
         if (listing.ownerId !== handoff.sharedByOwnerId || interest.status !== 'accepted') throw persistenceError()
-        transaction.set(handoffReference(firestore, handoff.listingId, handoff.interestedPlayerId), { interestedPlayerId: handoff.interestedPlayerId, sharedByOwnerId: handoff.sharedByOwnerId, method: handoff.method, value: handoff.value, createdAt: new Date(handoff.createdAt) })
+        const storedHandoff = existingHandoff.exists() ? existingHandoff.data() as HandoffDocument : null
+        const createdAt = storedHandoff?.createdAt ?? new Date(handoff.createdAt)
+        transaction.set(reference, { interestedPlayerId: handoff.interestedPlayerId, sharedByOwnerId: handoff.sharedByOwnerId, method: handoff.method, value: handoff.value, createdAt })
+        return { ...handoff, createdAt: storedHandoff?.createdAt.toDate().toISOString() ?? handoff.createdAt }
       })
-      return handoff
     } catch { throw persistenceError() }
   },
   getContactHandoff: async (listingId, playerId) => {

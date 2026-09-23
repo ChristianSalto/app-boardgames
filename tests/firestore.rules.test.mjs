@@ -21,6 +21,7 @@ import {
 } from 'firebase/firestore'
 
 const projectId = process.env.MESA_ABIERTA_RULES_PROJECT_ID ?? 'demo-mesa-abierta'
+const port = Number(process.env.MESA_ABIERTA_FIRESTORE_RULES_PORT ?? 8080)
 const rules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8')
 let environment
 
@@ -45,6 +46,37 @@ const participationRequest = (sessionId, playerId, status = 'pending') => ({
   playerId,
   status,
   createdAt: Timestamp.fromMillis(1),
+})
+const gameListing = (ownerId, overrides = {}) => {
+  const listing = {
+    ownerId,
+    gameName: 'Catan',
+    imageUrl: 'https://example.test/catan.webp',
+    description: 'Completo y en buen estado.',
+    condition: 'good',
+    listingType: 'sale',
+    priceInCents: 2500,
+    city: 'Madrid',
+    district: 'Centro',
+    status: 'active',
+    createdAt: Timestamp.fromMillis(1),
+    ...overrides,
+  }
+  if (listing.listingType === 'trade') delete listing.priceInCents
+  return listing
+}
+const listingInterest = (playerId, status = 'pending') => ({
+  playerId,
+  status,
+  createdAt: Timestamp.fromMillis(2),
+})
+const contactHandoff = (playerId, ownerId = 'a', overrides = {}) => ({
+  interestedPlayerId: playerId,
+  sharedByOwnerId: ownerId,
+  method: 'email',
+  value: 'contacto@example.test',
+  createdAt: Timestamp.fromMillis(3),
+  ...overrides,
 })
 
 const dbFor = (uid) => environment.authenticatedContext(uid).firestore()
@@ -73,7 +105,7 @@ const createPendingRequest = async (db, sessionId, playerId, currentPending = []
 before(async () => {
   environment = await initializeTestEnvironment({
     projectId,
-    firestore: { host: '127.0.0.1', port: 8080, rules },
+    firestore: { host: '127.0.0.1', port, rules },
   })
 })
 
@@ -255,11 +287,210 @@ describe('participation requests', () => {
   })
 })
 
+describe('game listings', () => {
+  test('allows an owner lifecycle, authenticated discovery and own closed history', async () => {
+    const a = dbFor('a')
+    const listingReference = doc(a, 'gameListings', 'listing-a')
+    await assertSucceeds(setDoc(listingReference, {
+      ...gameListing('a'),
+      createdAt: serverTimestamp(),
+    }))
+    await assertSucceeds(getDoc(doc(dbFor('b'), 'gameListings', 'listing-a')))
+    await assertSucceeds(getDocs(query(
+      collection(dbFor('b'), 'gameListings'),
+      where('status', '==', 'active'),
+    )))
+    await assertSucceeds(updateDoc(listingReference, { description: 'Actualizado por su propietario.' }))
+    await assertSucceeds(updateDoc(listingReference, { status: 'closed' }))
+    await assertSucceeds(getDoc(listingReference))
+    await assertSucceeds(getDocs(query(
+      collection(a, 'gameListings'),
+      where('ownerId', '==', 'a'),
+    )))
+  })
+
+  test('allows a prior interested player to read closed history but denies unrelated users', async () => {
+    await seed([
+      ['gameListings/listing-a', gameListing('a', { status: 'closed' })],
+      ['gameListings/listing-a/interests/b', listingInterest('b', 'accepted')],
+    ])
+    await assertSucceeds(getDoc(doc(dbFor('b'), 'gameListings', 'listing-a')))
+    await assertFails(getDoc(doc(dbFor('c'), 'gameListings', 'listing-a')))
+    await assertFails(getDoc(doc(anonymousDb(), 'gameListings', 'listing-a')))
+  })
+
+  test('denies impersonation, foreign edits, immutable-field changes, arbitrary fields and delete', async () => {
+    await seed([['gameListings/listing-a', gameListing('a')]])
+    await assertFails(setDoc(doc(dbFor('b'), 'gameListings', 'false-owner'), gameListing('a')))
+    await assertFails(updateDoc(doc(dbFor('b'), 'gameListings', 'listing-a'), { description: 'Intrusión' }))
+    await assertFails(updateDoc(doc(dbFor('a'), 'gameListings', 'listing-a'), { ownerId: 'b' }))
+    await assertFails(updateDoc(doc(dbFor('a'), 'gameListings', 'listing-a'), { createdAt: Timestamp.fromMillis(9) }))
+    await assertFails(updateDoc(doc(dbFor('a'), 'gameListings', 'listing-a'), { promoted: true }))
+    await assertFails(deleteDoc(doc(dbFor('a'), 'gameListings', 'listing-a')))
+    await assertFails(setDoc(doc(anonymousDb(), 'gameListings', 'anonymous'), gameListing('anonymous')))
+  })
+
+  test('denies malformed modality, price, condition, city and timestamp', async () => {
+    const a = dbFor('a')
+    const saleWithoutPrice = gameListing('a')
+    delete saleWithoutPrice.priceInCents
+    await assertFails(setDoc(doc(a, 'gameListings', 'sale-without-price'), saleWithoutPrice))
+    await assertFails(setDoc(doc(a, 'gameListings', 'invalid-price'), gameListing('a', { priceInCents: 0 })))
+    await assertFails(setDoc(doc(a, 'gameListings', 'trade-with-price'), {
+      ...gameListing('a', { listingType: 'trade' }),
+      priceInCents: 1000,
+    }))
+    await assertFails(setDoc(doc(a, 'gameListings', 'invalid-condition'), gameListing('a', { condition: 'broken' })))
+    await assertFails(setDoc(doc(a, 'gameListings', 'invalid-city'), gameListing('a', { city: 'Barcelona' })))
+    await assertFails(setDoc(doc(a, 'gameListings', 'invalid-timestamp'), gameListing('a', { createdAt: 'hoy' })))
+  })
+
+  test('enforces close as a terminal status-only transition', async () => {
+    await seed([
+      ['gameListings/closed', gameListing('a', { status: 'closed' })],
+      ['gameListings/active', gameListing('a')],
+    ])
+    const a = dbFor('a')
+    await assertFails(updateDoc(doc(a, 'gameListings', 'closed'), { status: 'active' }))
+    await assertFails(updateDoc(doc(a, 'gameListings', 'closed'), { description: 'No editable' }))
+    await assertFails(updateDoc(doc(a, 'gameListings', 'active'), {
+      status: 'closed',
+      description: 'Cierre con edición simultánea',
+    }))
+  })
+})
+
+describe('listing interests', () => {
+  test('allows self pending creation, private reads and owner resolution', async () => {
+    await seed([['gameListings/listing-a', gameListing('a')]])
+    const b = dbFor('b')
+    const interestReference = doc(b, 'gameListings', 'listing-a', 'interests', 'b')
+    await assertSucceeds(setDoc(interestReference, {
+      ...listingInterest('b'),
+      createdAt: serverTimestamp(),
+    }))
+    await assertSucceeds(getDoc(interestReference))
+    await assertSucceeds(getDoc(doc(dbFor('a'), 'gameListings', 'listing-a', 'interests', 'b')))
+    await assertSucceeds(getDocs(collection(dbFor('a'), 'gameListings', 'listing-a', 'interests')))
+    await assertSucceeds(updateDoc(doc(dbFor('a'), 'gameListings', 'listing-a', 'interests', 'b'), { status: 'accepted' }))
+
+    await seed([['gameListings/listing-a/interests/c', listingInterest('c')]])
+    await assertSucceeds(updateDoc(doc(dbFor('a'), 'gameListings', 'listing-a', 'interests', 'c'), { status: 'declined' }))
+  })
+
+  test('denies self-interest, direct acceptance, impersonation, duplicates and missing parents', async () => {
+    await seed([
+      ['gameListings/listing-a', gameListing('a')],
+      ['gameListings/listing-a/interests/b', listingInterest('b')],
+    ])
+    await assertFails(setDoc(doc(dbFor('a'), 'gameListings', 'listing-a', 'interests', 'a'), listingInterest('a')))
+    await assertFails(setDoc(doc(dbFor('c'), 'gameListings', 'listing-a', 'interests', 'c'), listingInterest('c', 'accepted')))
+    await assertFails(setDoc(doc(dbFor('b'), 'gameListings', 'listing-a', 'interests', 'c'), listingInterest('c')))
+    await assertFails(setDoc(doc(dbFor('b'), 'gameListings', 'missing', 'interests', 'b'), listingInterest('b')))
+    await assertFails(setDoc(doc(dbFor('b'), 'gameListings', 'listing-a', 'interests', 'b'), listingInterest('b')))
+  })
+
+  test('denies third-party reads and broad listing of private interests', async () => {
+    await seed([
+      ['gameListings/listing-a', gameListing('a')],
+      ['gameListings/listing-a/interests/b', listingInterest('b')],
+    ])
+    await assertFails(getDoc(doc(dbFor('c'), 'gameListings', 'listing-a', 'interests', 'b')))
+    await assertFails(getDocs(collection(dbFor('c'), 'gameListings', 'listing-a', 'interests')))
+  })
+
+  test('denies self-resolution, third-party changes, terminal transitions, timestamp changes and delete', async () => {
+    await seed([
+      ['gameListings/listing-a', gameListing('a')],
+      ['gameListings/listing-a/interests/b', listingInterest('b')],
+      ['gameListings/listing-a/interests/c', listingInterest('c', 'accepted')],
+      ['gameListings/listing-a/interests/d', listingInterest('d', 'declined')],
+    ])
+    await assertFails(updateDoc(doc(dbFor('b'), 'gameListings', 'listing-a', 'interests', 'b'), { status: 'accepted' }))
+    await assertFails(updateDoc(doc(dbFor('e'), 'gameListings', 'listing-a', 'interests', 'b'), { status: 'declined' }))
+    await assertFails(updateDoc(doc(dbFor('a'), 'gameListings', 'listing-a', 'interests', 'c'), { status: 'declined' }))
+    await assertFails(updateDoc(doc(dbFor('a'), 'gameListings', 'listing-a', 'interests', 'c'), { status: 'pending' }))
+    await assertFails(updateDoc(doc(dbFor('a'), 'gameListings', 'listing-a', 'interests', 'd'), { status: 'accepted' }))
+    await assertFails(updateDoc(doc(dbFor('a'), 'gameListings', 'listing-a', 'interests', 'b'), {
+      status: 'accepted',
+      createdAt: Timestamp.fromMillis(99),
+    }))
+    await assertFails(deleteDoc(doc(dbFor('a'), 'gameListings', 'listing-a', 'interests', 'b')))
+  })
+
+  test('denies resolving pending interests after the listing is closed', async () => {
+    await seed([
+      ['gameListings/listing-a', gameListing('a', { status: 'closed' })],
+      ['gameListings/listing-a/interests/b', listingInterest('b')],
+    ])
+    await assertFails(updateDoc(doc(dbFor('a'), 'gameListings', 'listing-a', 'interests', 'b'), { status: 'accepted' }))
+  })
+})
+
+describe('listing contact handoffs', () => {
+  test('allows the owner to create/update contact for an accepted interest and both parties to read it', async () => {
+    await seed([
+      ['gameListings/listing-a', gameListing('a')],
+      ['gameListings/listing-a/interests/b', listingInterest('b', 'accepted')],
+    ])
+    const reference = doc(dbFor('a'), 'gameListings', 'listing-a', 'contactHandoffs', 'b')
+    await assertSucceeds(setDoc(reference, contactHandoff('b')))
+    await assertSucceeds(getDoc(reference))
+    await assertSucceeds(getDoc(doc(dbFor('b'), 'gameListings', 'listing-a', 'contactHandoffs', 'b')))
+    await assertSucceeds(updateDoc(reference, { method: 'phone', value: '+34 600 000 000' }))
+  })
+
+  test('denies handoffs for pending or declined interests', async () => {
+    await seed([
+      ['gameListings/listing-a', gameListing('a')],
+      ['gameListings/listing-a/interests/b', listingInterest('b')],
+      ['gameListings/listing-a/interests/c', listingInterest('c', 'declined')],
+    ])
+    await assertFails(setDoc(doc(dbFor('a'), 'gameListings', 'listing-a', 'contactHandoffs', 'b'), contactHandoff('b')))
+    await assertFails(setDoc(doc(dbFor('a'), 'gameListings', 'listing-a', 'contactHandoffs', 'c'), contactHandoff('c')))
+  })
+
+  test('denies recipient writes, third-party reads, listing and client deletion', async () => {
+    await seed([
+      ['gameListings/listing-a', gameListing('a')],
+      ['gameListings/listing-a/interests/b', listingInterest('b', 'accepted')],
+      ['gameListings/listing-a/contactHandoffs/b', contactHandoff('b')],
+    ])
+    const path = ['gameListings', 'listing-a', 'contactHandoffs', 'b']
+    await assertFails(setDoc(doc(dbFor('b'), ...path), contactHandoff('b')))
+    await assertFails(updateDoc(doc(dbFor('b'), ...path), { value: 'otro@example.test' }))
+    await assertFails(getDoc(doc(dbFor('c'), ...path)))
+    await assertFails(getDocs(collection(dbFor('a'), 'gameListings', 'listing-a', 'contactHandoffs')))
+    await assertFails(deleteDoc(doc(dbFor('a'), ...path)))
+  })
+
+  test('denies forged identity, arbitrary fields, invalid values and immutable timestamp changes', async () => {
+    await seed([
+      ['gameListings/listing-a', gameListing('a')],
+      ['gameListings/listing-a/interests/b', listingInterest('b', 'accepted')],
+    ])
+    const reference = doc(dbFor('a'), 'gameListings', 'listing-a', 'contactHandoffs', 'b')
+    await assertFails(setDoc(reference, contactHandoff('c')))
+    await assertFails(setDoc(reference, contactHandoff('b', 'c')))
+    await assertFails(setDoc(reference, contactHandoff('b', 'a', { method: 'social' })))
+    await assertFails(setDoc(reference, contactHandoff('b', 'a', { value: '' })))
+    await assertFails(setDoc(reference, { ...contactHandoff('b'), internalNote: 'privado' }))
+    await assertFails(setDoc(reference, contactHandoff('b', 'a', { createdAt: 'hoy' })))
+
+    await seed([['gameListings/listing-a/contactHandoffs/b', contactHandoff('b')]])
+    await assertFails(updateDoc(reference, { createdAt: Timestamp.fromMillis(99) }))
+    await assertFails(updateDoc(reference, { extra: true }))
+  })
+})
+
 test('denies unauthenticated access to protected data', async () => {
   await seed([
     ['players/a', player('Ana')],
     ['gameSessions/session-a', session('a')],
     [`participationRequests/${requestId('session-a', 'b')}`, participationRequest('session-a', 'b')],
+    ['gameListings/listing-a', gameListing('a')],
+    ['gameListings/listing-a/interests/b', listingInterest('b')],
+    ['gameListings/listing-a/contactHandoffs/b', contactHandoff('b')],
   ])
   const db = anonymousDb()
   await assertFails(getDoc(doc(db, 'players', 'a')))
@@ -271,4 +502,7 @@ test('denies unauthenticated access to protected data', async () => {
     doc(db, 'participationRequests', requestId('session-a', 'anonymous')),
     participationRequest('session-a', 'anonymous'),
   ))
+  await assertFails(getDoc(doc(db, 'gameListings', 'listing-a')))
+  await assertFails(getDoc(doc(db, 'gameListings', 'listing-a', 'interests', 'b')))
+  await assertFails(getDoc(doc(db, 'gameListings', 'listing-a', 'contactHandoffs', 'b')))
 })

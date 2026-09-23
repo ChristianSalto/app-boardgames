@@ -62,3 +62,11 @@ Reduce lecturas iniciales, pero mezcla datos privados con el documento publicabl
 - 007C implementará solo Domain, Application y persistencia aprobados, con Emulator Suite.
 - 007D integrará Presentation sin acceder directamente a Firebase.
 - 007E concretará y probará las Security Rules y los índices del esquema real.
+
+## Addendum de seguridad 007E — 2026-09-23
+
+- La lectura de un anuncio cerrado queda limitada al propietario y a un usuario que conserve un interés previo en ese anuncio. Este vínculo permite consultar historial sin abrir el anuncio a cualquier usuario autenticado.
+- Los intereses son terminales y no se resuelven si el anuncio ya está cerrado.
+- Los handoffs no admiten listado, borrado ni cambio de identidades o fecha desde cliente. El propietario solo puede crear o actualizar el medio de contacto para un interés aceptado; propietario y destinatario pueden leerlo por ruta conocida.
+- La revocación y retención del contacto permanecen como decisión de producto pendiente. Hasta resolverla, se adopta la política mínima compatible y no se permite delete desde cliente.
+- Storage aplica ownership, ruta exacta, MIME y tamaño, pero no puede comprobar de manera atómica la existencia del anuncio en Firestore. La limpieza de subidas fallidas permanece en Application/Infrastructure.

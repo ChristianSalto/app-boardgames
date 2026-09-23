@@ -232,3 +232,10 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** sustituir la infraestructura runtime en memoria de anuncios por Firestore y Storage Emulator, manteniendo los límites de Domain/Application y habilitando anuncios compartidos entre sesiones autenticadas.
 - **Agente:** FrontendAgent especializado en Firebase.
 - **Resultado:** adaptadores Firestore/Storage, subida de una portada y estructura de subcolecciones incorporados; Rules e índices de base añadidos para desarrollo local. El endurecimiento formal queda para 007E.
+
+## PROMPT-007E — Game Listings Security Rules Hardening
+
+- **Fecha:** 2026-09-23
+- **Objetivo:** endurecer y validar formalmente el acceso a anuncios, intereses, handoffs privados y portadas, sin cambiar producto ni UI.
+- **Agente:** Security/FirebaseAgent.
+- **Resultado:** baseline de mínimo privilegio aplicada y cubierta con tests ALLOW/DENY aislados para Firestore y Storage; tests de Game Listings, TypeScript y build validados sin regresiones.

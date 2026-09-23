@@ -83,7 +83,11 @@ El modelo actual conserva una lista desnormalizada de identificadores pendientes
 
 La portada se sube al Storage Emulator en `game-listings/{ownerId}/{listingId}/cover`; Firestore conserva solo `imageUrl`. Presentation transforma el archivo elegido en bytes y tipo MIME permitido; Domain no recibe `File`, `Blob`, referencias Storage ni tipos Firebase. Auth, Firestore y Storage usan `demo-mesa-abierta` localmente.
 
-Las Rules de estas rutas son una baseline temporal de autenticación y ownership. 007E deberá endurecerlas y cubrirlas formalmente con escenarios ALLOW/DENY.
+La baseline de 007E aplica forma cerrada, ownership, estados terminales y audiencia mínima a estas rutas. Los anuncios activos son visibles para usuarios autenticados; los cerrados solo para su propietario o una persona con interés previo. Intereses y handoffs mantienen lectura privada, y únicamente el propietario puede resolver un interés o compartir contacto cuando el interés está aceptado.
+
+Las portadas quedan limitadas a `game-listings/{ownerId}/{listingId}/cover`: lectura autenticada y escritura, sustitución o borrado solo por el propietario, con JPEG/PNG/WebP y un máximo de 5 MB. La suite aislada de Rules usa los puertos `8180` y `9299`, un proyecto `demo-*` independiente y finaliza sus emuladores al terminar, para no tocar los datos locales de desarrollo.
+
+Firestore y Storage no comparten una transacción ni contexto de Rules. Por ello, Storage protege identidad, ruta, tipo y tamaño, mientras Application/Infrastructure coordinan la creación del anuncio y la limpieza de una portada si falla Firestore. La existencia del anuncio, el contenido real del archivo más allá del MIME declarado y la eliminación de objetos huérfanos requieren controles operativos adicionales si el producto se despliega.
 
 Se mantiene la dirección:
 
@@ -165,9 +169,9 @@ Forman parte del dominio `game-sessions`, aunque su representación física pued
 
 No se decide todavía si estos datos serán documentos independientes, subcolecciones o parte de otra representación. La elección deberá satisfacer consultas, atomicidad y reglas sin duplicar una fuente de verdad inconsistente.
 
-## Persistencia conceptual de Game Listings
+## Persistencia de Game Listings
 
-La Fase 6 añade un diseño conceptual, todavía no implementado, para `game-listings`:
+La Fase 6 implementa la siguiente estructura para `game-listings`:
 
 ```text
 gameListings/{listingId}
@@ -177,7 +181,7 @@ gameListings/{listingId}
 
 El anuncio conserva solo información publicable. Los intereses son relaciones privadas subordinadas y usan `playerId` como identificador para garantizar una sola relación por anuncio y persona. El medio de contacto aportado voluntariamente por el propietario se mantiene en una subcolección separada, legible únicamente por propietario y persona aceptada; nunca se deriva del email de Firebase Auth.
 
-Firestore `Timestamp`, referencias y errores se traducirán dentro de Infrastructure. Las consultas previstas, índices, transiciones y límites de seguridad se detallan en `GAME_LISTINGS_ARCHITECTURE.md`; ADR-005 registra la decisión. Esta sección no crea colecciones reales ni autoriza Storage.
+Firestore `Timestamp`, referencias y errores se traducen dentro de Infrastructure. Las consultas, índices, transiciones y límites de seguridad se detallan en `GAME_LISTINGS_ARCHITECTURE.md`; ADR-005 registra la decisión. La portada se mantiene en Storage bajo la ruta y política descritas en la sección de integración local.
 
 ## Necesidades de consulta
 
