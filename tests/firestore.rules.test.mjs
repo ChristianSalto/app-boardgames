@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { after, before, beforeEach, describe, test } from 'node:test'
 import {
@@ -29,8 +30,6 @@ const player = (displayName) => ({ displayName, city: 'Madrid', district: 'Centr
 const session = (organizerId, overrides = {}) => ({
   gameName: 'Azul',
   startsAt: Timestamp.fromDate(new Date('2031-06-20T14:00:00.000Z')),
-  date: '2031-06-20',
-  time: '16:00',
   city: 'Madrid',
   district: 'Centro',
   venue: '',
@@ -40,6 +39,19 @@ const session = (organizerId, overrides = {}) => ({
   participantIds: [organizerId],
   pendingRequestIds: [],
   status: 'scheduled',
+  ...overrides,
+})
+const reviewId = (sessionId, reviewerId, reviewedPlayerId) => createHash('sha256')
+  .update(JSON.stringify([sessionId, reviewerId, reviewedPlayerId]))
+  .digest('hex')
+const playerReview = (sessionId, reviewerId, reviewedPlayerId, overrides = {}) => ({
+  id: reviewId(sessionId, reviewerId, reviewedPlayerId),
+  sessionId,
+  reviewerId,
+  reviewedPlayerId,
+  rating: 5,
+  comment: 'Una partida agradable y bien organizada.',
+  createdAt: serverTimestamp(),
   ...overrides,
 })
 const participationRequest = (sessionId, playerId, status = 'pending') => ({
@@ -136,14 +148,17 @@ describe('game sessions', () => {
     const reference = doc(a, 'gameSessions', 'session-a')
     await assertSucceeds(setDoc(reference, session('a')))
     await assertSucceeds(getDoc(doc(dbFor('b'), 'gameSessions', 'session-a')))
-    await assertSucceeds(updateDoc(reference, { time: '17:30', capacity: 3 }))
+    await assertSucceeds(updateDoc(reference, {
+      startsAt: Timestamp.fromDate(new Date('2031-06-20T15:30:00.000Z')),
+      capacity: 3,
+    }))
     await assertSucceeds(updateDoc(reference, { status: 'cancelled', pendingRequestIds: [] }))
   })
 
   test('denies a false organizer, non-organizer edits, over-capacity writes and hard delete', async () => {
     await seed([['gameSessions/session-a', session('a', { capacity: 2 })]])
     await assertFails(setDoc(doc(dbFor('b'), 'gameSessions', 'false-owner'), session('a')))
-    await assertFails(updateDoc(doc(dbFor('b'), 'gameSessions', 'session-a'), { time: '18:00' }))
+    await assertFails(updateDoc(doc(dbFor('b'), 'gameSessions', 'session-a'), { district: 'Retiro' }))
     await assertFails(updateDoc(doc(dbFor('a'), 'gameSessions', 'session-a'), { organizerId: 'b' }))
     await assertFails(updateDoc(doc(dbFor('a'), 'gameSessions', 'session-a'), { participantIds: ['a', 'b', 'c'] }))
     await assertFails(deleteDoc(doc(dbFor('a'), 'gameSessions', 'session-a')))
@@ -154,15 +169,183 @@ describe('game sessions', () => {
     await assertFails(updateDoc(doc(dbFor('a'), 'gameSessions', 'session-a'), { capacity: 2 }))
   })
 
-  test('denies malformed civil dates and times', async () => {
+  test('requires a timestamp startsAt and rejects legacy civil time on new sessions', async () => {
+    const missingStartsAt = session('a')
+    delete missingStartsAt.startsAt
     await assertFails(setDoc(
-      doc(dbFor('a'), 'gameSessions', 'invalid-time'),
-      session('a', { time: '25:00' }),
+      doc(dbFor('a'), 'gameSessions', 'missing-starts-at'),
+      missingStartsAt,
     ))
     await assertFails(setDoc(
-      doc(dbFor('a'), 'gameSessions', 'invalid-date'),
-      session('a', { date: '2031-13-40' }),
+      doc(dbFor('a'), 'gameSessions', 'invalid-starts-at'),
+      session('a', { startsAt: '2031-06-20T14:00:00.000Z' }),
     ))
+    await assertFails(setDoc(
+      doc(dbFor('a'), 'gameSessions', 'legacy-civil-time'),
+      session('a', { date: '2031-06-20', time: '16:00' }),
+    ))
+  })
+
+  test('locks legacy date/time fields and denies rescheduling after startsAt', async () => {
+    await seed([
+      ['gameSessions/legacy-session', session('a', { date: '2031-06-20', time: '16:00' })],
+      ['gameSessions/past-session', session('a', {
+        startsAt: Timestamp.fromDate(new Date('2020-01-20T15:00:00.000Z')),
+      })],
+    ])
+    await assertFails(updateDoc(
+      doc(dbFor('a'), 'gameSessions', 'legacy-session'),
+      { date: '2031-06-21', time: '16:00' },
+    ))
+    await assertFails(updateDoc(
+      doc(dbFor('a'), 'gameSessions', 'past-session'),
+      { startsAt: Timestamp.fromDate(new Date('2031-06-20T14:00:00.000Z')) },
+    ))
+    await assertSucceeds(updateDoc(
+      doc(dbFor('a'), 'gameSessions', 'past-session'),
+      { status: 'cancelled', pendingRequestIds: [] },
+    ))
+  })
+})
+
+describe('player reviews', () => {
+  const pastSession = (overrides = {}) => session('a', {
+    startsAt: Timestamp.fromDate(new Date('2020-01-20T17:30:00.000Z')),
+    participantIds: ['a', 'b'],
+    ...overrides,
+  })
+
+  const seedEligibleReview = async (overrides = {}) => seed([
+    ['players/a', player('Ana')],
+    ['players/b', player('Berta')],
+    ['players/c', player('Carlos')],
+    ['gameSessions/review-session', pastSession(overrides)],
+  ])
+
+  test('allows an eligible participant to create once and another authenticated user to read', async () => {
+    await seedEligibleReview()
+    const data = playerReview('review-session', 'a', 'b')
+    const reference = doc(dbFor('a'), 'playerReviews', data.id)
+    await assertSucceeds(setDoc(reference, data))
+    await assertSucceeds(getDoc(doc(dbFor('c'), 'playerReviews', data.id)))
+  })
+
+  test('denies anonymous review access', async () => {
+    await seedEligibleReview()
+    const data = playerReview('review-session', 'a', 'b')
+    await assertFails(setDoc(doc(anonymousDb(), 'playerReviews', data.id), data))
+    await seed([['playerReviews/existing-review', {
+      ...data,
+      id: 'existing-review',
+      createdAt: Timestamp.fromMillis(1),
+    }]])
+    await assertFails(getDoc(doc(anonymousDb(), 'playerReviews', 'existing-review')))
+  })
+
+  test('denies self-review and forged reviewer identity', async () => {
+    await seedEligibleReview()
+    const selfReview = playerReview('review-session', 'a', 'a')
+    await assertFails(setDoc(doc(dbFor('a'), 'playerReviews', selfReview.id), selfReview))
+    const forgedReview = playerReview('review-session', 'a', 'b')
+    await assertFails(setDoc(doc(dbFor('c'), 'playerReviews', forgedReview.id), forgedReview))
+  })
+
+  test('denies a reviewer or reviewed player outside participantIds', async () => {
+    await seedEligibleReview()
+    const nonParticipantReviewer = playerReview('review-session', 'c', 'b')
+    await assertFails(setDoc(
+      doc(dbFor('c'), 'playerReviews', nonParticipantReviewer.id),
+      nonParticipantReviewer,
+    ))
+    const nonParticipantReviewed = playerReview('review-session', 'a', 'c')
+    await assertFails(setDoc(
+      doc(dbFor('a'), 'playerReviews', nonParticipantReviewed.id),
+      nonParticipantReviewed,
+    ))
+  })
+
+  test('denies reviews when either player document is missing', async () => {
+    await seed([
+      ['players/a', player('Ana')],
+      ['gameSessions/review-session', pastSession()],
+    ])
+    const missingReviewedPlayer = playerReview('review-session', 'a', 'b')
+    await assertFails(setDoc(
+      doc(dbFor('a'), 'playerReviews', missingReviewedPlayer.id),
+      missingReviewedPlayer,
+    ))
+
+    await environment.clearFirestore()
+    await seed([
+      ['players/b', player('Berta')],
+      ['gameSessions/review-session', pastSession()],
+    ])
+    const missingReviewerPlayer = playerReview('review-session', 'a', 'b')
+    await assertFails(setDoc(
+      doc(dbFor('a'), 'playerReviews', missingReviewerPlayer.id),
+      missingReviewerPlayer,
+    ))
+  })
+
+  test('denies reviews for future or cancelled sessions', async () => {
+    await seedEligibleReview({ startsAt: Timestamp.fromDate(new Date('2031-01-20T17:30:00.000Z')) })
+    const futureReview = playerReview('review-session', 'a', 'b')
+    await assertFails(setDoc(doc(dbFor('a'), 'playerReviews', futureReview.id), futureReview))
+
+    await environment.clearFirestore()
+    await seedEligibleReview({ status: 'cancelled' })
+    const cancelledReview = playerReview('review-session', 'a', 'b')
+    await assertFails(setDoc(doc(dbFor('a'), 'playerReviews', cancelledReview.id), cancelledReview))
+  })
+
+  test('denies ratings outside integer 1..5', async () => {
+    for (const [suffix, rating] of [['zero', 0], ['six', 6], ['decimal', 4.5]]) {
+      await environment.clearFirestore()
+      const sessionId = `rating-${suffix}`
+      await seed([
+        ['players/a', player('Ana')],
+        ['players/b', player('Berta')],
+        [`gameSessions/${sessionId}`, pastSession()],
+      ])
+      const data = playerReview(sessionId, 'a', 'b', { rating })
+      await assertFails(setDoc(doc(dbFor('a'), 'playerReviews', data.id), data))
+    }
+  })
+
+  test('denies oversized comments, extra fields and a forged createdAt', async () => {
+    await seedEligibleReview()
+    const tooLong = playerReview('review-session', 'a', 'b', { comment: 'x'.repeat(501) })
+    await assertFails(setDoc(doc(dbFor('a'), 'playerReviews', tooLong.id), tooLong))
+    const extraField = playerReview('review-session', 'a', 'b', { moderationState: 'visible' })
+    await assertFails(setDoc(doc(dbFor('a'), 'playerReviews', extraField.id), extraField))
+    const falseTimestamp = playerReview('review-session', 'a', 'b', {
+      createdAt: Timestamp.fromMillis(1),
+    })
+    await assertFails(setDoc(doc(dbFor('a'), 'playerReviews', falseTimestamp.id), falseTimestamp))
+  })
+
+  test('denies an incorrect hash and a duplicate deterministic review', async () => {
+    await seedEligibleReview()
+    const invalidId = 'a'.repeat(64)
+    const invalidHash = playerReview('review-session', 'a', 'b', { id: invalidId })
+    await assertFails(setDoc(doc(dbFor('a'), 'playerReviews', invalidId), invalidHash))
+
+    const data = playerReview('review-session', 'a', 'b')
+    const reference = doc(dbFor('a'), 'playerReviews', data.id)
+    await assertSucceeds(setDoc(reference, data))
+    await assertFails(setDoc(reference, data))
+  })
+
+  test('denies update and delete for every client', async () => {
+    await seedEligibleReview()
+    const id = reviewId('review-session', 'a', 'b')
+    await seed([['playerReviews/' + id, {
+      ...playerReview('review-session', 'a', 'b'),
+      createdAt: Timestamp.fromMillis(1),
+    }]])
+    const reference = doc(dbFor('a'), 'playerReviews', id)
+    await assertFails(updateDoc(reference, { rating: 4 }))
+    await assertFails(deleteDoc(reference))
   })
 })
 
@@ -285,6 +468,32 @@ describe('participation requests', () => {
     overCapacity.update(doc(a, 'participationRequests', bRequest), { status: 'confirmed' })
     await assertFails(overCapacity.commit())
     await assertFails(createPendingRequest(dbFor('b'), 'cancelled', 'b'))
+  })
+
+  test('denies requests and participant confirmation after startsAt', async () => {
+    const bRequest = requestId('past-session', 'b')
+    await seed([
+      ['gameSessions/past-session', session('a', {
+        startsAt: Timestamp.fromDate(new Date('2020-01-20T15:00:00.000Z')),
+      })],
+    ])
+    await assertFails(createPendingRequest(dbFor('b'), 'past-session', 'b'))
+
+    await seed([
+      ['gameSessions/past-session', session('a', {
+        startsAt: Timestamp.fromDate(new Date('2020-01-20T15:00:00.000Z')),
+        pendingRequestIds: [bRequest],
+      })],
+      [`participationRequests/${bRequest}`, participationRequest('past-session', 'b')],
+    ])
+    const a = dbFor('a')
+    const acceptance = writeBatch(a)
+    acceptance.update(doc(a, 'gameSessions', 'past-session'), {
+      participantIds: ['a', 'b'],
+      pendingRequestIds: [],
+    })
+    acceptance.update(doc(a, 'participationRequests', bRequest), { status: 'confirmed' })
+    await assertFails(acceptance.commit())
   })
 })
 

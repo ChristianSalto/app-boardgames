@@ -57,9 +57,21 @@ service cloud.firestore {
     }
 
     match /gameSessions/{sessionId} {
+      function hasValidLegacyCivilTime(data) {
+        let hasDate = data.keys().hasAny(['date']);
+        let hasTime = data.keys().hasAny(['time']);
+        return (!hasDate && !hasTime)
+          || (hasDate
+            && hasTime
+            && data.date is string
+            && data.date.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
+            && data.time is string
+            && data.time.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$'));
+      }
+
       function hasValidSessionShape(data) {
         return data.keys().hasAll([
-            'gameName', 'startsAt', 'date', 'time', 'city', 'district', 'capacity',
+            'gameName', 'startsAt', 'city', 'district', 'capacity',
             'organizerId', 'participantIds', 'pendingRequestIds', 'status'
           ])
           && data.keys().hasOnly([
@@ -68,10 +80,7 @@ service cloud.firestore {
             'pendingRequestIds', 'status'
           ])
           && isNonEmptyString(data.gameName, 120)
-          && data.date is string
-          && data.date.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
-          && data.time is string
-          && data.time.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+          && hasValidLegacyCivilTime(data)
           && data.startsAt is timestamp
           && data.city == 'Madrid'
           && isNonEmptyString(data.district, 80)
@@ -90,6 +99,7 @@ service cloud.firestore {
         let expectedRequestId = sessionId + '_' + request.auth.uid;
         let pendingRequest = getAfter(requestPath(expectedRequestId)).data;
         return resource.data.status == 'scheduled'
+          && resource.data.startsAt > request.time
           && request.resource.data.status == resource.data.status
           && resource.data.participantIds.size() < resource.data.capacity
           && !resource.data.participantIds.hasAny([request.auth.uid])
@@ -105,9 +115,10 @@ service cloud.firestore {
       function isOrganizerEdit() {
         return resource.data.organizerId == request.auth.uid
           && resource.data.status == 'scheduled'
+          && resource.data.startsAt > request.time
           && request.resource.data.status == 'scheduled'
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'gameName', 'startsAt', 'date', 'time', 'district', 'venue', 'description', 'capacity'
+            'gameName', 'startsAt', 'district', 'venue', 'description', 'capacity'
           ])
           && (
             request.resource.data.startsAt == resource.data.startsAt
@@ -170,6 +181,7 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated()
         && hasValidSessionShape(request.resource.data)
+        && !request.resource.data.keys().hasAny(['date', 'time'])
         && request.resource.data.organizerId == request.auth.uid
         && request.resource.data.status == 'scheduled'
         && request.resource.data.startsAt > request.time
@@ -218,15 +230,18 @@ service cloud.firestore {
 
       function isEligibleReviewCreation() {
         let data = request.resource.data;
-        let session = get(sessionPath(data.sessionId)).data;
         return data.reviewerId == request.auth.uid
           && data.reviewerId != data.reviewedPlayerId
           && exists(playerPath(data.reviewerId))
           && exists(playerPath(data.reviewedPlayerId))
           && exists(sessionPath(data.sessionId))
-          && session.status == 'scheduled'
-          && session.startsAt < request.time
-          && session.participantIds.hasAll([data.reviewerId, data.reviewedPlayerId])
+          && get(sessionPath(data.sessionId)).data.status == 'scheduled'
+          && get(sessionPath(data.sessionId)).data.startsAt is timestamp
+          && get(sessionPath(data.sessionId)).data.startsAt < request.time
+          && get(sessionPath(data.sessionId)).data.participantIds.hasAll([
+            data.reviewerId,
+            data.reviewedPlayerId
+          ])
           && data.createdAt == request.time
           && reviewId == expectedReviewId(data);
       }
@@ -235,6 +250,7 @@ service cloud.firestore {
       allow create: if isAuthenticated()
         && hasValidReviewShape(request.resource.data)
         && isEligibleReviewCreation();
+      allow update, delete: if false;
     }
 
     match /participationRequests/{requestId} {
@@ -254,6 +270,7 @@ service cloud.firestore {
           && request.resource.data.playerId == request.auth.uid
           && request.resource.data.status == 'pending'
           && session.status == 'scheduled'
+          && session.startsAt > request.time
           && session.participantIds.size() < session.capacity
           && !session.participantIds.hasAny([request.auth.uid])
           && sessionAfter.pendingRequestIds.hasAny([requestId]);
@@ -270,6 +287,7 @@ service cloud.firestore {
           && (
             (request.resource.data.status == 'confirmed'
               && session.status == 'scheduled'
+              && session.startsAt > request.time
               && sessionAfter.status == 'scheduled'
               && !session.participantIds.hasAny([resource.data.playerId])
               && sessionAfter.participantIds.hasAny([resource.data.playerId])

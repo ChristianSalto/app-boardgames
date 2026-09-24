@@ -315,7 +315,9 @@ PROMPT-008D implementa la colección raíz `playerReviews/{reviewId}` detrás de
 
 Las consultas separan el agregado completo de la presentación paginada: el resumen calcula media y recuento desde todas las reviews recibidas, mientras el perfil muestra tres recientes y la vista completa pagina de 10 en 10 por `reviewedPlayerId`, `createdAt DESC` e ID. Firebase `Timestamp` se convierte a ISO dentro de Infrastructure.
 
-Las Rules añadidas en 008D son provisionales y específicas: forma cerrada, identidad del autor, Players existentes, sesión programada ya iniciada, ambos participantes confirmados, hash correcto, tiempo de servidor y ausencia de update/delete. El hardening formal, la batería completa ALLOW/DENY y la revisión de vectores límite pertenecen a PROMPT-008E; no se ha debilitado ninguna regla previa.
+PROMPT-008E convierte esas reglas provisionales en la baseline de seguridad de `playerReviews`: lectura autenticada; create con forma cerrada, identidad del autor, Players existentes y distintos, sesión pasada no cancelada, ambos participantes confirmados, rating entero 1..5, comentario opcional de hasta 500 caracteres, `createdAt == request.time` e ID SHA-256 lowercase del JSON canónico; update/delete quedan denegados.
+
+`startsAt` es obligatorio y de tipo Timestamp en nuevas Game Sessions. El organizador solo puede cambiarlo antes del inicio y hacia otro instante futuro; una sesión iniciada no puede reprogramarse, aunque conserva la política existente de cancelación. Nuevas solicitudes y confirmaciones también se detienen al alcanzar `startsAt`, evitando fabricar `participantIds` retrospectivos para obtener elegibilidad de review. Las nuevas escrituras omiten `date/time`; si permanecen en documentos legacy, las Rules los validan como pareja y los mantienen inmutables, mientras toda lectura temporal usa `startsAt` como autoridad. La suite del Emulator prueba tanto operaciones permitidas como los principales vectores de denegación sin relajar las reglas anteriores.
 
 ## Monetización
 

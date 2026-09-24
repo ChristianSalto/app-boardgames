@@ -3,10 +3,10 @@
 ## Estado y alcance
 
 - **Fase:** 7 — Trust & Reputation MVP
-- **Tarea:** PROMPT-008D — Persistent Player Reviews & Canonical Session Time
-- **Estado:** persistencia y tiempo canónico implementados; en revisión
+- **Tarea:** PROMPT-008E — Player Trust Security Hardening
+- **Estado:** Security Rules y pruebas formales implementadas; en revisión
 
-Este documento concreta el capability `player-trust` aprobado en `TRUST_REPUTATION_PRODUCT.md` y registra su implementación incremental. El hardening formal y la batería completa de Security Rules siguen reservados para PROMPT-008E.
+Este documento concreta el capability `player-trust` aprobado en `TRUST_REPUTATION_PRODUCT.md` y registra su implementación incremental. PROMPT-008E consolida la frontera de confianza de reviews y del tiempo canónico sin añadir funcionalidades ni cambiar UI.
 
 ## Boundary
 
@@ -104,7 +104,7 @@ Además, hoy el organizador puede escribir esos campos dentro de las actualizaci
 - la entrada civil se interpreta explícitamente en `Europe/Madrid`, respetando DST;
 - UI y Domain reciben una representación agnóstica de Firebase y formatean el instante para Madrid;
 - Rules comparan `startsAt` con `request.time`;
-- `date` y `time` dejan de ser autoridad temporal y solo pueden sobrevivir durante una migración controlada;
+- las nuevas escrituras ya no persisten `date` ni `time`; ambos solo pueden sobrevivir como campos legacy de lectura y quedan inmutables desde cliente;
 - creación y edición deben exigir un `startsAt` futuro;
 - una sesión cuyo `startsAt` ya pasó no puede reprogramarse desde cliente.
 
@@ -204,11 +204,11 @@ Cada elemento reciente contiene rating, comentario opcional, fecha, `reviewerId`
 
 No contiene partidas jugadas, attendance, no-shows, highlights simulados ni un score de fiabilidad. Con cero reviews devuelve `state: new`, recuento cero y media ausente.
 
-## Security boundaries para 008E
+## Security boundaries consolidados en 008E
 
 ### Create
 
-Las Rules deberán exigir:
+Las Rules exigen:
 
 - usuario autenticado y Player propio existente;
 - `reviewerId == request.auth.uid` y Player valorado existente;
@@ -230,7 +230,7 @@ Usuarios autenticados pueden leer y listar reviews. Las queries deberán expresa
 
 Se deniegan siempre a clientes. Una futura herramienta de moderación usará un límite privilegiado y auditable, no una excepción general para autores o Players valorados.
 
-Las Rules provisionales exigen `startsAt` futuro al crear, solo permiten reprogramar mientras la sesión actual y la nueva fecha sean futuras y conservan la cancelación autorizada existente. 008E cubrirá formalmente ALLOW/DENY del documento de review, su hash, inmutabilidad y evidencia temporal sin cambiar esa política de producto.
+La baseline de 008E exige `startsAt` Timestamp futuro al crear, solo permite reprogramar mientras la sesión actual y la nueva fecha sean futuras y conserva la cancelación autorizada existente incluso tras el inicio. Al alcanzar `startsAt`, no se admiten nuevas solicitudes ni confirmaciones, por lo que `participantIds` queda congelado como evidencia histórica; los rechazos pendientes siguen pudiendo cerrarse. Las nuevas sesiones no admiten `date/time`; en documentos legacy esos campos deben aparecer juntos, tener forma civil válida y no pueden modificarse. Las pruebas formales cubren ALLOW/DENY del documento de review, hash, duplicado, inmutabilidad, elegibilidad y evidencia temporal.
 
 ## Identidad pública
 
@@ -294,4 +294,4 @@ No se inicia ninguna de estas tareas mediante este documento.
 
 ## Recomendación
 
-**GO técnico para preparar 008E**: `startsAt` ya es canónico, las reviews persisten y las pruebas aisladas cubren dos identidades, recarga, duplicados y sesiones no elegibles. 008E debe completar el hardening y las pruebas formales de Rules antes de considerar cerrada la seguridad de `player-trust`.
+**GO técnico para 008F**: `startsAt` es la única autoridad temporal en nuevas escrituras, las reviews persisten y las Rules validan identidad, existencia de Players, participación, sesión pasada no cancelada, forma, rating, comentario, tiempo de servidor, hash determinista, duplicado e inmutabilidad. La integración completa y cierre de fase corresponden a 008F.

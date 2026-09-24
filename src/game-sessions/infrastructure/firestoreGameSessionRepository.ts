@@ -18,14 +18,12 @@ const toSession = (id: string, data: GameSessionDocument): GameSession => ({ id,
 const toDocument = (input: CreateSessionInput, organizerId: string): GameSessionDocument => {
   if (!isValidCapacity(input.capacity)) throw new Error('Invalid capacity')
   const startsAt = Timestamp.fromDate(new Date(sessionInstantFromMadridCivil(input.date, input.time)))
-  return { gameName: input.game, startsAt, date: input.date, time: input.time, city: 'Madrid', district: input.zone, ...(input.place ? { venue: input.place } : {}), ...(input.description ? { description: input.description } : {}), capacity: input.capacity, organizerId, participantIds: [organizerId], pendingRequestIds: [], status: 'scheduled' }
+  return { gameName: input.game, startsAt, city: 'Madrid', district: input.zone, ...(input.place ? { venue: input.place } : {}), ...(input.description ? { description: input.description } : {}), capacity: input.capacity, organizerId, participantIds: [organizerId], pendingRequestIds: [], status: 'scheduled' }
 }
 
 const toMutableDocument = (input: UpdateSessionInput) => ({
   gameName: input.game,
   startsAt: Timestamp.fromDate(new Date(sessionInstantFromMadridCivil(input.date, input.time))),
-  date: input.date,
-  time: input.time,
   district: input.zone,
   venue: input.place.trim(),
   description: input.description.trim(),

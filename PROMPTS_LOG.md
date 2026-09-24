@@ -1,5 +1,12 @@
 # Registro de intervenciones
 
+## PROMPT-008E — Player Trust Security Hardening
+
+- **Fecha:** 2026-09-24
+- **Objetivo:** endurecer y probar formalmente las Security Rules de `playerReviews`, la elegibilidad confiable y `startsAt` como autoridad temporal de Game Sessions.
+- **Agentes:** Security/FirebaseAgent.
+- **Resultado:** baseline deny-by-default validada con 45 pruebas de Rules: create elegible, lectura autenticada, hash SHA-256 determinista, duplicados, inmutabilidad, límites de contenido y protección temporal; `participantIds` queda congelado al comenzar la sesión, nuevas sesiones escriben solo `startsAt` y los campos legacy quedan bloqueados. Fase 7 continúa en revisión y PROMPT-008F no ha comenzado.
+
 ## PROMPT-008D — Persistent Player Reviews & Canonical Session Time
 
 - **Fecha:** 2026-09-24

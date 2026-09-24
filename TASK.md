@@ -4,16 +4,16 @@
 Fase 7 — Trust & Reputation MVP
 
 **Tarea:**  
-PROMPT-008D — Persistent Player Reviews & Canonical Session Time.
+PROMPT-008E — Player Trust Security Hardening.
 
 **Estado:**  
 En revisión humana.
 
 **Resultado:**  
-Reviews persistentes en Firestore y `startsAt` canónico implementados y validados localmente; hardening formal de Security Rules aún pendiente.
+Security Rules de Player Trust y `startsAt` endurecidas y validadas contra Firebase Emulator, sin regresiones en las suites existentes.
 
 **Siguiente tarea:**
-PROMPT-008E — Player Trust Security Rules Hardening, pendiente de autorización.
+PROMPT-008F — Player Trust Integration Review & Phase Closeout, pendiente de autorización.
 
 **Restricción:**  
-PROMPT-008D queda en revisión humana. No iniciar PROMPT-008E.
+PROMPT-008E queda en revisión humana. No iniciar PROMPT-008F.
