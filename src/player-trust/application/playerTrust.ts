@@ -11,6 +11,7 @@ import {
 import type { ReviewIdGenerator } from '../domain/reviewId.ts'
 import type { ReviewEligibilityReader } from './reviewEligibilityReader.ts'
 import type { PlayerReviewRepository } from './playerTrustRepository.ts'
+import type { PlayerReviewCursor } from './playerTrustRepository.ts'
 
 type ReviewDependencies = Readonly<{
   reviewRepository: PlayerReviewRepository
@@ -58,7 +59,7 @@ export const getReviewablePlayersForSession = async (
   if (
     !evidence
     || evidence.status === 'cancelled'
-    || new Date(evidence.startsAt).getTime() > dependencies.now().getTime()
+    || new Date(evidence.startsAt).getTime() >= dependencies.now().getTime()
     || !evidence.participantIds.includes(reviewerId)
   ) {
     return []
@@ -98,17 +99,24 @@ export const createPlayerReview = async (
   if (eligibility.kind === 'ineligible') return { kind: 'ineligible', eligibility }
 
   const id = await dependencies.createReviewId(input)
-  const creation = createPlayerReviewRecord(input, id, dependencies.now().toISOString())
+  const creation = createPlayerReviewRecord(input, id)
   if (creation.kind === 'invalid') return creation
 
   const result = await dependencies.reviewRepository.create(creation.review)
-  return result === 'duplicate' ? { kind: 'duplicate' } : creation
+  return result.kind === 'duplicate' ? result : { kind: 'created', review: result.review }
 }
 
 export const getPlayerReviews = (
   repository: PlayerReviewRepository,
   playerId: string,
 ) => repository.getReceivedBy(playerId)
+
+export const getPlayerReviewsPage = (
+  repository: PlayerReviewRepository,
+  playerId: string,
+  pageSize = 10,
+  cursor?: PlayerReviewCursor,
+) => repository.getReceivedPage(playerId, pageSize, cursor)
 
 export const getPlayerTrustSummary = async (
   repository: PlayerReviewRepository,

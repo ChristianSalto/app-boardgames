@@ -5,7 +5,7 @@ export type ReviewIdentity = Readonly<{
 }>
 
 /**
- * Canonical serialization shared by the future Firestore Rules implementation.
+ * Canonical serialization shared by Infrastructure and Firestore Rules.
  * A JSON array preserves each boundary even if an identifier contains delimiters.
  */
 export const serializeReviewIdentity = ({

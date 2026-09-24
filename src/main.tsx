@@ -12,6 +12,7 @@ import { CurrentPlayerProvider } from './players/presentation/CurrentPlayerProvi
 import { createFirestoreGameListingRepository } from './game-listings/infrastructure/firestoreGameListingRepository'
 import { createFirestoreListingInterestRepository } from './game-listings/infrastructure/firestoreListingInterestRepository'
 import { createFirebaseListingImageRepository } from './game-listings/infrastructure/firebaseListingImageRepository'
+import { createFirestorePlayerReviewRepository } from './player-trust/infrastructure/firestorePlayerReviewRepository'
 import './styles/main.scss'
 
 const rootElement = document.getElementById('root')
@@ -28,6 +29,7 @@ const participationRequestRepository = createFirestoreParticipationRequestReposi
 const gameListingRepository = createFirestoreGameListingRepository(firebaseInfrastructure.firestore)
 const listingInterestRepository = createFirestoreListingInterestRepository(firebaseInfrastructure.firestore)
 const listingImageRepository = createFirebaseListingImageRepository(firebaseInfrastructure.storage)
+const playerReviewRepository = createFirestorePlayerReviewRepository(firebaseInfrastructure.firestore)
 const listingCommandDependencies = {
   createId: () => `listing-${crypto.randomUUID()}`,
   now: () => new Date().toISOString(),
@@ -46,6 +48,7 @@ createRoot(rootElement).render(
             listingInterestRepository={listingInterestRepository}
             listingImageRepository={listingImageRepository}
             listingCommandDependencies={listingCommandDependencies}
+            playerReviewRepository={playerReviewRepository}
           />
         </CurrentPlayerProvider>
       </AuthenticationProvider>

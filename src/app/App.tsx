@@ -26,6 +26,8 @@ import { AuthPageLayout } from '../shared/AuthPageLayout'
 import { AppShell } from '../shared/AppShell'
 import { PlayerTrustProvider } from '../player-trust/presentation/PlayerTrustProvider'
 import { ReviewParticipantsPage } from '../player-trust/presentation/ReviewParticipantsPage'
+import { PlayerReviewsPage } from '../player-trust/presentation/PlayerReviewsPage'
+import type { PlayerReviewRepository } from '../player-trust/application/playerTrustRepository'
 
 export function App({
   gameSessionRepository,
@@ -35,6 +37,7 @@ export function App({
   listingInterestRepository,
   listingImageRepository,
   listingCommandDependencies,
+  playerReviewRepository,
 }: {
   readonly gameSessionRepository: GameSessionRepository
   readonly participationRequestRepository: ParticipationRequestRepository
@@ -43,6 +46,7 @@ export function App({
   readonly listingInterestRepository: ListingInterestRepository
   readonly listingImageRepository: ListingImageRepository
   readonly listingCommandDependencies: GameListingCommandDependencies
+  readonly playerReviewRepository: PlayerReviewRepository
 }) {
   const { status, user, logout } = useAuthentication()
   const { player, status: playerStatus, retryCurrentPlayer } = useCurrentPlayer()
@@ -96,6 +100,7 @@ export function App({
             listingInterestRepository={listingInterestRepository}
             listingImageRepository={listingImageRepository}
             listingCommandDependencies={listingCommandDependencies}
+            playerReviewRepository={playerReviewRepository}
           /> : user && playerStatus === 'missing' ? <Navigate replace to="/complete-profile" /> : <Navigate replace to="/login" />
         }
       />
@@ -112,6 +117,7 @@ function AuthenticatedPrototype({
   listingInterestRepository,
   listingImageRepository,
   listingCommandDependencies,
+  playerReviewRepository,
 }: {
   readonly player: Player
   readonly repository: GameSessionRepository
@@ -121,6 +127,7 @@ function AuthenticatedPrototype({
   readonly listingInterestRepository: ListingInterestRepository
   readonly listingImageRepository: ListingImageRepository
   readonly listingCommandDependencies: GameListingCommandDependencies
+  readonly playerReviewRepository: PlayerReviewRepository
 }) {
   return (
     <PrototypeProvider
@@ -130,33 +137,34 @@ function AuthenticatedPrototype({
       playerRepository={playerRepository}
       key={player.id}
     >
-      <PlayerTrustProvider>
-      <GameListingsProvider
-        commandDependencies={listingCommandDependencies}
-        currentPlayerId={player.id}
-        gameListingRepository={gameListingRepository}
-        listingInterestRepository={listingInterestRepository}
-        listingImageRepository={listingImageRepository}
-      >
-        <AppShell>
-          <Routes>
-            <Route path="/" element={<ExplorePage />} />
-            <Route path="/sessions/:sessionId" element={<SessionDetailPage />} />
-            <Route path="/sessions/:sessionId/edit" element={<CreateSessionPage />} />
-            <Route path="/sessions/:sessionId/reviews" element={<ReviewParticipantsPage />} />
-            <Route path="/my-sessions" element={<MySessionsPage />} />
-            <Route path="/create" element={<CreateSessionPage />} />
-            <Route path="/profile" element={<PlayerProfilePage />} />
-            <Route path="/players/:playerId" element={<PlayerProfilePage />} />
-            <Route path="/listings" element={<GameListingsPage />} />
-            <Route path="/listings/my" element={<MyListingsPage />} />
-            <Route path="/listings/create" element={<ListingFormPage />} />
-            <Route path="/listings/:listingId/edit" element={<ListingFormPage />} />
-            <Route path="/listings/:listingId" element={<GameListingDetailPage />} />
-            <Route path="*" element={<Navigate replace to="/" />} />
-          </Routes>
-        </AppShell>
-      </GameListingsProvider>
+      <PlayerTrustProvider repository={playerReviewRepository}>
+        <GameListingsProvider
+          commandDependencies={listingCommandDependencies}
+          currentPlayerId={player.id}
+          gameListingRepository={gameListingRepository}
+          listingInterestRepository={listingInterestRepository}
+          listingImageRepository={listingImageRepository}
+        >
+          <AppShell>
+            <Routes>
+              <Route path="/" element={<ExplorePage />} />
+              <Route path="/sessions/:sessionId" element={<SessionDetailPage />} />
+              <Route path="/sessions/:sessionId/edit" element={<CreateSessionPage />} />
+              <Route path="/sessions/:sessionId/reviews" element={<ReviewParticipantsPage />} />
+              <Route path="/my-sessions" element={<MySessionsPage />} />
+              <Route path="/create" element={<CreateSessionPage />} />
+              <Route path="/profile" element={<PlayerProfilePage />} />
+              <Route path="/players/:playerId" element={<PlayerProfilePage />} />
+              <Route path="/players/:playerId/reviews" element={<PlayerReviewsPage />} />
+              <Route path="/listings" element={<GameListingsPage />} />
+              <Route path="/listings/my" element={<MyListingsPage />} />
+              <Route path="/listings/create" element={<ListingFormPage />} />
+              <Route path="/listings/:listingId/edit" element={<ListingFormPage />} />
+              <Route path="/listings/:listingId" element={<GameListingDetailPage />} />
+              <Route path="*" element={<Navigate replace to="/" />} />
+            </Routes>
+          </AppShell>
+        </GameListingsProvider>
       </PlayerTrustProvider>
     </PrototypeProvider>
   )

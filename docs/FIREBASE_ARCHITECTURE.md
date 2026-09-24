@@ -45,7 +45,7 @@ Tras autenticarse, la aplicación busca el perfil propio. Si no existe, muestra 
 
 ## Persistencia inicial de partidas
 
-`game-sessions/application` define las consultas y el comando mínimos para descubrir, obtener, crear y recuperar las partidas organizadas. El adaptador Firestore persiste `gameSessions` con juego, fecha, hora, Madrid, distrito, lugar opcional, descripción opcional, aforo, organizador, participantes confirmados y estado; los tipos Firebase no cruzan Infrastructure.
+`game-sessions/application` define las consultas y el comando mínimos para descubrir, obtener, crear y recuperar las partidas organizadas. El adaptador Firestore persiste `gameSessions` con juego, `startsAt`, Madrid, distrito, lugar opcional, descripción opcional, aforo, organizador, participantes confirmados y estado; los tipos Firebase no cruzan Infrastructure. `date` y `time` se conservan temporalmente como compatibilidad derivada mientras se completa la migración local.
 
 Las consultas actuales cargan las partidas persistidas para Explorar, Detalle y Mis partidas; Crear escribe una partida cuyo organizador ocupa la primera plaza conceptual. Las Rules permiten lectura solo autenticada, validan la forma mínima del documento y reservan creación, edición y cancelación al organizador identificado por Auth. `organizerId` es inmutable, el aforo nunca puede ser inferior a participantes confirmados y el borrado físico está denegado.
 
@@ -59,7 +59,9 @@ Las Rules permiten crear una solicitud `pending` solo para la identidad autentic
 
 ## Hora local y ciclo de vida esencial
 
-`date` y `time` representan la hora civil del encuentro en Madrid, no un instante UTC ni un `Timestamp`. Infrastructure los reconstruye como fecha-hora local sin añadir el sufijo `Z`; de ese modo una partida creada a las 16:00 conserva y muestra 16:00, sin aplicar compensaciones fijas de horario de verano.
+`startsAt` es la autoridad temporal y se persiste como `Timestamp`. Infrastructure interpreta la fecha y hora civiles introducidas en `Europe/Madrid` y Presentation vuelve a derivar desde ese instante la fecha y hora visibles en Madrid. Así, 16:00 se mantiene como 16:00 tanto en invierno como en verano sin tratar la entrada como UTC ni aplicar compensaciones fijas.
+
+Las horas inexistentes durante el cambio DST de primavera se rechazan con validación comprensible; las horas ambiguas de otoño usan de forma explícita la primera ocurrencia. `npm run migrate:session-starts-at` convierte documentos legacy de forma idempotente en Emulator, omite los ya migrados, no altera participantes, solicitudes, ownership ni otros datos y emite un recuento de migradas, omitidas y errores.
 
 El puerto de partidas añade actualización y cancelación mínima. Solo la persona organizadora puede actualizar juego, fecha, hora, distrito, lugar, descripción y aforo; la operación transaccional conserva participantes y solicitudes, exige fecha/hora futura y no permite un aforo inferior a participantes confirmados. La cancelación es una transición a `cancelled`, nunca un borrado físico: cierra las solicitudes pendientes en la misma transacción, excluye la partida de Explorar y conserva el historial de Mis partidas.
 
@@ -308,6 +310,12 @@ PROMPT-008B concreta la arquitectura en `PLAYER_TRUST_ARCHITECTURE.md` y ADR-006
 - media y recuento calculados al leer, sin agregados editables en Player.
 
 No se necesita Cloud Function para este incremento si `startsAt` es canónico, las Rules protegen la evidencia y no se materializan agregados. Si esa precondición temporal no puede cumplirse, la creación deberá pasar a una operación server-side confiable. Attendance/no-show y moderación completa permanecen fuera.
+
+PROMPT-008D implementa la colección raíz `playerReviews/{reviewId}` detrás de un port de Application. El runtime usa Firestore y el adaptador in-memory queda solo para tests. El identificador es SHA-256 lowercase de la tupla JSON canónica; una transacción crea el documento una sola vez y `createdAt` usa `serverTimestamp()`, compatible con `createdAt == request.time`.
+
+Las consultas separan el agregado completo de la presentación paginada: el resumen calcula media y recuento desde todas las reviews recibidas, mientras el perfil muestra tres recientes y la vista completa pagina de 10 en 10 por `reviewedPlayerId`, `createdAt DESC` e ID. Firebase `Timestamp` se convierte a ISO dentro de Infrastructure.
+
+Las Rules añadidas en 008D son provisionales y específicas: forma cerrada, identidad del autor, Players existentes, sesión programada ya iniciada, ambos participantes confirmados, hash correcto, tiempo de servidor y ausencia de update/delete. El hardening formal, la batería completa ALLOW/DENY y la revisión de vectores límite pertenecen a PROMPT-008E; no se ha debilitado ninguna regla previa.
 
 ## Monetización
 

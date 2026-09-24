@@ -1,4 +1,5 @@
 import type { Player } from '../../players/types'
+import { Link } from 'react-router-dom'
 import { usePlayerTrustSummary } from './PlayerTrustProvider'
 
 export function PlayerTrustProfile({
@@ -57,6 +58,9 @@ export function PlayerTrustProfile({
               )
             })}
           </ul>
+          {summary.reviewCount > summary.recentReviews.length ? (
+            <Link className="text-link" to={`/players/${playerId}/reviews`}>Ver todas las opiniones</Link>
+          ) : null}
         </section>
       ) : null}
     </section>

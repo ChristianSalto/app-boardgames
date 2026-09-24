@@ -6,22 +6,31 @@ import type {
   SessionTone,
   UserRelation,
 } from './types'
+import { instantToMadridCivil, madridCivilToInstant, madridTimeZoneName } from './madridDateTime.ts'
 
-export const localSessionDateTime = (date: string, time: string) =>
-  `${date}T${time}:00`
+export const sessionInstantFromMadridCivil = (date: string, time: string) => {
+  const result = madridCivilToInstant(date, time)
+  if (!result.ok) throw new Error(result.reason)
+  return result.instant
+}
 
 export const isFutureSessionInput = (
   input: Pick<CreateSessionInput, 'date' | 'time'>,
   now = new Date(),
-) => new Date(localSessionDateTime(input.date, input.time)).getTime() > now.getTime()
+) => {
+  const result = madridCivilToInstant(input.date, input.time)
+  return result.ok && new Date(result.instant).getTime() > now.getTime()
+}
 
 const dateFormatter = new Intl.DateTimeFormat('es-ES', {
+  timeZone: madridTimeZoneName,
   weekday: 'short',
   day: 'numeric',
   month: 'short',
 })
 
 const longDateFormatter = new Intl.DateTimeFormat('es-ES', {
+  timeZone: madridTimeZoneName,
   weekday: 'long',
   day: 'numeric',
   month: 'long',
@@ -29,6 +38,7 @@ const longDateFormatter = new Intl.DateTimeFormat('es-ES', {
 })
 
 const timeFormatter = new Intl.DateTimeFormat('es-ES', {
+  timeZone: madridTimeZoneName,
   hour: '2-digit',
   minute: '2-digit',
 })
@@ -129,7 +139,7 @@ export const createGameSession = (
 ): GameSession => ({
   id,
   game: input.game,
-  startsAt: localSessionDateTime(input.date, input.time),
+  startsAt: sessionInstantFromMadridCivil(input.date, input.time),
   city: 'Madrid',
   zone: input.zone,
   place: input.place.trim(),
@@ -157,10 +167,8 @@ export const sortSessionsByDate = (sessions: readonly GameSession[]) =>
       new Date(first.startsAt).getTime() - new Date(second.startsAt).getTime(),
   )
 
-const isSameDay = (first: Date, second: Date) =>
-  first.getFullYear() === second.getFullYear() &&
-  first.getMonth() === second.getMonth() &&
-  first.getDate() === second.getDate()
+const isSameMadridDay = (first: Date, second: Date) =>
+  instantToMadridCivil(first).date === instantToMadridCivil(second).date
 
 export const matchesDateFilter = (
   startsAt: string,
@@ -170,13 +178,15 @@ export const matchesDateFilter = (
   if (filter === 'all') return true
 
   const date = new Date(startsAt)
-  if (filter === 'today') return isSameDay(date, now)
+  if (filter === 'today') return isSameMadridDay(date, now)
 
   const distance = date.getTime() - now.getTime()
   const isWithinSevenDays = distance >= 0 && distance <= 7 * 24 * 60 * 60 * 1000
   if (filter === 'seven-days') return isWithinSevenDays
 
-  return isWithinSevenDays && (date.getDay() === 0 || date.getDay() === 6)
+  const madridDate = instantToMadridCivil(date).date
+  const madridDay = new Date(`${madridDate}T00:00:00.000Z`).getUTCDay()
+  return isWithinSevenDays && (madridDay === 0 || madridDay === 6)
 }
 
 export const getGameInitials = (game: string) =>

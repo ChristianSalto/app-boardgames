@@ -19,8 +19,8 @@ export type ReviewEligibility =
   | Readonly<{ kind: 'ineligible'; reason: ReviewEligibilityReason }>
 
 /**
- * 008C only: this check supports Application and UX. 008D + 008E will make
- * startsAt and review eligibility a trusted persistence and Rules boundary.
+ * Application validation uses the canonical session instant. Firestore Rules
+ * are the trusted boundary for persisted reviews and will be hardened in 008E.
  */
 export const getReviewEligibilityForEvidence = (
   evidence: ReviewSessionEvidence | null,
@@ -30,7 +30,7 @@ export const getReviewEligibilityForEvidence = (
 ): ReviewEligibility => {
   if (!evidence) return { kind: 'ineligible', reason: 'session-not-found' }
   if (evidence.status === 'cancelled') return { kind: 'ineligible', reason: 'session-cancelled' }
-  if (new Date(evidence.startsAt).getTime() > now.getTime()) {
+  if (new Date(evidence.startsAt).getTime() >= now.getTime()) {
     return { kind: 'ineligible', reason: 'session-not-past' }
   }
   if (!evidence.participantIds.includes(reviewerId)) {

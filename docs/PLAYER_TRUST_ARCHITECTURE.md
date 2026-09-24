@@ -3,10 +3,10 @@
 ## Estado y alcance
 
 - **Fase:** 7 — Trust & Reputation MVP
-- **Tarea:** PROMPT-008B — Player Trust Architecture & Trusted Review Eligibility
-- **Estado:** arquitectura definida; implementación pendiente
+- **Tarea:** PROMPT-008D — Persistent Player Reviews & Canonical Session Time
+- **Estado:** persistencia y tiempo canónico implementados; en revisión
 
-Este documento concreta el capability `player-trust` aprobado en `TRUST_REPUTATION_PRODUCT.md`. Diseña límites, contratos y persistencia conceptual para reviews reales entre Players. No implementa código, Firestore, Security Rules ni UI.
+Este documento concreta el capability `player-trust` aprobado en `TRUST_REPUTATION_PRODUCT.md` y registra su implementación incremental. El hardening formal y la batería completa de Security Rules siguen reservados para PROMPT-008E.
 
 ## Boundary
 
@@ -70,7 +70,8 @@ La colección `gameSessions` conserva:
 - `organizerId`;
 - `participantIds`, inicializado con el organizador y ampliado únicamente durante una aceptación protegida;
 - `status`, actualmente `scheduled` o `cancelled`;
-- `date` y `time` como cadenas civiles de Madrid.
+- `startsAt` como `Timestamp` canónico;
+- `date` y `time` conservados temporalmente como compatibilidad derivada, no como autoridad.
 
 `participationRequests/{sessionId_playerId}` conserva la transición de solicitud y su estado, pero no es la fuente final de pertenencia. La aceptación actual actualiza atómicamente la solicitud a `confirmed` y añade el Player a `gameSessions.participantIds`.
 
@@ -90,7 +91,7 @@ Este tipo no es `GameSession` ni importa su dominio. Un adaptador traduce la pro
 
 ## Evidencia temporal confiable
 
-### Problema actual
+### Problema resuelto en 008D
 
 `date` y `time` son cadenas civiles separadas. Las Rules no pueden resolver de forma fiable `Europe/Madrid`, incluidos cambios DST, a partir de esas cadenas. Compararlas con `request.time` o convertirlas como UTC repetiría el bug histórico de horas.
 
@@ -98,16 +99,18 @@ Además, hoy el organizador puede escribir esos campos dentro de las actualizaci
 
 ### Decisión
 
-`gameSessions` necesita un **`startsAt` Firestore Timestamp canónico** que represente el instante real de la partida:
+`gameSessions` usa un **`startsAt` Firestore Timestamp canónico** que representa el instante real de la partida:
 
 - la entrada civil se interpreta explícitamente en `Europe/Madrid`, respetando DST;
 - UI y Domain reciben una representación agnóstica de Firebase y formatean el instante para Madrid;
 - Rules comparan `startsAt` con `request.time`;
 - `date` y `time` dejan de ser autoridad temporal y solo pueden sobrevivir durante una migración controlada;
 - creación y edición deben exigir un `startsAt` futuro;
-- una sesión cuyo `startsAt` ya pasó no puede reprogramarse ni cancelarse desde cliente, porque la evidencia de elegibilidad debe quedar estable.
+- una sesión cuyo `startsAt` ya pasó no puede reprogramarse desde cliente.
 
-El valor visible de fecha/hora debe derivarse del instante canónico, no mantenerse como una segunda fuente editable. Los datos existentes requieren backfill o recreación en Emulator Suite antes de habilitar reviews.
+El valor visible de fecha/hora se deriva del instante canónico en `Europe/Madrid`. La conversión rechaza horas civiles inexistentes durante el salto de primavera y, ante una hora ambigua de otoño, elige explícitamente la primera ocurrencia. `npm run migrate:session-starts-at` hace backfill local idempotente de documentos legacy, conserva el resto de campos y reporta migradas, omitidas y errores.
+
+La cancelación conserva la política ya aprobada: el organizador puede cancelar sin hard-delete incluso después del inicio. Una cancelación posterior no borra reviews existentes, pero impide crear nuevas porque la elegibilidad exige que la sesión siga en estado `scheduled`. No se introduce `completed` ni un lifecycle nuevo.
 
 ### Cloud Functions
 
@@ -140,7 +143,15 @@ Esta forma permite:
 
 Guardar reviews bajo `players/{playerId}` haría que `players` pareciera propietario del lifecycle, acoplaría su path a la persona valorada y complicaría consultas transversales y retención histórica. No se recomienda.
 
-Los índices concretos se decidirán al implementar las consultas reales. Como mínimo será relevante ordenar por `createdAt` dentro del conjunto filtrado por `reviewedPlayerId`.
+El índice implementado combina `reviewedPlayerId ASC`, `createdAt DESC` y el ID documental ascendente para sostener una paginación estable.
+
+## Implementación Firestore de 008D
+
+El runtime usa `FirestorePlayerReviewRepository`; el adaptador en memoria queda limitado a pruebas unitarias. La creación escribe `playerReviews/{reviewId}` mediante transacción, falla con resultado `duplicate` si el path ya existe y delega `createdAt` en `serverTimestamp()`. Después convierte el `Timestamp` confirmado a ISO antes de cruzar Infrastructure.
+
+El ID es el SHA-256 hexadecimal lowercase del JSON canónico `['sessionId','reviewerId','reviewedPlayerId']`, representado realmente como array JSON con comillas dobles. No existen operaciones de actualización ni borrado en el port.
+
+El resumen carga todas las reviews recibidas para calcular `averageRating` y `reviewCount`; solo expone las tres más recientes al perfil. El listado `/players/:playerId/reviews` usa páginas de 10 con cursor compuesto por `createdAt` e ID, sin confundir una página visible con la fuente completa del agregado.
 
 ## Casos de uso
 
@@ -207,7 +218,7 @@ Las Rules deberán exigir:
 - `createdAt == request.time`;
 - ReviewId igual al hash determinista de la relación;
 - `reviewerId != reviewedPlayerId`;
-- Game Session existente, `status == scheduled` y `startsAt <= request.time`;
+- Game Session existente, `status == scheduled` y `startsAt < request.time`;
 - ambos IDs presentes en `participantIds`;
 - documento inexistente, inherente a `create` sobre el ID único.
 
@@ -219,7 +230,7 @@ Usuarios autenticados pueden leer y listar reviews. Las queries deberán expresa
 
 Se deniegan siempre a clientes. Una futura herramienta de moderación usará un límite privilegiado y auditable, no una excepción general para autores o Players valorados.
 
-Las Rules de Game Sessions deberán proteger el nuevo `startsAt`, exigir futuro en creación/edición y bloquear alteraciones temporales o cancelación una vez alcanzado. 008E cubrirá ALLOW/DENY tanto del documento de review como de la evidencia que lo autoriza.
+Las Rules provisionales exigen `startsAt` futuro al crear, solo permiten reprogramar mientras la sesión actual y la nueva fecha sean futuras y conservan la cancelación autorizada existente. 008E cubrirá formalmente ALLOW/DENY del documento de review, su hash, inmutabilidad y evidencia temporal sin cambiar esa política de producto.
 
 ## Identidad pública
 
@@ -273,7 +284,7 @@ No se inicia ninguna de estas tareas mediante este documento.
 
 ## Riesgos y decisiones abiertas
 
-- El backfill de sesiones existentes debe interpretar `date` + `time` explícitamente como `Europe/Madrid`; los instantes ambiguos o inexistentes durante cambios DST necesitan una política de rechazo o corrección.
+- El backfill interpreta `date` + `time` explícitamente como `Europe/Madrid`: rechaza horas inexistentes y elige la primera ocurrencia de una hora ambigua. Los documentos con error requieren corrección manual y no se modifican.
 - `participantIds` demuestra confirmación, no asistencia; es una limitación de producto aceptada.
 - Las cuentas coordinadas pueden fabricar partidas y reviews; no se añade antifraude avanzado en este MVP.
 - El cálculo al leer crecerá linealmente con reviews; debe medirse antes de materializar resúmenes.
@@ -283,4 +294,4 @@ No se inicia ninguna de estas tareas mediante este documento.
 
 ## Recomendación
 
-**GO para 008C**, condicionado a que 008D haga `startsAt` canónico antes de habilitar persistencia real de reviews. No se necesita Cloud Functions en el MVP bajo este diseño; si esa precondición no puede garantizarse, la publicación deberá pasar a una operación server-side confiable.
+**GO técnico para preparar 008E**: `startsAt` ya es canónico, las reviews persisten y las pruebas aisladas cubren dos identidades, recarga, duplicados y sesiones no elegibles. 008E debe completar el hardening y las pruebas formales de Rules antes de considerar cerrada la seguridad de `player-trust`.

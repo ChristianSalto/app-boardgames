@@ -4,6 +4,7 @@ import { usePrototype } from '../app/PrototypeContext'
 import { gameOptions, madridZones } from '../mock-data/prototypeData'
 import { VisualSelect } from '../shared/VisualSelect'
 import { isFutureSessionInput } from './model'
+import { instantToMadridCivil, madridCivilToInstant } from './madridDateTime'
 import type { CreateSessionInput } from './types'
 
 type FormErrors = Partial<Record<keyof CreateSessionInput, string>>
@@ -34,8 +35,15 @@ const validate = (form: CreateSessionInput): FormErrors => {
   if (!form.game) errors.game = 'Selecciona el juego de la partida.'
   if (!form.date) errors.date = 'Indica la fecha de la partida.'
   if (!form.time) errors.time = 'Indica la hora de la partida.'
-  if (form.date && form.time && !isFutureSessionInput(form)) {
-    errors.date = 'La fecha y la hora deben estar en el futuro.'
+  if (form.date && form.time) {
+    const instant = madridCivilToInstant(form.date, form.time)
+    if (!instant.ok) {
+      errors.time = instant.reason === 'nonexistent-civil-time'
+        ? 'Esa hora no existe en Madrid por el cambio al horario de verano.'
+        : 'Indica una fecha y una hora válidas.'
+    } else if (!isFutureSessionInput(form)) {
+      errors.date = 'La fecha y la hora deben estar en el futuro.'
+    }
   }
   if (!form.zone) errors.zone = 'Selecciona una zona o distrito.'
   if (!Number.isInteger(form.capacity) || form.capacity < 2) {
@@ -55,11 +63,11 @@ export function CreateSessionPage() {
 
   useEffect(() => {
     if (!editingSession) return
-    const [date, timeWithSeconds] = editingSession.startsAt.split('T')
+    const { date, time } = instantToMadridCivil(editingSession.startsAt)
     setForm({
       game: editingSession.game,
       date: date ?? '',
-      time: timeWithSeconds?.slice(0, 5) ?? '',
+      time,
       zone: editingSession.zone,
       place: editingSession.place,
       capacity: editingSession.capacity,

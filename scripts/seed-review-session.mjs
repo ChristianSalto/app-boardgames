@@ -1,10 +1,11 @@
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing'
-import { doc, setDoc } from 'firebase/firestore'
+import { Timestamp, doc, setDoc } from 'firebase/firestore'
+import { madridCivilToInstant } from '../src/game-sessions/madridDateTime.ts'
 
 const projectId = 'demo-mesa-abierta'
 const firestoreHost = process.env.FIRESTORE_EMULATOR_HOST ?? '127.0.0.1:8080'
 const authHost = process.env.AUTH_EMULATOR_HOST ?? '127.0.0.1:9099'
-const reviewSessionId = 'review-flow-session'
+const reviewSessionId = process.env.REVIEW_SESSION_ID ?? 'review-flow-session'
 const developmentPassword = 'MesaAbiertaReview123!'
 
 const parseLocalHost = (value, service) => {
@@ -53,6 +54,8 @@ const organizerEmail = 'review-organizer@mesa-abierta.local'
 const participantEmail = 'review-player@mesa-abierta.local'
 const organizerId = await createOrReuseLocalAccount(organizerEmail)
 const participantId = await createOrReuseLocalAccount(participantEmail)
+const seededStart = madridCivilToInstant('2026-01-20', '18:30')
+if (!seededStart.ok) throw new Error('La fecha de la sesión semilla no es válida en Europe/Madrid.')
 
 const testEnvironment = await initializeTestEnvironment({
   projectId,
@@ -77,6 +80,7 @@ try {
       }),
       setDoc(doc(database, 'gameSessions', reviewSessionId), {
         gameName: 'Azul',
+        startsAt: Timestamp.fromDate(new Date(seededStart.instant)),
         date: '2026-01-20',
         time: '18:30',
         city: 'Madrid',

@@ -28,6 +28,7 @@ let environment
 const player = (displayName) => ({ displayName, city: 'Madrid', district: 'Centro', description: '' })
 const session = (organizerId, overrides = {}) => ({
   gameName: 'Azul',
+  startsAt: Timestamp.fromDate(new Date('2031-06-20T14:00:00.000Z')),
   date: '2031-06-20',
   time: '16:00',
   city: 'Madrid',

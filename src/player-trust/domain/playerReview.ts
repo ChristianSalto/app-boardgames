@@ -7,6 +7,8 @@ export type PlayerReview = Readonly<ReviewIdentity & {
   createdAt: string
 }>
 
+export type PlayerReviewDraft = Readonly<Omit<PlayerReview, 'createdAt'>>
+
 export type CreatePlayerReviewInput = Readonly<{
   sessionId: string
   reviewerId: string
@@ -21,7 +23,7 @@ export type ReviewValidationFailure =
   | 'comment-too-long'
 
 export type ReviewCreation =
-  | Readonly<{ kind: 'created'; review: PlayerReview }>
+  | Readonly<{ kind: 'created'; review: PlayerReviewDraft }>
   | Readonly<{ kind: 'invalid'; reason: ReviewValidationFailure }>
 
 export const maximumReviewCommentLength = 500
@@ -37,7 +39,6 @@ export const isValidReviewRating = (rating: number) =>
 export const createPlayerReviewRecord = (
   input: CreatePlayerReviewInput,
   id: string,
-  createdAt: string,
 ): ReviewCreation => {
   if (!isValidReviewRating(input.rating)) return { kind: 'invalid', reason: 'invalid-rating' }
   if (input.reviewerId === input.reviewedPlayerId) return { kind: 'invalid', reason: 'self-review' }
@@ -56,7 +57,6 @@ export const createPlayerReviewRecord = (
       reviewedPlayerId: input.reviewedPlayerId,
       rating: input.rating,
       ...(comment ? { comment } : {}),
-      createdAt,
     },
   }
 }

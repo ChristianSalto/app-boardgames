@@ -6,7 +6,8 @@ import {
   getReviewEligibility,
   getReviewablePlayersForSession,
 } from '../src/player-trust/application/playerTrust.ts'
-import { createInMemoryPlayerReviewRepository, createSha256ReviewId } from '../src/player-trust/infrastructure/inMemoryPlayerTrust.ts'
+import { createInMemoryPlayerReviewRepository } from '../src/player-trust/infrastructure/inMemoryPlayerTrust.ts'
+import { createSha256ReviewId } from '../src/player-trust/infrastructure/reviewId.ts'
 
 const pastEvidence = {
   sessionId: 'past-session',
@@ -56,6 +57,8 @@ test('provisional eligibility requires a past scheduled session and confirmed pa
   assert.deepEqual(await getReviewEligibility(dependencies, 'past-session', 'player-a', 'player-a'), { kind: 'ineligible', reason: 'self-review' })
   const futureDependencies = createDependencies({ ...pastEvidence, startsAt: '2027-01-01T16:00:00.000Z' })
   assert.deepEqual(await getReviewEligibility(futureDependencies, 'past-session', 'player-a', 'player-b'), { kind: 'ineligible', reason: 'session-not-past' })
+  const notStartedDependencies = createDependencies({ ...pastEvidence, startsAt: '2026-01-01T00:00:00.000Z' })
+  assert.deepEqual(await getReviewEligibility(notStartedDependencies, 'past-session', 'player-a', 'player-b'), { kind: 'ineligible', reason: 'session-not-past' })
   const cancelledDependencies = createDependencies({ ...pastEvidence, status: 'cancelled' })
   assert.deepEqual(await getReviewEligibility(cancelledDependencies, 'past-session', 'player-a', 'player-b'), { kind: 'ineligible', reason: 'session-cancelled' })
 })

@@ -7,7 +7,7 @@ import {
   normalizeReviewComment,
 } from '../src/player-trust/domain/playerReview.ts'
 import { serializeReviewIdentity } from '../src/player-trust/domain/reviewId.ts'
-import { createSha256ReviewId } from '../src/player-trust/infrastructure/inMemoryPlayerTrust.ts'
+import { createSha256ReviewId } from '../src/player-trust/infrastructure/reviewId.ts'
 
 const validInput = {
   sessionId: 'session-1',
@@ -27,7 +27,7 @@ test('rating is valid only from 1 through 5 as an integer', () => {
 test('comments are normalized and bounded without storing an empty value', () => {
   assert.equal(normalizeReviewComment('  Una mesa estupenda.  '), 'Una mesa estupenda.')
   assert.equal(normalizeReviewComment('   '), undefined)
-  const tooLong = createPlayerReviewRecord({ ...validInput, comment: 'x'.repeat(maximumReviewCommentLength + 1) }, 'id', '2026-01-01T00:00:00.000Z')
+  const tooLong = createPlayerReviewRecord({ ...validInput, comment: 'x'.repeat(maximumReviewCommentLength + 1) }, 'id')
   assert.deepEqual(tooLong, { kind: 'invalid', reason: 'comment-too-long' })
 })
 
@@ -35,7 +35,6 @@ test('a player cannot review themselves', () => {
   const result = createPlayerReviewRecord(
     { ...validInput, reviewedPlayerId: validInput.reviewerId },
     'id',
-    '2026-01-01T00:00:00.000Z',
   )
   assert.deepEqual(result, { kind: 'invalid', reason: 'self-review' })
 })

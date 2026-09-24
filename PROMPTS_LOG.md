@@ -1,5 +1,12 @@
 # Registro de intervenciones
 
+## PROMPT-008D — Persistent Player Reviews & Canonical Session Time
+
+- **Fecha:** 2026-09-24
+- **Objetivo:** persistir Player Reviews y convertir `startsAt` en la autoridad temporal de Game Sessions, con semántica Europe/Madrid, migración local y preparación para Rules confiables.
+- **Agentes:** Senior FrontendAgent y FirebaseAgent.
+- **Resultado:** runtime conectado a `playerReviews` Firestore con ID SHA-256 determinista, tiempo de servidor, queries paginadas y resumen completo; `startsAt` Timestamp, DST, seed y migración idempotente validados. Las Rules añadidas son provisionales y PROMPT-008E no ha comenzado.
+
 ## PROMPT-008C — Player Trust Domain/Application & UI Prototype
 
 - **Fecha:** 2026-09-23
