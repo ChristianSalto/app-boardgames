@@ -4,16 +4,13 @@
 Fase 7 — Trust & Reputation MVP
 
 **Tarea:**  
-PROMPT-008E — Player Trust Security Hardening.
+PROMPT-008F — Player Trust Integration & Phase 7 Closeout.
 
 **Estado:**  
-En revisión humana.
+Completada.
 
 **Resultado:**  
-Security Rules de Player Trust y `startsAt` endurecidas y validadas contra Firebase Emulator, sin regresiones en las suites existentes.
-
-**Siguiente tarea:**
-PROMPT-008F — Player Trust Integration Review & Phase Closeout, pendiente de autorización.
+Player Trust integrado y validado de extremo a extremo: reviews persistentes, resumen global, opiniones recientes y paginadas, fiabilidad diferenciada, autoridad temporal `startsAt`, lifecycle y Security Rules verificados sin bloqueos.
 
 **Restricción:**  
-PROMPT-008E queda en revisión humana. No iniciar PROMPT-008F.
+Este cierre no inicia ni define una fase posterior.

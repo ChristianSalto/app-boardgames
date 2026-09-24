@@ -20,7 +20,7 @@ export type ReviewEligibility =
 
 /**
  * Application validation uses the canonical session instant. Firestore Rules
- * are the trusted boundary for persisted reviews and will be hardened in 008E.
+ * are the trusted boundary for persisted reviews.
  */
 export const getReviewEligibilityForEvidence = (
   evidence: ReviewSessionEvidence | null,

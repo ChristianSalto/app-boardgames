@@ -95,7 +95,18 @@ Este trabajo no bloquea el cierre de Fase 6 y requiere priorización explícita 
 
 **Criterio de salida orientativo:** las reglas de elegibilidad, publicación, visibilidad, agregación y mínimo privilegio están implementadas y validadas sin permitir que el cliente manipule reputación.
 
-**Estado:** en progreso. PROMPT-008A ha definido el alcance de producto y PROMPT-008B la arquitectura; PROMPT-008C todavía no ha comenzado.
+**Estado:** completada. PROMPT-008A–008E definieron e implementaron producto, arquitectura, UX, persistencia, autoridad temporal y seguridad; PROMPT-008F validó el flujo real de extremo a extremo y consolidó el cierre.
+
+### Backlog diferido tras el cierre
+
+- asistencia y ausencias sin aviso (`attendance` / `no-show`);
+- moderación y reportes de reviews;
+- mitigación de fraude, colusión y abuso;
+- estrategia de coste para agregados de reputación cuando la escala lo requiera;
+- eliminación futura de los campos temporales legacy `date` / `time`;
+- refinamiento visual pendiente de Auth;
+- optimización del bundle JavaScript, actualmente superior a 500 kB;
+- preparación de un entorno Firebase cloud DEV como próximo hito operativo, sin configurarlo en este cierre.
 
 ## Fase 8 — Perfil y consolidación del MVP
 
@@ -111,4 +122,4 @@ Según los resultados del MVP podrían abordarse operación y lanzamiento contro
 
 ## Puerta inmediata
 
-La Fase 7 dispone de definición de producto y arquitectura aprobadas tras PROMPT-008A y PROMPT-008B. El siguiente paso recomendado es PROMPT-008C, limitado a Domain/Application y prototipo UI sin persistencia real; no queda iniciado por este documento.
+La Fase 7 está completada tras validación end-to-end, de arquitectura y de seguridad. Este cierre no autoriza ni define la siguiente fase; cualquier continuidad requiere una nueva decisión explícita de producto.

@@ -27,7 +27,7 @@ export function PlayerTrustProfile({
         <section className="trust-summary__item">
           <h3>Reputación</h3>
           {summary.state === 'new' ? (
-            <p className="trust-summary__value"><strong>Nuevo</strong><span>Sin valoraciones todavía</span></p>
+            <p className="trust-summary__value"><strong>Nuevo en Mesa Abierta</strong><span>Sin valoraciones todavía</span></p>
           ) : (
             <p className="trust-summary__value">
               <strong>{summary.averageRating?.toLocaleString('es-ES', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span aria-hidden="true">★</span></strong>
