@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:cloud": "vite --mode cloud",
     "build": "tsc -b && vite build",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test:game-listings": "node --experimental-strip-types --test tests/game-listings.domain.test.ts tests/game-listings.application.test.ts",
