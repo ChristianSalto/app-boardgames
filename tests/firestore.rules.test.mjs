@@ -27,6 +27,7 @@ const rules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8
 let environment
 
 const player = (displayName) => ({ displayName, city: 'Madrid', district: 'Centro', description: '' })
+const betaTester = (active = true) => ({ active })
 const session = (organizerId, overrides = {}) => ({
   gameName: 'Azul',
   startsAt: Timestamp.fromDate(new Date('2031-06-20T14:00:00.000Z')),
@@ -122,8 +123,41 @@ before(async () => {
   })
 })
 
-beforeEach(async () => environment.clearFirestore())
+beforeEach(async () => {
+  await environment.clearFirestore()
+  await seed(['a', 'b', 'c', 'd', 'e'].map((uid) => [`betaTesters/${uid}`, betaTester()]))
+})
 after(async () => environment.cleanup())
+
+describe('closed beta access', () => {
+  test('allows an authenticated user to read only their own beta status', async () => {
+    await assertSucceeds(getDoc(doc(dbFor('a'), 'betaTesters', 'a')))
+    await assertFails(getDoc(doc(dbFor('a'), 'betaTesters', 'b')))
+    await assertFails(getDocs(collection(dbFor('a'), 'betaTesters')))
+  })
+
+  test('denies every client write to beta testers', async () => {
+    await assertFails(setDoc(doc(dbFor('f'), 'betaTesters', 'f'), betaTester()))
+    await assertFails(updateDoc(doc(dbFor('a'), 'betaTesters', 'a'), { active: false }))
+    await assertFails(deleteDoc(doc(dbFor('a'), 'betaTesters', 'a')))
+  })
+
+  test('allows app data only to active beta testers', async () => {
+    await seed([
+      ['players/a', player('Ana')],
+      ['betaTesters/f', betaTester(false)],
+      ['players/f', player('Fuera de beta')],
+      ['players/g', player('Sin invitación')],
+    ])
+
+    await assertSucceeds(getDoc(doc(dbFor('a'), 'players', 'a')))
+    await assertSucceeds(getDoc(doc(dbFor('f'), 'betaTesters', 'f')))
+    await assertFails(getDoc(doc(dbFor('f'), 'players', 'f')))
+    await assertFails(getDoc(doc(dbFor('g'), 'players', 'g')))
+    await assertFails(getDoc(doc(anonymousDb(), 'betaTesters', 'a')))
+    await assertFails(getDoc(doc(anonymousDb(), 'players', 'a')))
+  })
+})
 
 describe('players', () => {
   test('allows A to create/update own profile and B to read it', async () => {

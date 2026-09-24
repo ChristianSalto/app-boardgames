@@ -12,12 +12,15 @@
     "test:game-listings": "node --experimental-strip-types --test tests/game-listings.domain.test.ts tests/game-listings.application.test.ts",
     "test:game-sessions": "node scripts/run-game-session-tests.mjs",
     "test:player-trust": "node scripts/run-player-trust-tests.mjs",
+    "test:beta-access": "node --experimental-strip-types --test tests/runtime-access-policy.test.ts",
+    "test:beta-access:local-rules": "node scripts/run-local-beta-rules-tests.mjs",
     "test:rules": "node scripts/run-rules-tests.mjs",
     "seed:listings": "node scripts/seed-game-listings.mjs",
     "seed:review-session": "node --experimental-strip-types scripts/seed-review-session.mjs",
     "migrate:session-starts-at": "node --experimental-strip-types scripts/migrate-session-starts-at.mjs",
     "preview": "vite preview",
-    "emulators": "firebase emulators:start --only auth,firestore,storage",
+    "preemulators": "node scripts/prepare-emulator-firestore-rules.mjs",
+    "emulators": "firebase emulators:start --config firebase.local.json --only auth,firestore,storage",
     "deploy:hosting:dev": "firebase deploy --only hosting --project mesa-abierta-dev"
   },
   "dependencies": {

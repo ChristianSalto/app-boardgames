@@ -72,7 +72,7 @@ function ArrowIcon() {
   )
 }
 
-export function LoginPage() {
+export function LoginPage({ registrationEnabled }: { readonly registrationEnabled: boolean }) {
   const { login } = useAuthentication()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -148,11 +148,13 @@ export function LoginPage() {
           <span>{isSubmitting ? 'Iniciando sesión…' : 'Iniciar sesión'}</span>
           <ArrowIcon />
         </button>
-        <div className="auth-form__switch-link">
-          <span aria-hidden="true" />
-          <p className="auth-form__switch">¿Aún no tienes cuenta? <Link to="/register">Crear una cuenta</Link></p>
-          <span aria-hidden="true" />
-        </div>
+        {registrationEnabled ? (
+          <div className="auth-form__switch-link">
+            <span aria-hidden="true" />
+            <p className="auth-form__switch">¿Aún no tienes cuenta? <Link to="/register">Crear una cuenta</Link></p>
+            <span aria-hidden="true" />
+          </div>
+        ) : null}
       </form>
     </AuthPageLayout>
   )

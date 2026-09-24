@@ -6,6 +6,16 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function betaTesterPath(userId) {
+      return /databases/$(database)/documents/betaTesters/$(userId);
+    }
+
+    function hasActiveBetaAccess() {
+      return isAuthenticated()
+        && exists(betaTesterPath(request.auth.uid))
+        && get(betaTesterPath(request.auth.uid)).data.active == true;
+    }
+
     function isNonEmptyString(value, maxLength) {
       return value is string && value.size() > 0 && value.size() <= maxLength;
     }
@@ -35,8 +45,13 @@ service cloud.firestore {
     }
 
     function isSessionOrganizer(sessionId) {
-      return isAuthenticated()
+      return hasActiveBetaAccess()
         && get(sessionPath(sessionId)).data.organizerId == request.auth.uid;
+    }
+
+    match /betaTesters/{userId} {
+      allow get: if isAuthenticated() && request.auth.uid == userId;
+      allow list, create, update, delete: if false;
     }
 
     match /players/{playerId} {
@@ -50,8 +65,8 @@ service cloud.firestore {
           && hasValidOptionalString(data, 'avatarUrl', 500);
       }
 
-      allow get: if isAuthenticated();
-      allow create, update: if isAuthenticated()
+      allow get: if hasActiveBetaAccess();
+      allow create, update: if hasActiveBetaAccess()
         && request.auth.uid == playerId
         && hasValidPlayerShape(request.resource.data);
     }
@@ -178,8 +193,8 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'pendingRequestIds']);
       }
 
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated()
+      allow read: if hasActiveBetaAccess();
+      allow create: if hasActiveBetaAccess()
         && hasValidSessionShape(request.resource.data)
         && !request.resource.data.keys().hasAny(['date', 'time'])
         && request.resource.data.organizerId == request.auth.uid
@@ -188,7 +203,7 @@ service cloud.firestore {
         && request.resource.data.participantIds.size() == 1
         && request.resource.data.participantIds[0] == request.auth.uid
         && request.resource.data.pendingRequestIds.size() == 0;
-      allow update: if isAuthenticated()
+      allow update: if hasActiveBetaAccess()
         && hasValidSessionShape(request.resource.data)
         && request.resource.data.organizerId == resource.data.organizerId
         && (
@@ -246,8 +261,8 @@ service cloud.firestore {
           && reviewId == expectedReviewId(data);
       }
 
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated()
+      allow read: if hasActiveBetaAccess();
+      allow create: if hasActiveBetaAccess()
         && hasValidReviewShape(request.resource.data)
         && isEligibleReviewCreation();
       allow update, delete: if false;
@@ -298,18 +313,18 @@ service cloud.firestore {
           );
       }
 
-      allow get: if isAuthenticated()
+      allow get: if hasActiveBetaAccess()
         && (!exists(requestPath(requestId))
           || resource.data.playerId == request.auth.uid
           || isSessionOrganizer(resource.data.sessionId));
-      allow list: if isAuthenticated()
+      allow list: if hasActiveBetaAccess()
         && (resource.data.playerId == request.auth.uid
           || isSessionOrganizer(resource.data.sessionId));
-      allow create: if isAuthenticated()
+      allow create: if hasActiveBetaAccess()
         && hasValidRequestShape(request.resource.data)
         && request.resource.data.createdAt == request.time
         && isValidRequestCreation();
-      allow update: if isAuthenticated()
+      allow update: if hasActiveBetaAccess()
         && hasValidRequestShape(request.resource.data)
         && isOrganizerResolution();
     }
@@ -332,7 +347,7 @@ service cloud.firestore {
       }
 
       function canReadListing() {
-        return isAuthenticated()
+        return hasActiveBetaAccess()
           && (
             resource.data.status == 'active'
             || resource.data.ownerId == request.auth.uid
@@ -358,11 +373,11 @@ service cloud.firestore {
       }
 
       allow get, list: if canReadListing();
-      allow create: if isAuthenticated()
+      allow create: if hasActiveBetaAccess()
         && request.auth.uid == request.resource.data.ownerId
         && request.resource.data.status == 'active'
         && listingShape(request.resource.data);
-      allow update: if isAuthenticated()
+      allow update: if hasActiveBetaAccess()
         && listingShape(request.resource.data)
         && isOwnerUpdate();
 
@@ -379,15 +394,15 @@ service cloud.firestore {
           return get(gameListingPath(listingId)).data;
         }
 
-        allow get, list: if isAuthenticated()
+        allow get, list: if hasActiveBetaAccess()
           && (request.auth.uid == playerId || request.auth.uid == parentListing().ownerId);
-        allow create: if isAuthenticated()
+        allow create: if hasActiveBetaAccess()
           && request.auth.uid == playerId
           && parentListing().status == 'active'
           && parentListing().ownerId != playerId
           && request.resource.data.status == 'pending'
           && interestShape(request.resource.data);
-        allow update: if isAuthenticated()
+        allow update: if hasActiveBetaAccess()
           && request.auth.uid == parentListing().ownerId
           && parentListing().status == 'active'
           && resource.data.status == 'pending'
@@ -416,11 +431,11 @@ service cloud.firestore {
         }
 
         function isListingOwner() {
-          return isAuthenticated()
+          return hasActiveBetaAccess()
             && request.auth.uid == get(gameListingPath(listingId)).data.ownerId;
         }
 
-        allow get: if isAuthenticated()
+        allow get: if hasActiveBetaAccess()
           && (request.auth.uid == playerId || isListingOwner());
         allow create: if isListingOwner()
           && hasAcceptedInterest()

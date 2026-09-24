@@ -1,5 +1,12 @@
 # Registro de intervenciones
 
+## PROMPT-009B-1 — Closed Beta Guard
+
+- **Fecha:** 2026-09-24
+- **Objetivo:** preparar un acceso cerrado para Firebase DEV mediante `betaTesters/{uid}`, sin backend adicional, invite codes ni despliegue.
+- **Agentes:** FrontendAgent y FirebaseAgent.
+- **Resultado:** guard previo a Player, registro público deshabilitado solo en cloud DEV y Rules deny-by-default ampliadas para exigir tester activo en todos los datos de la aplicación; local/emuladores conserva su flujo actual. Rules y aplicación quedan pendientes de despliegue explícito.
+
 ## PROMPT-008F — Player Trust Integration & Phase 7 Closeout
 
 - **Fecha:** 2026-09-24

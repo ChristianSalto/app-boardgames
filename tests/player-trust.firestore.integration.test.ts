@@ -60,6 +60,8 @@ test('Olivia publishes a persistent review that Pablo can read, without duplicat
     await environment.withSecurityRulesDisabled(async (context) => {
       const database = context.firestore()
       await Promise.all([
+        setDoc(doc(database, 'betaTesters', 'olivia'), { active: true }),
+        setDoc(doc(database, 'betaTesters', 'pablo'), { active: true }),
         setDoc(doc(database, 'players', 'olivia'), {
           displayName: 'Olivia Organizadora', city: 'Madrid', district: 'Chamberí',
         }),

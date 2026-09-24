@@ -35,6 +35,16 @@ El puente inicial hacia un `Player` simulado se ha sustituido por `players/{uid}
 
 Firebase Auth mantiene su sesión local de navegador; por eso una recarga restaura la identidad cuando Auth Emulator sigue disponible. Google continúa fuera del MVP actual; Firestore cubre ya los perfiles, las partidas y las solicitudes aprobadas.
 
+## Acceso cerrado al entorno DEV
+
+El modo cloud DEV incorpora un guard previo a la carga del `Player`. Tras restaurar una identidad de Firebase Auth, la aplicación consulta exclusivamente `betaTesters/{uid}` mediante un port de Application y un adaptador Firestore de Infrastructure. Solo `{ active: true }` autoriza el montaje de `CurrentPlayerProvider` y, por tanto, la carga de perfiles y del resto de datos privados.
+
+Una identidad autenticada sin documento activo recibe la pantalla «Beta cerrada» y solo puede cerrar sesión. Un fallo de infraestructura se mantiene separado de una denegación y permite reintentar o cerrar sesión. El cliente únicamente puede leer su propio estado; no puede listar, crear, actualizar ni borrar testers. La provisión de Auth y de `betaTesters/{uid}` corresponde a una operación administrativa confiable fuera de la SPA.
+
+La política se activa solo con el modo Vite `cloud`, el proyecto `mesa-abierta-dev` y los emuladores deshabilitados. En desarrollo local el guard permanece inactivo y el registro continúa disponible. `npm run emulators` genera en `.firebase/` una variante local de la misma baseline cuya única diferencia es sustituir la comprobación de invitación por autenticación; `firebase.local.json` la usa sin duplicar las Rules. La suite de seguridad continúa probando `firestore.rules`, que es la baseline cloud cerrada.
+
+En cloud DEV se oculta el enlace de alta y `/register` redirige a Login. No se usan invite codes, Cloud Functions, Admin SDK en frontend, Blaze ni Storage cloud. Estas Rules quedan preparadas y probadas localmente, pero no se despliegan en PROMPT-009B-1.
+
 ## Persistencia inicial de Player
 
 `players/application` define un port reducido para obtener y crear un perfil. `FirestorePlayerRepository`, en Infrastructure, guarda únicamente `players/{uid}` y traduce su documento al modelo interno `Player`. El `uid` se usa como asociación estable autorizada, sin exponer `Firebase User` fuera de Infrastructure ni convertir Authentication en Player.

@@ -38,6 +38,7 @@ export function App({
   listingImageRepository,
   listingCommandDependencies,
   playerReviewRepository,
+  registrationEnabled,
 }: {
   readonly gameSessionRepository: GameSessionRepository
   readonly participationRequestRepository: ParticipationRequestRepository
@@ -47,6 +48,7 @@ export function App({
   readonly listingImageRepository: ListingImageRepository
   readonly listingCommandDependencies: GameListingCommandDependencies
   readonly playerReviewRepository: PlayerReviewRepository
+  readonly registrationEnabled: boolean
 }) {
   const { status, user, logout } = useAuthentication()
   const { player, status: playerStatus, retryCurrentPlayer } = useCurrentPlayer()
@@ -85,8 +87,8 @@ export function App({
 
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate replace to="/" /> : <LoginPage />} />
-      <Route path="/register" element={user ? <Navigate replace to="/" /> : <RegisterPage />} />
+      <Route path="/login" element={user ? <Navigate replace to="/" /> : <LoginPage registrationEnabled={registrationEnabled} />} />
+      <Route path="/register" element={user || !registrationEnabled ? <Navigate replace to="/login" /> : <RegisterPage />} />
       <Route path="/complete-profile" element={user && playerStatus === 'missing' ? <CompleteProfilePage /> : <Navigate replace to="/" />} />
       <Route
         path="*"
