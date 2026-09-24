@@ -63,8 +63,10 @@ export function MySessionsPage() {
             ))}
           </div>
         ) : (
-          <div className="empty-state">
-            <span className="empty-state__symbol" aria-hidden="true">◇</span>
+          <div className={`empty-state${activeTab === 'organized' ? ' empty-state--compact' : ''}`}>
+            <div className="empty-state__symbol-container" aria-hidden="true">
+              <span className="empty-state__symbol">◇</span>
+            </div>
             <h2>
               {activeTab === 'organized'
                 ? 'Aún no has organizado partidas'
@@ -72,15 +74,12 @@ export function MySessionsPage() {
             </h2>
             <p>
               {activeTab === 'organized'
-                ? 'Publica una mesa y encuentra personas con las que jugar.'
+                ? 'Cuando publiques una mesa, aquí podrás gestionar participantes, solicitudes y el estado de la partida.'
                 : 'Explora las partidas disponibles en Madrid.'}
             </p>
-            <Link
-              className="button button--primary"
-              to={activeTab === 'organized' ? '/create' : '/'}
-            >
-              {activeTab === 'organized' ? 'Crear partida' : 'Explorar partidas'}
-            </Link>
+            {activeTab === 'participating' ? (
+              <Link className="button button--primary" to="/">Explorar partidas</Link>
+            ) : null}
           </div>
         )}
       </div>

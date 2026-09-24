@@ -4,16 +4,16 @@
 Fase 7 — Trust & Reputation MVP
 
 **Tarea:**  
-PROMPT-008B — Player Trust Architecture & Trusted Review Eligibility.
+PROMPT-008C — Player Trust Domain/Application & UI Prototype.
 
 **Estado:**  
-En progreso.
+En revisión humana.
 
 **Resultado:**  
-Arquitectura de `player-trust` definida: review inmutable y única, elegibilidad basada en participantes confirmados, tiempo canónico de sesión y agregados calculados desde la fuente de verdad.
+Prototipo funcional de `player-trust` preparado para revisión humana: reviews in-memory, flujo post-partida, resumen de reputación calculado y fiabilidad sin datos verificados.
 
 **Siguiente tarea:**
-PROMPT-008C — Domain/Application & UI Prototype, pendiente de inicio.
+PROMPT-008D — Trusted Session Time & Review Persistence, pendiente de inicio.
 
 **Restricción:**  
-PROMPT-008C no ha comenzado. No implementar código, Firestore ni Security Rules mediante esta tarea.
+PROMPT-008C queda en revisión humana. No iniciar 008D ni persistir reviews en Firestore mediante esta tarea.

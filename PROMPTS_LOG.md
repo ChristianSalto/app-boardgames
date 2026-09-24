@@ -1,5 +1,12 @@
 # Registro de intervenciones
 
+## PROMPT-008C — Player Trust Domain/Application & UI Prototype
+
+- **Fecha:** 2026-09-23
+- **Objetivo:** implementar el primer flujo funcional de valoraciones post-partida con Domain, Application, UI e infraestructura in-memory, sin persistencia ni nuevas Rules.
+- **Agente:** FrontendAgent.
+- **Resultado:** reviews inmutables con ID SHA-256 determinista, elegibilidad provisional de UX, perfil y detalle conectados al resumen calculado, y flujo accesible para valorar participantes. Las reviews siguen perdiéndose al recargar; 008D permanece pendiente.
+
 Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos sensibles.
 
 ## PROMPT-001 — Project Foundation

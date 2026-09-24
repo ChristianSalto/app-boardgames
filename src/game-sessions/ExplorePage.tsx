@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
 import { AppIcon } from '../shared/AppIcon'
 import { VisualSelect } from '../shared/VisualSelect'
@@ -162,21 +161,16 @@ export function ExplorePage() {
             ))}
           </div>
         ) : (
-          <div className="empty-state">
-            <span className="empty-state__symbol" aria-hidden="true">◇</span>
-            <h3>{hasFilters ? 'No hay resultados' : 'Todavía no hay partidas disponibles'}</h3>
+          <div className="empty-state empty-state--compact">
+            <div className="empty-state__symbol-container" aria-hidden="true">
+              <span className="empty-state__symbol">◇</span>
+            </div>
+            <h3>{hasFilters ? 'No hay partidas que coincidan con tu búsqueda' : 'Todavía no hay partidas disponibles'}</h3>
             <p>
               {hasFilters
-                ? 'Prueba a cambiar el juego, la fecha o la zona.'
-                : 'Puedes ser la primera persona en organizar una mesa en Madrid.'}
+                ? 'Prueba a cambiar los filtros para ampliar la búsqueda.'
+                : 'Cuando haya nuevas partidas disponibles, las encontrarás aquí.'}
             </p>
-            {hasFilters ? (
-              <button className="button button--secondary" onClick={clearFilters} type="button">
-                Limpiar filtros
-              </button>
-            ) : (
-              <Link className="button button--primary" to="/create">Crear una partida</Link>
-            )}
           </div>
         )}
       </section>

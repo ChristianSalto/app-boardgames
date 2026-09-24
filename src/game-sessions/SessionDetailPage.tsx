@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
+import { PlayerTrustCompact } from '../player-trust/presentation/PlayerTrustCompact'
+import { ReviewParticipantsAction } from '../player-trust/presentation/ReviewParticipantsAction'
 import { AppIcon } from '../shared/AppIcon'
 import {
   formatSessionLongDate,
@@ -213,18 +215,7 @@ export function SessionDetailPage() {
                 </div>
               </div>
               <div className="organizer-trust__content">
-                {organizer.trust ? (
-                <dl className="organizer-trust__signals">
-                  <div>
-                    <dt>Reputación</dt>
-                    <dd>{formatRating(organizer.trust.averageRating)} <span aria-hidden="true">★</span> · {organizer.trust.ratingCount} valoraciones</dd>
-                  </div>
-                  <div>
-                    <dt>Fiabilidad</dt>
-                    <dd>{organizer.trust.attendedGames}/{organizer.trust.gamesPlayed} asistencias · {organizer.trust.noShows} {organizer.trust.noShows === 1 ? 'ausencia' : 'ausencias'} sin aviso</dd>
-                  </div>
-                </dl>
-                ) : <p>Las señales de confianza aún no están disponibles para este perfil.</p>}
+                <PlayerTrustCompact playerId={organizer.id} />
                 <Link
                   className="text-link"
                   state={organizer.id === currentPlayerId ? undefined : profileNavigationState}
@@ -265,6 +256,8 @@ export function SessionDetailPage() {
               ))}
             </ul>
           </div>
+
+          <ReviewParticipantsAction sessionId={session.id} />
 
           {isOrganizer && displayState !== 'cancelled' ? (
             <OrganizerRequests
@@ -439,8 +432,3 @@ function OrganizerRequests({
 
 const getInitials = (name: string) =>
   name.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('')
-
-const formatRating = (rating: number) => rating.toLocaleString('es-ES', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-})

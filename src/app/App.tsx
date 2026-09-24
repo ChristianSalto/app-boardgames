@@ -24,6 +24,8 @@ import { CompleteProfilePage } from '../players/presentation/CompleteProfilePage
 import { useCurrentPlayer } from '../players/presentation/CurrentPlayerProvider'
 import { AuthPageLayout } from '../shared/AuthPageLayout'
 import { AppShell } from '../shared/AppShell'
+import { PlayerTrustProvider } from '../player-trust/presentation/PlayerTrustProvider'
+import { ReviewParticipantsPage } from '../player-trust/presentation/ReviewParticipantsPage'
 
 export function App({
   gameSessionRepository,
@@ -128,6 +130,7 @@ function AuthenticatedPrototype({
       playerRepository={playerRepository}
       key={player.id}
     >
+      <PlayerTrustProvider>
       <GameListingsProvider
         commandDependencies={listingCommandDependencies}
         currentPlayerId={player.id}
@@ -140,6 +143,7 @@ function AuthenticatedPrototype({
             <Route path="/" element={<ExplorePage />} />
             <Route path="/sessions/:sessionId" element={<SessionDetailPage />} />
             <Route path="/sessions/:sessionId/edit" element={<CreateSessionPage />} />
+            <Route path="/sessions/:sessionId/reviews" element={<ReviewParticipantsPage />} />
             <Route path="/my-sessions" element={<MySessionsPage />} />
             <Route path="/create" element={<CreateSessionPage />} />
             <Route path="/profile" element={<PlayerProfilePage />} />
@@ -153,6 +157,7 @@ function AuthenticatedPrototype({
           </Routes>
         </AppShell>
       </GameListingsProvider>
+      </PlayerTrustProvider>
     </PrototypeProvider>
   )
 }

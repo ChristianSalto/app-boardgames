@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
+import { PlayerTrustProfile } from '../player-trust/presentation/PlayerTrustProfile'
 import { AppIcon } from '../shared/AppIcon'
-import type { PlayerTrustSignals } from './types'
 
 export function PlayerProfilePage() {
   const { playerId } = useParams()
@@ -24,14 +24,10 @@ export function PlayerProfilePage() {
     <article className="profile-card">
       <div className="profile-card__top"><div className="avatar avatar--large" aria-hidden="true">{getInitials(player.displayName)}</div><div><p className="eyebrow">{isOwnProfile ? 'Tu perfil' : 'Perfil de jugador'}</p><h1>{player.displayName}</h1><p className="profile-location"><AppIcon name="location" size={18} /> {player.city}{player.district ? ` · ${player.district}` : ''}</p></div></div>
       <div className="profile-about"><h2>Sobre {isOwnProfile ? 'ti' : player.displayName.split(' ')[0]}</h2><p>{player.description || 'Esta persona todavía no ha añadido una descripción.'}</p></div>
-      {player.trust ? <TrustProfile trust={player.trust} /> : <section className="trust-profile"><h2>Señales de confianza</h2><p>Las valoraciones y señales de fiabilidad aún no están disponibles para este perfil.</p></section>}
+      <PlayerTrustProfile playerId={player.id} players={players} />
       <dl className="profile-stats profile-stats--activity"><div><dt>Organizadas en la app</dt><dd>{activity.organized}</dd></div><div><dt>Participaciones en la app</dt><dd>{activity.confirmed}</dd></div></dl>
     </article>
   </section>
-}
-
-function TrustProfile({ trust }: { readonly trust: PlayerTrustSignals }) {
-  return <div className="trust-profile"><div className="trust-profile__heading"><div><p className="eyebrow">Señales de confianza</p><h2>Experiencia compartiendo mesa</h2></div><span className="prototype-badge">Datos simulados</span></div><div className="trust-summary"><section className="trust-summary__item"><h3>Reputación</h3><p className="trust-summary__value"><strong>{trust.averageRating.toLocaleString('es-ES', { minimumFractionDigits: 1 })} <span aria-hidden="true">★</span></strong><span>{trust.ratingCount} valoraciones</span></p></section><section className="trust-summary__item"><h3>Fiabilidad</h3><p className="trust-summary__value"><strong>{trust.attendedGames} de {trust.gamesPlayed}</strong><span>partidas asistidas</span></p></section></div></div>
 }
 
 const getInitials = (name: string) => name.split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('')
