@@ -1847,26 +1847,13 @@
 
 .my-listings-page__confirm {
   position: sticky;
-  bottom: var(--space-4);
+  bottom: calc(4rem + env(safe-area-inset-bottom));
   z-index: 1;
   margin-top: var(--space-5);
   box-shadow: var(--shadow-2);
 }
 
 @include tools.desktop {
-  .site-header { position: sticky; top: 0; background: color-mix(in srgb, var(--color-background) 94%, transparent); backdrop-filter: blur(14px); }
-  .site-header__inner { width: min(100% - 3rem, var(--content-width)); }
-  .primary-nav { display: flex; padding-right: var(--space-4); border-right: var(--border-width) solid var(--color-border); }
-  .primary-nav--mobile { display: none; }
-  .primary-nav:not(.primary-nav--mobile) .primary-nav__link { min-height: 2.75rem; padding: var(--space-2) var(--space-3); }
-  .primary-nav:not(.primary-nav--mobile) .primary-nav__link::after { position: absolute; right: var(--space-3); bottom: 0.2rem; left: var(--space-3); height: 0.15rem; transform: scaleX(0); border-radius: 999px; background: var(--color-accent); content: ''; }
-  .primary-nav:not(.primary-nav--mobile) .primary-nav__link:hover { color: var(--color-text); }
-  .primary-nav:not(.primary-nav--mobile) .primary-nav__link.is-active::after { transform: scaleX(1); }
-  .header-create-action { display: inline-flex; }
-  .header-logout-action { display: inline-flex; align-items: center; }
-  .header-player { display: inline-flex; }
-  .header-create-action:hover { background: var(--color-forest-dark); color: var(--color-text-on-dark); }
-  .header-create-action.is-active { background: var(--color-forest-dark); color: var(--color-text-on-dark); box-shadow: 0 0 0 2px var(--color-highlight), var(--shadow-1); }
   .hero__inner { grid-template-columns: 1fr auto; min-height: 26rem; padding-block: 3rem; }
   .hero h1 { font-size: clamp(3rem, 5vw, 4.4rem); }
   .hero__table { display: block; }
@@ -1893,6 +1880,24 @@
   .listing-grid--community { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .listing-grid--own { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .listing-card__image { min-height: 8.5rem; }
+}
+
+/* The full desktop header needs more room than the tablet breakpoint. */
+@media (min-width: 64rem) {
+  .site-header { position: sticky; top: 0; background: color-mix(in srgb, var(--color-background) 94%, transparent); backdrop-filter: blur(14px); }
+  .site-header__inner { width: min(100% - 3rem, var(--content-width)); }
+  .primary-nav { display: flex; padding-right: var(--space-4); border-right: var(--border-width) solid var(--color-border); }
+  .primary-nav--mobile { display: none; }
+  .primary-nav:not(.primary-nav--mobile) .primary-nav__link { min-height: 2.75rem; padding: var(--space-2) var(--space-3); }
+  .primary-nav:not(.primary-nav--mobile) .primary-nav__link::after { position: absolute; right: var(--space-3); bottom: 0.2rem; left: var(--space-3); height: 0.15rem; transform: scaleX(0); border-radius: 999px; background: var(--color-accent); content: ''; }
+  .primary-nav:not(.primary-nav--mobile) .primary-nav__link:hover { color: var(--color-text); }
+  .primary-nav:not(.primary-nav--mobile) .primary-nav__link.is-active::after { transform: scaleX(1); }
+  .header-create-action { display: inline-flex; }
+  .header-logout-action { display: inline-flex; align-items: center; }
+  .header-player { display: inline-flex; }
+  .header-create-action:hover { background: var(--color-forest-dark); color: var(--color-text-on-dark); }
+  .header-create-action.is-active { background: var(--color-forest-dark); color: var(--color-text-on-dark); box-shadow: 0 0 0 2px var(--color-highlight), var(--shadow-1); }
+  .my-listings-page__confirm { bottom: var(--space-4); }
 }
 
 @include tools.wide {

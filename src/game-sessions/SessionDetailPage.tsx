@@ -205,6 +205,20 @@ export function SessionDetailPage() {
             </div>
           </dl>
 
+          <aside className="detail-aside" aria-label="Estado de tu participación">
+            <ParticipationPanel
+              displayState={displayState}
+              isOrganizer={isOrganizer}
+              onRequest={handleRequest}
+              relation={relation}
+              remainingSeats={remainingSeats}
+            />
+            <p className="privacy-note">
+              <AppIcon name="location" size={18} />
+              El lugar mostrado es simulado. La visibilidad de una dirección exacta real se decidirá con criterios de privacidad.
+            </p>
+          </aside>
+
           {organizer ? (
             <section className="organizer-trust" aria-labelledby="organizer-title">
               <div className="organizer-trust__identity">
@@ -275,20 +289,6 @@ export function SessionDetailPage() {
             />
           ) : null}
         </div>
-
-        <aside className="detail-aside" aria-label="Estado de tu participación">
-          <ParticipationPanel
-            displayState={displayState}
-            isOrganizer={isOrganizer}
-            onRequest={handleRequest}
-            relation={relation}
-            remainingSeats={remainingSeats}
-          />
-          <p className="privacy-note">
-            <AppIcon name="location" size={18} />
-            El lugar mostrado es simulado. La visibilidad de una dirección exacta real se decidirá con criterios de privacidad.
-          </p>
-        </aside>
       </div>
     </section>
   )
