@@ -624,6 +624,118 @@
   border: var(--border-width) solid color-mix(in srgb, var(--color-border-strong) 78%, transparent);
 }
 
+/* Login prioritises the form on small screens; decoration remains available from tablet up. */
+@media (max-width: 30rem) {
+  .auth-page--branded {
+    padding: var(--space-3);
+  }
+
+  .auth-card--login,
+  .auth-card--register {
+    margin-block: var(--space-2);
+    padding: var(--space-4);
+  }
+
+  .auth-card--login .auth-card__brand,
+  .auth-card--register .auth-card__brand {
+    min-height: 2.5rem;
+    margin-bottom: var(--space-3);
+    padding-bottom: var(--space-3);
+  }
+
+  .auth-card--login .auth-card__heading,
+  .auth-card--register .auth-card__heading {
+    margin-bottom: var(--space-3);
+  }
+
+  .auth-card--login .auth-card__heading .eyebrow,
+  .auth-card--register .auth-card__heading .eyebrow {
+    margin-bottom: 0.35rem;
+  }
+
+  .auth-card--login .auth-card__heading h1,
+  .auth-card--register .auth-card__heading h1 {
+    margin-bottom: 0.35rem;
+    font-size: clamp(1.85rem, 8.5vw, 2.1rem);
+    line-height: 1.06;
+  }
+
+  .auth-card--login .auth-card__heading > p:last-child,
+  .auth-card--register .auth-card__heading > p:last-child {
+    font-size: 0.92rem;
+    line-height: 1.42;
+  }
+
+  .auth-card--login .auth-form--branded,
+  .auth-card--register .auth-form--branded {
+    --control-height: 3.2rem;
+
+    gap: var(--space-3);
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .auth-card--login .auth-form--branded .field,
+  .auth-card--register .auth-form--branded .field {
+    gap: 0.35rem;
+  }
+
+  .auth-card--login .auth-form--branded .field__label,
+  .auth-card--register .auth-form--branded .field__label {
+    font-size: 0.86rem;
+  }
+
+  .auth-card--login .auth-form--branded .auth-control input,
+  .auth-card--register .auth-form--branded .auth-control input {
+    padding: 0.6rem 3rem;
+  }
+
+  .auth-card--login .auth-control__leading-icon,
+  .auth-card--register .auth-control__leading-icon {
+    left: 0.5rem;
+    width: 1.85rem;
+    height: 1.85rem;
+  }
+
+  .auth-card--login .auth-control__leading-icon svg,
+  .auth-card--register .auth-control__leading-icon svg,
+  .auth-card--login .auth-control__visibility svg,
+  .auth-card--register .auth-control__visibility svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .auth-card--login .auth-submit,
+  .auth-card--register .auth-submit {
+    min-height: 3.2rem;
+    margin-top: 0;
+    font-size: 0.95rem;
+  }
+
+  .auth-card--login .auth-form__switch-link,
+  .auth-card--register .auth-form__switch-link {
+    gap: 0.5rem;
+  }
+
+  .auth-card--login .auth-form__switch,
+  .auth-card--register .auth-form__switch {
+    font-size: 0.78rem;
+  }
+
+  .auth-card--login .auth-card__footer,
+  .auth-card--register .auth-card__footer {
+    display: none;
+  }
+
+  .auth-card--profile .auth-card__footer {
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+  }
+}
+
 @media (min-width: 40rem) {
   .auth-page--branded {
     padding: var(--space-6);
