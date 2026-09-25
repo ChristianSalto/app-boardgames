@@ -1196,8 +1196,10 @@
 
 .text-link {
   display: inline-flex;
+  min-height: 2.75rem;
   align-items: center;
   gap: 0.28rem;
+  padding-inline: 0.25rem;
   color: var(--color-forest);
   font-size: 0.9rem;
   font-weight: 750;
@@ -1582,6 +1584,7 @@
 .profile-page { max-width: 52rem; }
 .profile-card { padding: 1.25rem; border: 1px solid var(--color-line); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-soft); }
 .profile-card__top { display: flex; align-items: center; gap: 1rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--color-line); }
+.profile-card__top > :last-child { min-width: 0; }
 .profile-card h1 { margin: 0; font-size: clamp(2rem, 7vw, 3.25rem); }
 .profile-location { display: flex; align-items: center; gap: 0.35rem; margin: 0.35rem 0 0; color: var(--color-ink-soft); }
 .profile-about { padding-block: 1.4rem 0.6rem; }
@@ -1646,9 +1649,12 @@
 
 .community-listings__heading {
   align-items: end;
+  flex-wrap: wrap;
   gap: var(--space-4);
   margin-bottom: var(--space-4);
 }
+
+.community-listings__heading > div { min-width: 0; }
 
 .community-listings__heading h2 {
   margin-bottom: 0;
@@ -1745,6 +1751,30 @@
   color: var(--color-text);
   font-family: var(--font-display);
   font-size: var(--font-size-lg);
+}
+
+/* User-entered names, titles and reviews must wrap rather than force horizontal scrolling. */
+.session-card h2,
+.detail-heading h1,
+.listing-card__body h3,
+.listing-detail-heading h1,
+.profile-card h1,
+.organizer-trust__identity h2,
+.person-row strong,
+.review-participant-list__identity strong,
+.review-card blockquote p,
+.review-card__author {
+  overflow-wrap: anywhere;
+}
+
+.session-card__heading,
+.organizer-trust__identity > div,
+.person-row > span:nth-child(2),
+.listing-card__body,
+.listing-card__facts > span,
+.review-card,
+.review-card__meta > * {
+  min-width: 0;
 }
 
 .listing-card__body > .text-link {
@@ -1965,6 +1995,19 @@
   box-shadow: var(--shadow-2);
 }
 
+@media (max-width: 30rem) {
+  .community-listings__heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-3);
+  }
+
+  .community-listings__publish {
+    justify-self: start;
+  }
+}
+
 @include tools.desktop {
   .hero__inner { grid-template-columns: 1fr auto; min-height: 26rem; padding-block: 3rem; }
   .hero h1 { font-size: clamp(3rem, 5vw, 4.4rem); }
@@ -1988,7 +2031,7 @@
   .trust-summary { grid-template-columns: 1fr 1fr; }
   .review-list { grid-template-columns: 1fr 1fr; }
   .review-flow-layout { grid-template-columns: minmax(0, 1.1fr) minmax(19rem, 0.9fr); align-items: start; }
-  .listing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .listing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .listing-grid--community { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .listing-grid--own { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .listing-card__image { min-height: 8.5rem; }
@@ -2013,6 +2056,7 @@
 }
 
 @include tools.wide {
+  .listing-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .listing-grid--community { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .listing-detail-layout {
     grid-template-columns: minmax(0, 1fr) minmax(15rem, 18rem);
