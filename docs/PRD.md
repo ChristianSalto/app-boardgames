@@ -3,7 +3,7 @@
 ## Estado del documento
 
 - **Fase:** 0 — Foundation
-- **Estado:** baseline aprobada; Marketplace de Fase 6 completado; Trust & Reputation de Fase 7 en definición
+- **Estado:** baseline aprobada; Marketplace de Fase 6 completado; Trust & Reputation de Fase 7 completado
 - **Referencia de alcance:** `MVP.md`
 - **Naturaleza:** definición inicial basada en hipótesis; requiere validación con usuarios.
 

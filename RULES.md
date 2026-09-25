@@ -7,7 +7,7 @@ Estas reglas se aplican a personas y agentes de IA. Deben interpretarse junto co
 - El problema inicial es encontrar personas con quienes jugar a juegos de mesa.
 - El MVP prioriza crear, descubrir y participar en partidas o quedadas.
 - No se incorpora una funcionalidad fuera de `docs/MVP.md` sin decisión explícita de producto.
-- Intercambio de juegos y red social avanzada permanecen fuera del MVP 1.
+- Game Listings, incluida la modalidad de intercambio aprobada en `docs/MVP.md`, forma parte del alcance vigente; la red social avanzada permanece fuera del MVP 1.
 - Toda incertidumbre se registra como hipótesis o pregunta abierta; no se presenta como hecho.
 - No se comienza una fase hasta que `ProductManagerAgent` confirme los criterios de salida de la anterior.
 

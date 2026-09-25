@@ -1,4 +1,6 @@
-# Prototipo SPA — Fase 2
+# Prototipo SPA — Fase 2 (documentación histórica)
+
+> **Nota histórica:** Este documento describe el prototipo de la Fase 2 y no el runtime actual. El runtime actual utiliza Firebase Auth y Firestore, junto con la arquitectura posterior documentada en el repositorio.
 
 ## Objetivo
 
