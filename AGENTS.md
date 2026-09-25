@@ -151,3 +151,18 @@ Una tarea no está terminada solo porque exista una entrega. Debe satisfacer sus
 - Frontend y Firebase implementan en sus respectivos límites; QA revisa sin sustituir al responsable.
 - Una discrepancia de alcance vuelve a `ProductManagerAgent`; una discrepancia técnica relevante vuelve a `SoftwareArchitectAgent`; una entrega no conforme vuelve al agente responsable.
 - Solo `ProductManagerAgent`, con los criterios satisfechos y revisión humana cuando proceda, autoriza el avance de fase.
+
+<!-- BEGIN BOARDGAME UX KIT v1 -->
+## Trabajo UX de Mesa Abierta
+
+Este bloque complementa las reglas y roles anteriores. Conserva a ProductManagerAgent como coordinador de alcance, UXDesignerAgent como responsable UX, FrontendAgent como implementador y QAReviewerAgent como revisor independiente. Las instrucciones humanas vigentes y la jerarquía existente mantienen prioridad.
+
+- Antes de cambiar navegación, pantallas, componentes, formularios, copy o estados visibles, consulta la skill pertinente en `.agents/skills/boardgame-ux-*/SKILL.md` y las secciones necesarias de `docs/ux/GUIA.md`. Para este repositorio lee primero `docs/ux/ADAPTACION_MESA_ABIERTA.md` y contrasta su commit con HEAD.
+- Arquitectura de información, flujos, menús y refactors amplios: `boardgame-ux-architecture`. Layout, foco, densidad, componentes y formularios: `boardgame-ux-screens`. Etiquetas, ayudas, errores, vacíos y confirmaciones: `boardgame-ux-writing`. Antes de cerrar un cambio visible: `boardgame-ux-validation`. No activar este proceso para trabajo sin efecto UX.
+- En un refactor sustancial, delega una tarea acotada a `boardgame_ux_architect` para apoyar a UXDesignerAgent. Si el copy cambia de forma extensa o delicada, delega en `boardgame_ux_writer`. Antes de aceptar un flujo o patrón compartido, delega la revisión en `boardgame_ux_reviewer` como apoyo de QAReviewerAgent. Puedes paralelizar lecturas independientes; solo el responsable de implementación edita los archivos del producto. No lanzar los tres para una corrección pequeña.
+- Si el entorno no dispone de estos agentes o subagentes, lee sus instrucciones y aplica los roles de forma secuencial; declara que no hubo revisión independiente y respeta la exigencia de QA del repositorio antes de aceptar. No afirmar que los agentes se ejecutaron si solo se leyeron sus archivos.
+- Antes de cada tarea sustancial recomienda un modelo disponible y esfuerzo proporcionales a dificultad, riesgo y coste; indica si no puedes cambiar el modelo activo. No fijar un modelo no disponible ni repetir la recomendación en cada paso menor.
+- Conserva alcance, identidad visual, permisos y contratos de dominio. No importar funcionalidades de Cruxmatch ni los ejemplos condicionales de la guía. En Mesa Abierta, solicitar plaza no confirma participación; el organizador cuenta en el aforo; anuncios y reputación conservan sus decisiones aprobadas.
+- Captura e inspecciona el estado anterior y posterior del alcance con datos locales deterministas. Distingue inspección de código, render, interacción, lectores y tests. Si falta evidencia, documenta la parte pendiente y continúa lo independiente sin declarar el lote visualmente completo.
+- Reutiliza `docs/UX_STRATEGY.md`, `docs/SCREEN_INVENTORY.md`, `docs/VISUAL_DIRECTION.md`, `TASK.md` y `PROMPTS_LOG.md`; las plantillas del kit se usan solo donde no exista ya un artefacto equivalente. Auditar no autoriza implementar; una solicitud de refactor sí autoriza cambios locales dentro del foco, respetando fases y decisiones vigentes. Publicación y servicios externos requieren su alcance explícito.
+<!-- END BOARDGAME UX KIT v1 -->
