@@ -323,6 +323,7 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** eliminar repetición visible entre contexto de comunidad, propósito, ciudad y encabezado de resultados y adelantar filtros/partidas sin rehacer su comportamiento.
 - **Agente:** FrontendAgent.
 - **Resultado:** se eliminan los eyebrows redundantes de comunidad/Explorar y el chip de Madrid, ahora expresado una vez en la guía de filtros; el título identifica explícitamente las partidas de juegos de mesa y el encabezado de sección pasa a «Resultados». El contador anuncia resultados. El hero desktop/tablet baja de 26rem a 22rem manteniendo su arte y padding reequilibrado. Filtros, URL, retorno y orden de Marketplace no se modifican. Revisión independiente de código sin hallazgos; `typecheck` y `build` pasan. La validación visual en 390/768/desktop queda pendiente porque el navegador local no tiene pestañas ni sesión beta.
+- **Revisión sobre HEAD (2026-09-26):** el texto del hero deja de enumerar los filtros visibles; se retira el encabezado «Resultados» situado antes de los filtros y se conserva el contador de resultados. El estado vacío asciende a `h2` para mantener la jerarquía. No cambian filtros, URL, retorno ni Marketplace. `typecheck` y `build` pasan. La inspección local llega a `/login`, por lo que sigue pendiente la validación visual autenticada a 390/768/desktop.
 
 ## UX-R01E — Simplify Organizer Management
 

@@ -68,7 +68,7 @@ export function ExplorePage() {
           <div className="hero__content">
             <h1>Encuentra partidas de juegos de mesa.</h1>
             <p className="hero__lead">
-              Filtra por juego, fecha y zona en Madrid y solicita una plaza.
+              En Madrid, solicita plaza en la partida que te encaje.
             </p>
           </div>
           <div className="hero__table" aria-hidden="true">
@@ -80,13 +80,7 @@ export function ExplorePage() {
         </div>
       </section>
 
-      <section className="page-container explore-section" aria-labelledby="explore-title">
-        <div className="section-heading">
-          <div>
-            <h2 id="explore-title">Resultados</h2>
-          </div>
-        </div>
-
+      <section className="page-container explore-section" aria-label="Búsqueda de partidas">
         <div className="filters" aria-label="Filtros de partidas">
           <div className="field filters__game">
             <label htmlFor="game-filter">Juego</label>
@@ -170,7 +164,7 @@ export function ExplorePage() {
             <div className="empty-state__symbol-container" aria-hidden="true">
               <span className="empty-state__symbol">◇</span>
             </div>
-            <h3>{hasFilters ? 'No hay partidas que coincidan con tu búsqueda' : 'Todavía no hay partidas disponibles'}</h3>
+            <h2>{hasFilters ? 'No hay partidas que coincidan con tu búsqueda' : 'Todavía no hay partidas disponibles'}</h2>
             <p>
               {hasFilters
                 ? 'Prueba a cambiar los filtros para ampliar la búsqueda.'
