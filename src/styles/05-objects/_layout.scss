@@ -81,23 +81,24 @@
 
 @include tools.wide {
   .detail-layout {
-    display: block;
-  }
-
-  .detail-main {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 21rem;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 21rem);
+    grid-template-areas:
+      'overview aside'
+      'content aside';
     column-gap: 2rem;
+    row-gap: 1.25rem;
     align-items: start;
   }
 
-  .detail-main > :not(.detail-aside) {
-    grid-column: 1;
+  .detail-main {
+    grid-area: content;
+    min-width: 0;
   }
 
+  .session-overview-card { grid-area: overview; min-width: 0; }
+
   .detail-aside {
-    grid-column: 2;
-    grid-row: 1 / span 20;
+    grid-area: aside;
     position: sticky;
     top: 6.5rem;
     align-self: start;
@@ -105,5 +106,11 @@
 
   .session-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 63.99rem) {
+  .detail-page {
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
   }
 }

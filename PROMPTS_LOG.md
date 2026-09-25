@@ -302,3 +302,17 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** corregir únicamente los problemas Medium pendientes del audit responsive en filtros, Marketplace, CTA de comunidad, targets táctiles y textos largos.
 - **Agente:** FrontendAgent.
 - **Resultado:** los chips mantienen dos columnas en móvil y cuatro en desktop; enlaces pequeños reciben una altura mínima de 44px sin perder su aspecto de enlace; se protege el nombre del organizador y el texto largo en perfiles, reviews y títulos. Se conserva Marketplace a dos columnas desde 768px y tres desde 1088px, y el CTA de comunidad apilado en anchos menores de 480px. `typecheck` y `build` pasan. La inspección visual autenticada queda pendiente: el navegador local solo permite ver `/login`; el login no presenta overflow horizontal en 320, 375, 390, 430, 768 y 1440px.
+
+## UX-R01B — Simplify Session Detail on Mobile
+
+- **Fecha:** 2026-09-25
+- **Objetivo:** reducir fragmentación y scroll en el detalle móvil agrupando datos principales y ordenando las acciones según el rol, sin alterar contratos.
+- **Agente:** FrontendAgent.
+- **Resultado:** imagen/arte, estado, título, fecha/hora, ubicación, privacidad y aforo se agrupan en una card principal móvil con subbloques y valores alineados bajo sus labels. La card amplia de confianza del organizador se oculta en móvil; la fila de participantes mantiene el acceso al perfil y muestra una señal compacta de reputación cuando los datos están disponibles. El panel de estado/acción queda tras la card principal, con presentación compacta; participantes preceden a «Sobre la partida». En escritorio se conserva la distribución anterior desde 68rem; la jerarquía de gestión del organizador se mantiene. `test:game-sessions`, `typecheck` y `build` pasan. La comprobación visual y de teclado por estado/viewport queda pendiente por falta de sesión beta autenticada en el navegador local.
+
+## UX-R01C — Unify Session Detail Responsive Architecture
+
+- **Fecha:** 2026-09-25
+- **Objetivo:** compartir la arquitectura de información del detalle entre móvil y desktop, reducir superficies duplicadas y mantener el panel contextual en una columna secundaria amplia.
+- **Agente:** FrontendAgent.
+- **Resultado:** una card principal contiene arte, estado, título, resumen y metadata en todos los breakpoints; metadata deja de tener cards interiores. Se retira la card independiente de organizador/confianza; la fila del organizador conserva su rol, señal breve de reputación y acceso al perfil. Un grid externo conserva el orden DOM retorno → información → estado/acción → participantes → descripción → secundario, y coloca solo el panel contextual en la columna derecha desde 68rem. «Sobre la partida» queda como sección simple. En móvil se compactan la fecha, el aviso de privacidad, el panel contextual y el encabezado de participantes. `test:game-sessions` (4 pruebas unitarias y migración Firestore en proyecto demo), `typecheck` y `build` pasan; el build mantiene el aviso de bundle JS mayor de 500 kB. Revisión independiente estática sin hallazgos. Validación visual y teclado real por viewport/estado bloqueada por falta de sesión beta y pestañas de navegador.

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
 import { AppIcon } from '../shared/AppIcon'
 import {
@@ -33,6 +33,7 @@ type SessionCardProps = {
 }
 
 export function SessionCard({ session, showRelation = false }: SessionCardProps) {
+  const location = useLocation()
   const { currentPlayerId, players } = usePrototype()
   const organizer = players.find((player) => player.id === session.organizerId)
   const remainingSeats = getRemainingSeats(session)
@@ -103,8 +104,9 @@ export function SessionCard({ session, showRelation = false }: SessionCardProps)
         <Link
           className="text-link session-card__link"
           state={{
-            from: showRelation ? '/my-sessions' : '/',
+            from: showRelation ? '/my-sessions' : `${location.pathname}${location.search}`,
             fromLabel: showRelation ? 'Mis partidas' : 'Explorar',
+            fromKey: location.key,
           }}
           to={`/sessions/${session.id}`}
         >

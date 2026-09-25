@@ -23,7 +23,7 @@ No muestra completas, canceladas o pasadas. No necesita orden avanzado ni mapa.
 - **Usuario:** visitante interesado, solicitante pendiente, participante confirmado u organizador.
 - **Punto de entrada:** tarjeta de Explorar, tarjeta de Mis partidas o detalle tras publicar.
 - **Acciones principales:** solicitar plaza; abrir perfil; para el organizador, aceptar o rechazar solicitudes.
-- **Información principal:** orientación contextual de origen y modo de consulta/gestión; juego, fecha, hora, Madrid, zona/distrito y lugar simulado si existe; organizador con reputación y fiabilidad simuladas resumidas, descripción, confirmados/aforo, plazas disponibles, participantes confirmados y estado personal.
+- **Información principal:** orientación contextual de origen y modo de consulta/gestión; juego, fecha, hora, Madrid, zona/distrito y lugar simulado si existe dentro de una superficie principal; descripción, confirmados/aforo, plazas disponibles, participantes confirmados y estado personal. El organizador aparece en la fila de participantes con su rol, una señal breve de reputación cuando exista y acceso al perfil; reputación y fiabilidad se mantienen como conceptos separados.
 - **Estados importantes:** loading, disponible para solicitar, solicitud pendiente, participación confirmada, solicitud no aceptada, partida completada antes de confirmar la solicitud, vista del organizador, completa, cancelada, pasada, error/no encontrada y éxito tras publicación.
 
 Variantes:

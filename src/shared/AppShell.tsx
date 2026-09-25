@@ -1,5 +1,5 @@
-import { useEffect, type ReactNode } from 'react'
-import { Link, NavLink, useLocation } from 'react-router-dom'
+import { useEffect, useRef, type ReactNode } from 'react'
+import { Link, NavLink, useLocation, useNavigationType } from 'react-router-dom'
 import { AppIcon } from './AppIcon'
 import { useAuthentication } from '../authentication/presentation/AuthenticationProvider'
 import { useCurrentPlayer } from '../players/presentation/CurrentPlayerProvider'
@@ -43,12 +43,16 @@ function PrimaryNavigation({ mobile = false }: { readonly mobile?: boolean }) {
 
 export function AppShell({ children }: { readonly children: ReactNode }) {
   const { pathname } = useLocation()
+  const navigationType = useNavigationType()
+  const previousPathname = useRef(pathname)
   const { logout } = useAuthentication()
   const { player } = useCurrentPlayer()
 
   useEffect(() => {
-    window.scrollTo({ top: 0 })
-  }, [pathname])
+    if (previousPathname.current === pathname) return
+    previousPathname.current = pathname
+    if (navigationType !== 'POP') window.scrollTo({ top: 0 })
+  }, [navigationType, pathname])
 
   return (
     <div className="app-shell">

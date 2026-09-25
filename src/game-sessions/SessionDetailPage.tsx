@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
-import { PlayerTrustCompact } from '../player-trust/presentation/PlayerTrustCompact'
+import { usePlayerTrustSummary } from '../player-trust/presentation/PlayerTrustProvider'
 import { ReviewParticipantsAction } from '../player-trust/presentation/ReviewParticipantsAction'
 import { AppIcon } from '../shared/AppIcon'
 import {
+  formatSessionDate,
   formatSessionLongDate,
   formatSessionTime,
   getGameInitials,
@@ -35,7 +36,9 @@ export function SessionDetailPage() {
     readonly edited?: boolean
     readonly from?: string
     readonly fromLabel?: string
+    readonly fromKey?: string
   } | null
+  const navigate = useNavigate()
   const {
     acceptRequest,
     cancelSession,
@@ -70,7 +73,6 @@ export function SessionDetailPage() {
     )
   }
 
-  const organizer = playerById.get(session.organizerId)
   const participants = session.participantIds
     .map((id) => playerById.get(id))
     .filter((player) => player !== undefined)
@@ -79,8 +81,10 @@ export function SessionDetailPage() {
   const displayState = getSessionDisplayState(session)
   const remainingSeats = getRemainingSeats(session)
   const isOrganizer = relation === 'organizer'
-  const originPath = locationState?.from ?? (isOrganizer ? '/my-sessions' : '/')
-  const originLabel = locationState?.fromLabel ?? (isOrganizer ? 'Mis partidas' : 'Explorar')
+  const originPath = locationState?.from ?? '/'
+  const originLabel = locationState?.fromLabel ?? 'Explorar'
+  const returnedFromExplore =
+    locationState?.from?.split('?')[0] === '/' && Boolean(locationState.fromKey)
   const profileNavigationState = {
     from: location.pathname,
     fromLabel: session.game,
@@ -137,11 +141,63 @@ export function SessionDetailPage() {
     }
   }
 
+  const participationAside = (
+    <aside
+      aria-label={isOrganizer ? 'Gestión de la partida' : 'Estado de tu participación'}
+      className="detail-aside"
+    >
+      <ParticipationPanel
+        displayState={displayState}
+        isOrganizer={isOrganizer}
+        onRequest={handleRequest}
+        relation={relation}
+        remainingSeats={remainingSeats}
+      />
+      {isOrganizer && displayState !== 'cancelled' ? (
+        <div className="detail-organizer-actions">
+          <Link className="button button--ghost" to={`/sessions/${session.id}/edit`}>Editar partida</Link>
+          <button
+            className="button button--danger detail-organizer-actions__cancel"
+            onClick={() => setConfirmingCancellation(true)}
+            type="button"
+          >
+            Cancelar partida
+          </button>
+        </div>
+      ) : null}
+      {isOrganizer && confirmingCancellation ? (
+        <div className="inline-confirm" role="group" aria-label="Confirmar cancelación de la partida">
+          <p>¿Cancelar esta partida? Las solicitudes pendientes dejarán de estar activas.</p>
+          <button className="button button--danger" onClick={handleCancel} type="button">Sí, cancelar partida</button>
+          <button className="button button--ghost" onClick={() => setConfirmingCancellation(false)} type="button">Volver</button>
+        </div>
+      ) : null}
+    </aside>
+  )
+
   return (
     <section className="page-container detail-page">
       <nav aria-label="Migas de pan" className="breadcrumb">
         <ol>
-          <li><Link to={originPath}>{originLabel}</Link></li>
+          <li>
+            <Link
+              onClick={(event) => {
+                if (
+                  !returnedFromExplore
+                  || event.button !== 0
+                  || event.metaKey
+                  || event.altKey
+                  || event.ctrlKey
+                  || event.shiftKey
+                ) return
+                event.preventDefault()
+                navigate(-1)
+              }}
+              to={originPath}
+            >
+              {originLabel}
+            </Link>
+          </li>
           <li aria-current="page">{session.game}</li>
         </ol>
       </nav>
@@ -154,99 +210,55 @@ export function SessionDetailPage() {
       ) : null}
 
       <div className="detail-layout">
+        <section className="session-overview-card" aria-labelledby="session-detail-title">
+            <div className="detail-heading">
+              <div className={`game-art game-art--large game-art--${session.tone}`} aria-hidden="true">
+                <span>{getGameInitials(session.game)}</span>
+              </div>
+              <div className="detail-heading__content">
+                <p className="detail-context">
+                  {isOrganizer ? 'Gestionar partida' : 'Detalle de partida'}
+                </p>
+                <div className="detail-heading__meta">
+                  <span className={`status-pill status-pill--${displayState}`}>
+                    {stateLabels[displayState]}
+                  </span>
+                  {isOrganizer ? <span className="status-pill status-pill--organizer">Organizada por ti</span> : null}
+                </div>
+                <h1 id="session-detail-title">{session.game}</h1>
+                <p className="detail-heading__summary">Encuentro de juegos de mesa.</p>
+              </div>
+            </div>
+
+            <dl className="detail-facts">
+              <div>
+                <dt><AppIcon name="calendar" size={18} /><span>Cuándo</span></dt>
+                <dd className="u-capitalize">
+                  <span className="detail-date-long">{formatSessionLongDate(session.startsAt)}</span>
+                  <span className="detail-date-compact">{formatSessionDate(session.startsAt)}</span>
+                  {' · '}{formatSessionTime(session.startsAt)}
+                </dd>
+              </div>
+              <div>
+                <dt><AppIcon name="location" size={18} /><span>Dónde</span></dt>
+                <dd className="detail-location">
+                  <strong>{session.place || 'Lugar por confirmar'}</strong>
+                  <span>{session.zone} · Madrid</span>
+                  <small>El lugar es simulado. La visibilidad de una dirección real exacta dependerá de criterios de privacidad.</small>
+                </dd>
+              </div>
+              <div>
+                <dt><AppIcon name="people" size={18} /><span>Aforo</span></dt>
+                <dd>{session.participantIds.length}/{session.capacity} confirmados · {remainingSeats} {remainingSeats === 1 ? 'plaza' : 'plazas'}</dd>
+              </div>
+            </dl>
+        </section>
+
+        {participationAside}
+
         <div className="detail-main">
-          <div className="detail-heading">
-            <div className={`game-art game-art--large game-art--${session.tone}`} aria-hidden="true">
-              <span>{getGameInitials(session.game)}</span>
-            </div>
-            <div>
-              <p className="detail-context">
-                {isOrganizer ? 'Gestionar partida' : 'Detalle de partida'}
-              </p>
-              <div className="detail-heading__meta">
-                <span className={`status-pill status-pill--${displayState}`}>
-                  {stateLabels[displayState]}
-                </span>
-                {isOrganizer ? <span className="status-pill status-pill--organizer">Organizada por ti</span> : null}
-              </div>
-              <h1>{session.game}</h1>
-              <p>Encuentro de juegos de mesa en {session.zone}.</p>
-              {isOrganizer && displayState !== 'cancelled' ? (
-                <div className="request-card__actions">
-                  <Link className="button button--ghost" to={`/sessions/${session.id}/edit`}>Editar partida</Link>
-                  <button className="button button--danger" onClick={() => setConfirmingCancellation(true)} type="button">Cancelar partida</button>
-                </div>
-              ) : null}
-              {isOrganizer && confirmingCancellation ? (
-                <div className="inline-confirm" role="group" aria-label="Confirmar cancelación de la partida">
-                  <p>¿Cancelar esta partida? Las solicitudes pendientes dejarán de estar activas.</p>
-                  <button className="button button--danger" onClick={handleCancel} type="button">Sí, cancelar partida</button>
-                  <button className="button button--ghost" onClick={() => setConfirmingCancellation(false)} type="button">Volver</button>
-                </div>
-              ) : null}
-            </div>
-          </div>
 
-          <dl className="detail-facts">
-            <div>
-              <dt><AppIcon name="calendar" /> Cuándo</dt>
-              <dd className="u-capitalize">{formatSessionLongDate(session.startsAt)} · {formatSessionTime(session.startsAt)}</dd>
-            </div>
-            <div>
-              <dt><AppIcon name="location" /> Dónde</dt>
-              <dd className="detail-location">
-                <strong>{session.place || 'Lugar por confirmar'}</strong>
-                <span>{session.zone} · Madrid</span>
-              </dd>
-            </div>
-            <div>
-              <dt><AppIcon name="people" /> Aforo</dt>
-              <dd>{session.participantIds.length}/{session.capacity} confirmados · {remainingSeats} {remainingSeats === 1 ? 'plaza' : 'plazas'}</dd>
-            </div>
-          </dl>
-
-          <aside className="detail-aside" aria-label="Estado de tu participación">
-            <ParticipationPanel
-              displayState={displayState}
-              isOrganizer={isOrganizer}
-              onRequest={handleRequest}
-              relation={relation}
-              remainingSeats={remainingSeats}
-            />
-            <p className="privacy-note">
-              <AppIcon name="location" size={18} />
-              El lugar mostrado es simulado. La visibilidad de una dirección exacta real se decidirá con criterios de privacidad.
-            </p>
-          </aside>
-
-          {organizer ? (
-            <section className="organizer-trust" aria-labelledby="organizer-title">
-              <div className="organizer-trust__identity">
-                <span className="avatar" aria-hidden="true">{getInitials(organizer.displayName)}</span>
-                <div>
-                  <h2 id="organizer-title">{organizer.displayName}</h2>
-                  <p>Organiza esta partida</p>
-                </div>
-              </div>
-              <div className="organizer-trust__content">
-                <PlayerTrustCompact playerId={organizer.id} />
-                <Link
-                  className="text-link"
-                  state={organizer.id === currentPlayerId ? undefined : profileNavigationState}
-                  to={organizer.id === currentPlayerId ? '/profile' : `/players/${organizer.id}`}
-                >
-                  Ver perfil y opiniones <AppIcon name="arrow" size={17} />
-                </Link>
-              </div>
-            </section>
-          ) : null}
-
-          <div className="content-block">
-            <h2>Sobre la partida</h2>
-            <p>{session.description || 'El organizador no ha añadido información adicional.'}</p>
-          </div>
-
-          <div className="content-block">
+          <div className="content-block" id="session-management" tabIndex={-1}>
             <div className="content-block__heading">
               <h2>Participantes confirmados</h2>
               <span>{participants.length}/{session.capacity}</span>
@@ -263,6 +275,7 @@ export function SessionDetailPage() {
                     <span>
                       <strong>{player.displayName}</strong>
                       <small>{player.id === session.organizerId ? 'Organiza la partida' : player.district ?? 'Madrid'}</small>
+                      {player.id === session.organizerId ? <OrganizerReputationSignal playerId={player.id} /> : null}
                     </span>
                     <AppIcon name="arrow" size={18} />
                   </Link>
@@ -270,6 +283,11 @@ export function SessionDetailPage() {
               ))}
             </ul>
           </div>
+
+          <section className="session-description-block" aria-labelledby="session-description-title">
+            <h2 id="session-description-title">Sobre la partida</h2>
+            <p>{session.description || 'El organizador no ha añadido información adicional.'}</p>
+          </section>
 
           <ReviewParticipantsAction sessionId={session.id} />
 
@@ -288,6 +306,7 @@ export function SessionDetailPage() {
               sessionIsComplete={displayState === 'complete'}
             />
           ) : null}
+
         </div>
       </div>
     </section>
@@ -310,7 +329,14 @@ function ParticipationPanel({
   remainingSeats,
 }: ParticipationPanelProps) {
   if (isOrganizer) {
-    return <div className="participation-panel"><p className="eyebrow">Tu partida</p><h2>Gestiona esta mesa</h2><p>Revisa participantes y solicitudes desde esta misma pantalla.</p></div>
+    return (
+      <div className="participation-panel">
+        <p className="eyebrow">Tu partida</p>
+        <h2>Participantes y solicitudes</h2>
+        <p>Consulta quién participa y gestiona las solicitudes pendientes.</p>
+        <a className="button button--primary button--wide" href="#session-management">Gestionar partida</a>
+      </div>
+    )
   }
 
   if (displayState === 'cancelled') {
@@ -322,7 +348,7 @@ function ParticipationPanel({
   }
 
   if (relation === 'confirmed') {
-    return <div className="participation-panel participation-panel--success"><p className="eyebrow">Tu plaza</p><h2>Participación confirmada</h2><p>Ya cuentas dentro del aforo de esta partida.</p></div>
+    return <div className="participation-panel participation-panel--success"><p className="eyebrow">Tu plaza</p><h2>Plaza confirmada</h2><p>Cuentas dentro del aforo.</p></div>
   }
 
   if (relation === 'pending') {
@@ -350,6 +376,27 @@ function ParticipationPanel({
         Solicitar plaza
       </button>
     </div>
+  )
+}
+
+function OrganizerReputationSignal({ playerId }: { readonly playerId: string }) {
+  const summary = usePlayerTrustSummary(playerId)
+  if (!summary) return null
+  if (summary.state === 'new') {
+    return <small className="organizer-reputation-signal">Nuevo en Mesa Abierta</small>
+  }
+
+  const rating = summary.averageRating?.toLocaleString('es-ES', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })
+  const reviewLabel = summary.reviewCount === 1 ? 'valoración' : 'valoraciones'
+
+  return (
+    <small className="organizer-reputation-signal">
+      {rating ? <><span aria-hidden="true">★</span> {rating} · </> : null}
+      {summary.reviewCount} {reviewLabel}
+    </small>
   )
 }
 

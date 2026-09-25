@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
 import { AppIcon } from '../shared/AppIcon'
 import { VisualSelect } from '../shared/VisualSelect'
@@ -20,9 +21,23 @@ const dateOptions = [
 
 export function ExplorePage() {
   const { sessions } = usePrototype()
-  const [game, setGame] = useState('')
-  const [date, setDate] = useState<DateFilter>('all')
-  const [zone, setZone] = useState('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const game = searchParams.get('game') ?? ''
+  const dateValue = searchParams.get('date')
+  const date = dateOptions.some((option) => option.value === dateValue)
+    ? dateValue as DateFilter
+    : 'all'
+  const zone = searchParams.get('zone') ?? 'all'
+
+  const updateFilter = (name: string, value: string, defaultValue: string) => {
+    const next = new URLSearchParams(searchParams)
+    if (value === defaultValue) {
+      next.delete(name)
+    } else {
+      next.set(name, value)
+    }
+    setSearchParams(next, { replace: true })
+  }
 
   const availableSessions = useMemo(
     () => sortSessionsByDate(sessions.filter((session) => isSessionAvailable(session))),
@@ -45,11 +60,7 @@ export function ExplorePage() {
   }, [availableSessions, date, game, zone])
 
   const hasFilters = game !== '' || date !== 'all' || zone !== 'all'
-  const clearFilters = () => {
-    setGame('')
-    setDate('all')
-    setZone('all')
-  }
+  const clearFilters = () => setSearchParams(new URLSearchParams(), { replace: true })
 
   return (
     <>
@@ -88,7 +99,7 @@ export function ExplorePage() {
             <div className="search-control">
               <input
                 id="game-filter"
-                onChange={(event) => setGame(event.target.value)}
+                onChange={(event) => updateFilter('game', event.target.value, '')}
                 placeholder="Ej. Wingspan"
                 type="search"
                 value={game}
@@ -97,7 +108,7 @@ export function ExplorePage() {
                 <button
                   aria-label="Limpiar filtro de juego"
                   className="search-control__clear"
-                  onClick={() => setGame('')}
+                  onClick={() => updateFilter('game', '', '')}
                   type="button"
                 >
                   <span aria-hidden="true">×</span>
@@ -116,7 +127,7 @@ export function ExplorePage() {
                     aria-pressed={isSelected}
                     className={`date-chip${isSelected ? ' is-selected' : ''}`}
                     key={option.value}
-                    onClick={() => setDate(option.value)}
+                    onClick={() => updateFilter('date', option.value, 'all')}
                     type="button"
                   >
                     {isSelected ? <span aria-hidden="true">✓</span> : null}
@@ -131,7 +142,7 @@ export function ExplorePage() {
             <VisualSelect
               ariaLabelledBy="zone-filter-label"
               id="zone-filter"
-              onChange={setZone}
+              onChange={(value) => updateFilter('zone', value, 'all')}
               options={[
                 { value: 'all', label: 'Todas las zonas' },
                 ...zones.map((item) => ({ value: item, label: item })),
