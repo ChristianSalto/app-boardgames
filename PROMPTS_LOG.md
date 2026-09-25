@@ -295,3 +295,10 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** definir el modelo, límites, elegibilidad confiable, persistencia conceptual y estrategia de integridad de reviews sin implementar código ni Security Rules.
 - **Agente:** Senior Architecture/SecurityAgent.
 - **Resultado:** `player-trust` queda preparado para implementación incremental con reviews raíz, ID determinista, `participantIds` como evidencia y `startsAt` canónico como requisito previo; los agregados se calculan al leer y no se requiere Cloud Function en el MVP bajo estas precondiciones. PROMPT-008C no ha comenzado.
+
+## PROMPT-009C-4 — Remaining Mobile Responsive Fixes
+
+- **Fecha:** 2026-09-25
+- **Objetivo:** corregir únicamente los problemas Medium pendientes del audit responsive en filtros, Marketplace, CTA de comunidad, targets táctiles y textos largos.
+- **Agente:** FrontendAgent.
+- **Resultado:** los chips mantienen dos columnas en móvil y cuatro en desktop; enlaces pequeños reciben una altura mínima de 44px sin perder su aspecto de enlace; se protege el nombre del organizador y el texto largo en perfiles, reviews y títulos. Se conserva Marketplace a dos columnas desde 768px y tres desde 1088px, y el CTA de comunidad apilado en anchos menores de 480px. `typecheck` y `build` pasan. La inspección visual autenticada queda pendiente: el navegador local solo permite ver `/login`; el login no presenta overflow horizontal en 320, 375, 390, 430, 768 y 1440px.

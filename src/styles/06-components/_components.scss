@@ -273,6 +273,9 @@
 }
 
 .auth-form__switch a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
   color: var(--color-forest-dark);
   font-weight: 750;
   text-underline-offset: 0.2em;
@@ -1387,6 +1390,11 @@
   color: var(--color-text);
 }
 
+.breadcrumb li {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .feedback-banner,
 .error-summary {
   display: flex;
@@ -1759,9 +1767,15 @@
 .listing-card__body h3,
 .listing-detail-heading h1,
 .profile-card h1,
+.profile-location,
+.profile-about h2,
+.profile-about p,
 .organizer-trust__identity h2,
+.session-card__organizer strong,
 .person-row strong,
 .review-participant-list__identity strong,
+.review-form h2,
+.review-rating-field legend,
 .review-card blockquote p,
 .review-card__author {
   overflow-wrap: anywhere;
@@ -1774,6 +1788,15 @@
 .listing-card__facts > span,
 .review-card,
 .review-card__meta > * {
+  min-width: 0;
+}
+
+.profile-card,
+.profile-card__top > :last-child,
+.profile-about,
+.trust-profile,
+.trust-profile__heading > *,
+.review-list > li {
   min-width: 0;
 }
 
@@ -2005,6 +2028,9 @@
 
   .community-listings__publish {
     justify-self: start;
+    min-width: max-content;
+    max-width: 100%;
+    white-space: nowrap;
   }
 }
 

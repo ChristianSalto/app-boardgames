@@ -96,13 +96,12 @@
 }
 
 .date-chips {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-2);
 }
 
 .date-chip {
-  flex: 1 1 9rem;
   min-height: 2.85rem;
   padding: var(--space-2) var(--space-3);
   border-color: var(--color-border-strong);
@@ -356,13 +355,7 @@
     padding: var(--space-5);
   }
 
-  .date-chips {
-    flex-wrap: nowrap;
-  }
-
-  .date-chip {
-    flex-basis: 0;
-  }
+  .date-chips { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
   .form-card {
     padding: var(--space-6);
