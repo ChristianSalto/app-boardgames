@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
-import { AppIcon } from '../shared/AppIcon'
 import { VisualSelect } from '../shared/VisualSelect'
 import {
   isSessionAvailable,
@@ -67,10 +66,9 @@ export function ExplorePage() {
       <section className="hero">
         <div className="page-container hero__inner">
           <div className="hero__content">
-            <p className="eyebrow">Comunidad de juegos de mesa · Madrid</p>
-            <h1>Encuentra gente con quien jugar.</h1>
+            <h1>Encuentra partidas de juegos de mesa.</h1>
             <p className="hero__lead">
-              Explora partidas de juegos de mesa en Madrid y solicita tu plaza.
+              Filtra por juego, fecha y zona en Madrid y solicita una plaza.
             </p>
           </div>
           <div className="hero__table" aria-hidden="true">
@@ -85,12 +83,8 @@ export function ExplorePage() {
       <section className="page-container explore-section" aria-labelledby="explore-title">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Explorar</p>
-            <h2 id="explore-title">Partidas disponibles</h2>
+            <h2 id="explore-title">Resultados</h2>
           </div>
-          <span className="location-context">
-            <AppIcon name="location" /> Madrid
-          </span>
         </div>
 
         <div className="filters" aria-label="Filtros de partidas">
@@ -162,7 +156,7 @@ export function ExplorePage() {
 
         <p className="results-count" aria-live="polite">
           {filteredSessions.length}{' '}
-          {filteredSessions.length === 1 ? 'partida disponible' : 'partidas disponibles'}
+          {filteredSessions.length === 1 ? 'resultado' : 'resultados'}
         </p>
 
         {filteredSessions.length > 0 ? (

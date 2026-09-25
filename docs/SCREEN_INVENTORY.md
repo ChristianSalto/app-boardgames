@@ -12,7 +12,7 @@ El núcleo de partidas se resuelve con cinco pantallas principales. Los estados 
 - **Usuario:** cualquier persona que busca partida; en el prototipo se usa una identidad simulada.
 - **Punto de entrada:** apertura de la aplicación o navegación «Explorar».
 - **Acciones principales:** buscar juego, filtrar fecha, filtrar zona/distrito, limpiar filtros, ver partida, crear partida desde un vacío general, abrir un anuncio reciente o «Ver todos» en Juegos de la comunidad.
-- **Información principal:** propuesta de valor explícita sobre encontrar personas con quienes jugar a juegos de mesa, Madrid, filtros activos y tarjetas con juego, fecha/hora, zona, organizador, confirmados/aforo y plazas disponibles. Después de las partidas aparece un bloque secundario y compacto de anuncios activos.
+- **Información principal:** título claro para encontrar partidas de juegos de mesa; el contexto de Madrid y los filtros por juego, fecha y zona se presentan antes de resultados con contador y tarjetas de juego, fecha/hora, zona, organizador, confirmados/aforo y plazas disponibles. Juegos de la comunidad aparece después de las partidas como bloque secundario.
 - **Estados importantes:** loading, listado con resultados, sin partidas disponibles, sin coincidencias de filtros y error de carga.
 
 No muestra completas, canceladas o pasadas. No necesita orden avanzado ni mapa.

@@ -316,3 +316,17 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** compartir la arquitectura de información del detalle entre móvil y desktop, reducir superficies duplicadas y mantener el panel contextual en una columna secundaria amplia.
 - **Agente:** FrontendAgent.
 - **Resultado:** una card principal contiene arte, estado, título, resumen y metadata en todos los breakpoints; metadata deja de tener cards interiores. Se retira la card independiente de organizador/confianza; la fila del organizador conserva su rol, señal breve de reputación y acceso al perfil. Un grid externo conserva el orden DOM retorno → información → estado/acción → participantes → descripción → secundario, y coloca solo el panel contextual en la columna derecha desde 68rem. «Sobre la partida» queda como sección simple. En móvil se compactan la fecha, el aviso de privacidad, el panel contextual y el encabezado de participantes. `test:game-sessions` (4 pruebas unitarias y migración Firestore en proyecto demo), `typecheck` y `build` pasan; el build mantiene el aviso de bundle JS mayor de 500 kB. Revisión independiente estática sin hallazgos. Validación visual y teclado real por viewport/estado bloqueada por falta de sesión beta y pestañas de navegador.
+
+## UX-R01D — Simplify Explore Hierarchy
+
+- **Fecha:** 2026-09-25
+- **Objetivo:** eliminar repetición visible entre contexto de comunidad, propósito, ciudad y encabezado de resultados y adelantar filtros/partidas sin rehacer su comportamiento.
+- **Agente:** FrontendAgent.
+- **Resultado:** se eliminan los eyebrows redundantes de comunidad/Explorar y el chip de Madrid, ahora expresado una vez en la guía de filtros; el título identifica explícitamente las partidas de juegos de mesa y el encabezado de sección pasa a «Resultados». El contador anuncia resultados. El hero desktop/tablet baja de 26rem a 22rem manteniendo su arte y padding reequilibrado. Filtros, URL, retorno y orden de Marketplace no se modifican. Revisión independiente de código sin hallazgos; `typecheck` y `build` pasan. La validación visual en 390/768/desktop queda pendiente porque el navegador local no tiene pestañas ni sesión beta.
+
+## UX-R01E — Simplify Organizer Management
+
+- **Fecha:** 2026-09-25
+- **Objetivo:** reunir solicitudes, acceso a participantes y acciones del organizador en un panel contextual compacto, sin alterar la lógica de participación.
+- **Agente:** FrontendAgent.
+- **Resultado:** el panel del organizador muestra el número de solicitudes y permite revisarlas en el mismo lugar cuando existen; enlaza a la lista principal de participantes y reúne editar/cancelar con jerarquía secundaria/destructiva. Se retiran el falso acceso de gestión que solo saltaba a participantes y la card independiente de solicitudes. `test:game-sessions`, `typecheck` y `build` pasan; revisión independiente de código sin hallazgos P0–P2. La validación visual autenticada a 375/390/430 y desktop queda pendiente por falta de sesión beta.

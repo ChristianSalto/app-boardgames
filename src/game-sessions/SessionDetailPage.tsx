@@ -146,32 +146,62 @@ export function SessionDetailPage() {
       aria-label={isOrganizer ? 'Gestión de la partida' : 'Estado de tu participación'}
       className="detail-aside"
     >
-      <ParticipationPanel
-        displayState={displayState}
-        isOrganizer={isOrganizer}
-        onRequest={handleRequest}
-        relation={relation}
-        remainingSeats={remainingSeats}
-      />
-      {isOrganizer && displayState !== 'cancelled' ? (
-        <div className="detail-organizer-actions">
-          <Link className="button button--ghost" to={`/sessions/${session.id}/edit`}>Editar partida</Link>
-          <button
-            className="button button--danger detail-organizer-actions__cancel"
-            onClick={() => setConfirmingCancellation(true)}
-            type="button"
-          >
-            Cancelar partida
-          </button>
+      {isOrganizer ? (
+        <div className="participation-panel organizer-management">
+          <h2>{displayState === 'cancelled' ? 'Tu partida' : 'Gestionar partida'}</h2>
+          <p className={`organizer-management__pending${pendingRequests.length > 0 ? ' organizer-management__pending--active' : ''}`}>
+            {pendingRequests.length === 0 ? 'No tienes solicitudes pendientes.' : (
+              <>
+                {pendingRequests.length} {pendingRequests.length === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'}
+                <span className="organizer-management__hint">Esperan tu revisión.</span>
+              </>
+            )}
+          </p>
+          {displayState !== 'cancelled' && pendingRequests.length > 0 ? (
+            <details className="organizer-management__requests">
+              <summary className="button button--primary button--wide">Revisar solicitudes</summary>
+              <OrganizerRequests
+                confirmingDecline={confirmingDecline}
+                onAccept={handleAccept}
+                onCancelDecline={() => setConfirmingDecline(null)}
+                onConfirmDecline={handleDecline}
+                onStartDecline={setConfirmingDecline}
+                pendingRequests={pendingRequests.map((request) => ({
+                  playerId: request.playerId,
+                  player: playerById.get(request.playerId),
+                }))}
+                profileNavigationState={profileNavigationState}
+              />
+            </details>
+          ) : null}
+          {displayState !== 'cancelled' ? (
+            <div className="detail-organizer-actions">
+              <Link className="button button--ghost" to={`/sessions/${session.id}/edit`}>Editar partida</Link>
+              <button
+                className="button detail-organizer-actions__cancel"
+                onClick={() => setConfirmingCancellation(true)}
+                type="button"
+              >
+                Cancelar partida
+              </button>
+            </div>
+          ) : null}
+          {confirmingCancellation ? (
+            <div className="inline-confirm" role="group" aria-label="Confirmar cancelación de la partida">
+              <p>¿Cancelar esta partida? Las solicitudes pendientes dejarán de estar activas.</p>
+              <button className="button button--danger" onClick={handleCancel} type="button">Sí, cancelar partida</button>
+              <button className="button button--ghost" onClick={() => setConfirmingCancellation(false)} type="button">Volver</button>
+            </div>
+          ) : null}
         </div>
-      ) : null}
-      {isOrganizer && confirmingCancellation ? (
-        <div className="inline-confirm" role="group" aria-label="Confirmar cancelación de la partida">
-          <p>¿Cancelar esta partida? Las solicitudes pendientes dejarán de estar activas.</p>
-          <button className="button button--danger" onClick={handleCancel} type="button">Sí, cancelar partida</button>
-          <button className="button button--ghost" onClick={() => setConfirmingCancellation(false)} type="button">Volver</button>
-        </div>
-      ) : null}
+      ) : (
+        <ParticipationPanel
+          displayState={displayState}
+          onRequest={handleRequest}
+          relation={relation}
+          remainingSeats={remainingSeats}
+        />
+      )}
     </aside>
   )
 
@@ -291,22 +321,6 @@ export function SessionDetailPage() {
 
           <ReviewParticipantsAction sessionId={session.id} />
 
-          {isOrganizer && displayState !== 'cancelled' ? (
-            <OrganizerRequests
-              confirmingDecline={confirmingDecline}
-              onAccept={handleAccept}
-              onCancelDecline={() => setConfirmingDecline(null)}
-              onConfirmDecline={handleDecline}
-              onStartDecline={setConfirmingDecline}
-              pendingRequests={pendingRequests.map((request) => ({
-                playerId: request.playerId,
-                player: playerById.get(request.playerId),
-              }))}
-              profileNavigationState={profileNavigationState}
-              sessionIsComplete={displayState === 'complete'}
-            />
-          ) : null}
-
         </div>
       </div>
     </section>
@@ -315,7 +329,6 @@ export function SessionDetailPage() {
 
 type ParticipationPanelProps = {
   readonly displayState: ReturnType<typeof getSessionDisplayState>
-  readonly isOrganizer: boolean
   readonly onRequest: () => Promise<void>
   readonly relation: ReturnType<typeof getUserRelation>
   readonly remainingSeats: number
@@ -323,22 +336,10 @@ type ParticipationPanelProps = {
 
 function ParticipationPanel({
   displayState,
-  isOrganizer,
   onRequest,
   relation,
   remainingSeats,
 }: ParticipationPanelProps) {
-  if (isOrganizer) {
-    return (
-      <div className="participation-panel">
-        <p className="eyebrow">Tu partida</p>
-        <h2>Participantes y solicitudes</h2>
-        <p>Consulta quién participa y gestiona las solicitudes pendientes.</p>
-        <a className="button button--primary button--wide" href="#session-management">Gestionar partida</a>
-      </div>
-    )
-  }
-
   if (displayState === 'cancelled') {
     return <div className="participation-panel participation-panel--muted"><p className="eyebrow">Cancelada</p><h2>La partida ha sido cancelada</h2><p>No admite nuevas solicitudes.</p></div>
   }
@@ -411,7 +412,6 @@ type OrganizerRequestsProps = {
     readonly player: ReturnType<Map<string, ReturnType<typeof usePrototype>['players'][number]>['get']>
   }[]
   readonly profileNavigationState: ProfileNavigationState
-  readonly sessionIsComplete: boolean
 }
 
 function OrganizerRequests({
@@ -422,58 +422,41 @@ function OrganizerRequests({
   onStartDecline,
   pendingRequests,
   profileNavigationState,
-  sessionIsComplete,
 }: OrganizerRequestsProps) {
   return (
-    <div className="content-block requests-block">
-      <div className="content-block__heading">
-        <div>
-          <p className="eyebrow">Solo para ti</p>
-          <h2>Solicitudes pendientes</h2>
-        </div>
-        <span>{pendingRequests.length}</span>
-      </div>
-
-      {pendingRequests.length === 0 ? (
-        <div className="inline-empty">
-          <p>{sessionIsComplete ? 'La partida está completa. No quedan solicitudes pendientes.' : 'No tienes solicitudes pendientes.'}</p>
-        </div>
-      ) : (
-        <ul className="request-list">
-          {pendingRequests.map(({ playerId, player }) => (
-            <li className="request-card" key={playerId}>
-              <div className="person-row person-row--static">
-                <span className="avatar" aria-hidden="true">{getInitials(player?.displayName ?? '?')}</span>
-                <span>
-                  <strong>{player?.displayName ?? 'Perfil no disponible'}</strong>
-                  <small>{player?.district ? `${player.district} · Madrid` : 'Madrid'}</small>
-                </span>
-                <Link
-                  className="text-link"
-                  state={profileNavigationState}
-                  to={`/players/${playerId}`}
-                >
-                  Ver perfil
-                </Link>
-              </div>
-              {player?.description ? <p>{player.description}</p> : null}
-              {confirmingDecline === playerId ? (
-                <div className="inline-confirm" role="group" aria-label={`Confirmar rechazo de ${player?.displayName ?? 'la solicitud'}`}>
-                  <p>¿Rechazar esta solicitud?</p>
-                  <button className="button button--danger" onClick={() => onConfirmDecline(playerId)} type="button">Sí, rechazar</button>
-                  <button className="button button--ghost" onClick={onCancelDecline} type="button">Volver</button>
-                </div>
-              ) : (
-                <div className="request-card__actions">
-                  <button className="button button--primary" onClick={() => onAccept(playerId)} type="button">Aceptar solicitud</button>
-                  <button className="button button--ghost" onClick={() => onStartDecline(playerId)} type="button">Rechazar</button>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <ul className="request-list">
+      {pendingRequests.map(({ playerId, player }) => (
+        <li className="request-card" key={playerId}>
+          <div className="person-row person-row--static">
+            <span className="avatar" aria-hidden="true">{getInitials(player?.displayName ?? '?')}</span>
+            <span>
+              <strong>{player?.displayName ?? 'Perfil no disponible'}</strong>
+              <small>{player?.district ? `${player.district} · Madrid` : 'Madrid'}</small>
+            </span>
+            <Link
+              className="text-link"
+              state={profileNavigationState}
+              to={`/players/${playerId}`}
+            >
+              Ver perfil
+            </Link>
+          </div>
+          {player?.description ? <p>{player.description}</p> : null}
+          {confirmingDecline === playerId ? (
+            <div className="inline-confirm" role="group" aria-label={`Confirmar rechazo de ${player?.displayName ?? 'la solicitud'}`}>
+              <p>¿Rechazar esta solicitud?</p>
+              <button className="button button--danger" onClick={() => onConfirmDecline(playerId)} type="button">Sí, rechazar</button>
+              <button className="button button--ghost" onClick={onCancelDecline} type="button">Volver</button>
+            </div>
+          ) : (
+            <div className="request-card__actions">
+              <button className="button button--primary" onClick={() => onAccept(playerId)} type="button">Aceptar solicitud</button>
+              <button className="button button--ghost" onClick={() => onStartDecline(playerId)} type="button">Rechazar</button>
+            </div>
+          )}
+        </li>
+      ))}
+    </ul>
   )
 }
 
