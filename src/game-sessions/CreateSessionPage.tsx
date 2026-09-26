@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
 import { gameOptions, madridZones } from '../mock-data/prototypeData'
@@ -60,6 +60,9 @@ export function CreateSessionPage() {
   const isEditing = Boolean(sessionId)
   const [form, setForm] = useState<CreateSessionInput>(initialForm)
   const [errors, setErrors] = useState<FormErrors>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [saveError, setSaveError] = useState(false)
+  const isSubmittingRef = useRef(false)
 
   useEffect(() => {
     if (!editingSession) return
@@ -89,6 +92,8 @@ export function CreateSessionPage() {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (isSubmittingRef.current) return
+
     const nextErrors = validate(form)
     if (editingSession && form.capacity < editingSession.participantIds.length) {
       nextErrors.capacity = `El aforo no puede ser inferior a las ${editingSession.participantIds.length} plazas ya confirmadas.`
@@ -99,16 +104,29 @@ export function CreateSessionPage() {
       return
     }
 
-    if (editingSession) {
-      await updateSession(editingSession.id, form)
-      navigate(`/sessions/${editingSession.id}`, {
-        state: { edited: true, from: '/my-sessions', fromLabel: 'Mis partidas' },
-      })
-    } else {
-      const createdSessionId = await createSession(form)
-      navigate(`/sessions/${createdSessionId}`, {
-        state: { created: true, from: '/my-sessions', fromLabel: 'Mis partidas' },
-      })
+    isSubmittingRef.current = true
+    setIsSubmitting(true)
+    setSaveError(false)
+    requestAnimationFrame(() => document.getElementById('save-status')?.focus())
+
+    try {
+      if (editingSession) {
+        await updateSession(editingSession.id, form)
+        navigate(`/sessions/${editingSession.id}`, {
+          state: { edited: true, from: '/my-sessions', fromLabel: 'Mis partidas' },
+        })
+      } else {
+        const createdSessionId = await createSession(form)
+        navigate(`/sessions/${createdSessionId}`, {
+          state: { created: true, from: '/my-sessions', fromLabel: 'Mis partidas' },
+        })
+      }
+    } catch {
+      setSaveError(true)
+      requestAnimationFrame(() => document.getElementById('save-error')?.focus())
+    } finally {
+      isSubmittingRef.current = false
+      setIsSubmitting(false)
     }
   }
 
@@ -143,6 +161,13 @@ export function CreateSessionPage() {
           <div className="error-summary" id="form-errors" role="alert" tabIndex={-1}>
             <strong>Revisa los campos indicados</strong>
             <p>Hay información necesaria que falta o no es válida.</p>
+          </div>
+        ) : null}
+
+        {saveError ? (
+          <div className="error-summary" id="save-error" role="alert" tabIndex={-1}>
+            <strong>{isEditing ? 'No hemos podido guardar los cambios.' : 'No hemos podido crear la partida.'}</strong>
+            <p>Inténtalo de nuevo.</p>
           </div>
         ) : null}
 
@@ -283,9 +308,17 @@ export function CreateSessionPage() {
           </div>
         </div>
 
+        {isSubmitting ? (
+          <p className="field__help" id="save-status" role="status" aria-live="polite" tabIndex={-1}>
+            {isEditing ? 'Guardando cambios…' : 'Creando partida…'}
+          </p>
+        ) : null}
+
         <div className="form-actions">
-          <button className="button button--primary form-submit" type="submit">
-            {isEditing ? 'Guardar cambios' : 'Publicar partida'}
+          <button className="button button--primary form-submit" disabled={isSubmitting} type="submit">
+            {isSubmitting
+              ? isEditing ? 'Guardando cambios…' : 'Creando partida…'
+              : isEditing ? 'Guardar cambios' : 'Publicar partida'}
           </button>
         </div>
       </form>

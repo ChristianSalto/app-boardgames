@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
 import { VisualSelect } from '../shared/VisualSelect'
+import { SessionLoadErrorState } from './SessionLoadErrorState'
 import {
   isSessionAvailable,
   matchesDateFilter,
@@ -19,7 +20,7 @@ const dateOptions = [
 ] satisfies ReadonlyArray<{ value: DateFilter; label: string }>
 
 export function ExplorePage() {
-  const { sessions } = usePrototype()
+  const { retrySessions, sessions, sessionsError, sessionsLoading } = usePrototype()
   const [searchParams, setSearchParams] = useSearchParams()
   const game = searchParams.get('game') ?? ''
   const dateValue = searchParams.get('date')
@@ -148,30 +149,43 @@ export function ExplorePage() {
           </button>
         </div>
 
-        <p className="results-count" aria-live="polite">
-          {filteredSessions.length}{' '}
-          {filteredSessions.length === 1 ? 'resultado' : 'resultados'}
-        </p>
-
-        {filteredSessions.length > 0 ? (
-          <div className="session-grid">
-            {filteredSessions.map((session) => (
-              <SessionCard key={session.id} session={session} />
-            ))}
-          </div>
-        ) : (
-          <div className="empty-state empty-state--compact">
-            <div className="empty-state__symbol-container" aria-hidden="true">
-              <span className="empty-state__symbol">◇</span>
-            </div>
-            <h2>{hasFilters ? 'No hay partidas que coincidan con tu búsqueda' : 'Todavía no hay partidas disponibles'}</h2>
-            <p>
-              {hasFilters
-                ? 'Prueba a cambiar los filtros para ampliar la búsqueda.'
-                : 'Cuando haya nuevas partidas disponibles, las encontrarás aquí.'}
+        {sessionsLoading ? <p aria-live="polite">Cargando partidas…</p> : null}
+        {sessionsError ? (
+          <SessionLoadErrorState
+            loading={sessionsLoading}
+            title="No hemos podido cargar las partidas"
+            message="Comprueba tu conexión e inténtalo de nuevo."
+            onRetry={() => { void retrySessions() }}
+          />
+        ) : null}
+        {!sessionsLoading && !sessionsError ? (
+          <>
+            <p className="results-count" aria-live="polite">
+              {filteredSessions.length}{' '}
+              {filteredSessions.length === 1 ? 'resultado' : 'resultados'}
             </p>
-          </div>
-        )}
+
+            {filteredSessions.length > 0 ? (
+              <div className="session-grid">
+                {filteredSessions.map((session) => (
+                  <SessionCard key={session.id} session={session} />
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state empty-state--compact">
+                <div className="empty-state__symbol-container" aria-hidden="true">
+                  <span className="empty-state__symbol">◇</span>
+                </div>
+                <h2>{hasFilters ? 'No hay partidas que coincidan con tu búsqueda' : 'Todavía no hay partidas disponibles'}</h2>
+                <p>
+                  {hasFilters
+                    ? 'Prueba a cambiar los filtros para ampliar la búsqueda.'
+                    : 'Cuando haya nuevas partidas disponibles, las encontrarás aquí.'}
+                </p>
+              </div>
+            )}
+          </>
+        ) : null}
       </section>
       <div className="page-container"><CommunityListingsSection /></div>
     </>

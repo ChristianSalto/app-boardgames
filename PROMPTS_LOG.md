@@ -1,5 +1,33 @@
 # Registro de intervenciones
 
+## BETA-R01B-4 — Remove Development Language From User-facing Errors
+
+- **Fecha:** 2026-09-26
+- **Objetivo:** retirar referencias a emuladores e infraestructura local de los errores visibles de Login, Registro y CompleteProfile, conservando los errores específicos útiles.
+- **Agente:** FrontendAgent con criterios de escritura y validación UX.
+- **Resultado:** los fallos de red e inesperados identifican la operación y permiten reintentar; el perfil comunica el fallo de guardado sin detalles internos. `npm run typecheck`, `npm run build` y `git diff --check` pasan. Validación manual de los estados de error pendiente; no se accedió a datos cloud ni se hizo deploy.
+
+## BETA-R01B-3 — Preserve Protected Destination After Authentication
+
+- **Fecha:** 2026-09-26
+- **Objetivo:** conservar un destino protegido interno tras login y CompleteProfile, validándolo para impedir navegación externa y manteniendo Beta Access.
+- **Agentes:** FrontendAgent y revisión independiente QA/UX.
+- **Resultado:** `location.state` transporta rutas internas reconocidas con `replace`; Login ↔ Registro conserva el destino y el login voluntario conserva `/`. Tras revisión independiente se preservó también el destino al volver de Registro a Login, y en el retorno de registro deshabilitado. Añadidas cuatro pruebas del helper de navegación. `npm run typecheck`, `npm run build`, `npm run test:auth-routing` (4/4), `npm run test:beta-access` (2/2) y `npm run test:rules` (48/48) pasan. Revisión manual autenticada pendiente; no se accedió a datos cloud ni se hizo deploy.
+
+## BETA-R01B-2 — Safe Session Submit & Save Feedback
+
+- **Fecha:** 2026-09-26
+- **Objetivo:** impedir dobles envíos y ofrecer estados accesibles de guardado, éxito y error recuperable en Crear/Editar partida.
+- **Agentes:** FrontendAgent y revisión independiente QA/UX.
+- **Resultado:** guard síncrono con `useRef`, feedback local y foco accesible; los valores se conservan ante error y la navegación existente continúa tras éxito. El refresco posterior no convierte un write correcto en fallo de guardado. Typecheck, build y `test:game-sessions` pasan (4 pruebas temporales y 1 migración en emulador aislado). Revisión estática sin hallazgos; validación manual autenticada pendiente. Build mantiene el aviso del bundle JS mayor de 500 kB.
+
+## BETA-R01B-1 — Game Sessions Load/Error States
+
+- **Fecha:** 2026-09-26
+- **Objetivo:** distinguir en Explorar y detalle una carga fallida de un resultado vacío o una partida inexistente, con recuperación visible y sin ampliar alcance.
+- **Agente:** FrontendAgent.
+- **Resultado:** el contexto registra fallo de lectura y permite reintentar; Explorar distingue carga/error/resultados/vacío y detalle distingue carga/error/no encontrada/contenido. `npm run typecheck`, `npm run build` y `npm run test:game-sessions` pasan (4 pruebas temporales y 1 migración en emulador aislado). No se añadieron tests UI porque el repositorio no tiene un harness de presentación para estos componentes. La comprobación manual autenticada queda pendiente por falta de sesión beta local.
+
 ## PROMPT-009B-1 — Closed Beta Guard
 
 - **Fecha:** 2026-09-24

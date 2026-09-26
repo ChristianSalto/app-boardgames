@@ -32,7 +32,7 @@ export function CompleteProfilePage() {
     })
     setIsSubmitting(false)
     if (!created) {
-      setErrors({ form: 'No hemos podido guardar tu perfil. Comprueba los emuladores e inténtalo de nuevo.' })
+      setErrors({ form: 'No hemos podido guardar tu perfil. Inténtalo de nuevo.' })
     }
   }
 

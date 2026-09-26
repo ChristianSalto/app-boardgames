@@ -39,6 +39,8 @@ type PrototypeContextValue = {
   readonly cancelSession: (id: string) => Promise<void>
   readonly getPlayer: (id: string) => Promise<Player | null>
   readonly sessionsLoading: boolean
+  readonly sessionsError: boolean
+  readonly retrySessions: () => Promise<void>
 }
 
 const PrototypeContext = createContext<PrototypeContextValue | undefined>(undefined)
@@ -60,43 +62,57 @@ export function PrototypeProvider({
   const [players, setPlayers] = useState<readonly Player[]>(() => upsertPlayer(initialPlayers, currentPlayer))
   const [sessions, setSessions] = useState<readonly GameSession[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
+  const [sessionsError, setSessionsError] = useState(false)
 
   useEffect(() => {
     setPlayers((current) => upsertPlayer(current, currentPlayer))
   }, [currentPlayer])
 
-  const refreshSessions = useCallback(async () => {
-    const persistedSessions = await discoverGameSessions(sessionRepository)
-    const ownRequests = await getParticipationForPlayer(participationRequestRepository, currentPlayerId)
-    const organizedSessions = persistedSessions.filter((item) => item.organizerId === currentPlayerId)
-    const organizerRequests = await Promise.all(
-      organizedSessions.map((item) => getPendingRequestsForSession(participationRequestRepository, item.id)),
-    )
-    const requests = mergeRequests(ownRequests, organizerRequests.flat())
-    const requestPlayerIds = requests
-      .filter((item) => item.playerId !== currentPlayerId)
-      .map((item) => item.playerId)
-    const participantPlayerIds = persistedSessions
-      .flatMap((item) => item.participantIds)
-      .filter((id) => id !== currentPlayerId)
-    const persistedPlayers = await Promise.all(
-      [...new Set([...requestPlayerIds, ...participantPlayerIds])]
-        .map((id) => getPlayerById(playerRepository, id)),
-    )
-    setPlayers((current) => mergePlayers(upsertPlayer(current, currentPlayer), persistedPlayers))
-    setSessions(persistedSessions.map((session) => ({
-      ...session,
-      requests: requests.filter((request) => request.sessionId === session.id),
-    })))
+  const refreshSessions = useCallback(async (showLoading = true) => {
+    if (showLoading) setSessionsLoading(true)
+    try {
+      const persistedSessions = await discoverGameSessions(sessionRepository)
+      const ownRequests = await getParticipationForPlayer(participationRequestRepository, currentPlayerId)
+      const organizedSessions = persistedSessions.filter((item) => item.organizerId === currentPlayerId)
+      const organizerRequests = await Promise.all(
+        organizedSessions.map((item) => getPendingRequestsForSession(participationRequestRepository, item.id)),
+      )
+      const requests = mergeRequests(ownRequests, organizerRequests.flat())
+      const requestPlayerIds = requests
+        .filter((item) => item.playerId !== currentPlayerId)
+        .map((item) => item.playerId)
+      const participantPlayerIds = persistedSessions
+        .flatMap((item) => item.participantIds)
+        .filter((id) => id !== currentPlayerId)
+      const persistedPlayers = await Promise.all(
+        [...new Set([...requestPlayerIds, ...participantPlayerIds])]
+          .map((id) => getPlayerById(playerRepository, id)),
+      )
+      setPlayers((current) => mergePlayers(upsertPlayer(current, currentPlayer), persistedPlayers))
+      setSessions(persistedSessions.map((session) => ({
+        ...session,
+        requests: requests.filter((request) => request.sessionId === session.id),
+      })))
+      setSessionsError(false)
+    } catch (error) {
+      setSessionsError(true)
+      throw error
+    } finally {
+      if (showLoading) setSessionsLoading(false)
+    }
   }, [currentPlayer, currentPlayerId, participationRequestRepository, playerRepository, sessionRepository])
 
+  const retrySessions = useCallback(async () => {
+    try {
+      await refreshSessions()
+    } catch {
+      // The provider records the failed state; the screen remains available for another retry.
+    }
+  }, [refreshSessions])
+
   useEffect(() => {
-    let active = true
-    setSessionsLoading(true)
     refreshSessions()
       .catch(() => undefined)
-      .finally(() => { if (active) setSessionsLoading(false) })
-    return () => { active = false }
   }, [refreshSessions])
 
   const requestSeat = useCallback(async (sessionId: string) => {
@@ -116,13 +132,13 @@ export function PrototypeProvider({
 
   const createSession = useCallback(async (input: CreateSessionInput) => {
     const session = await persistGameSession(sessionRepository, input, currentPlayerId)
-    await refreshSessions()
+    await refreshSessions(false).catch(() => undefined)
     return session.id
   }, [currentPlayerId, refreshSessions, sessionRepository])
 
   const updateSession = useCallback(async (id: string, input: UpdateSessionInput) => {
     await persistGameSessionUpdate(sessionRepository, id, input, currentPlayerId)
-    await refreshSessions()
+    await refreshSessions(false).catch(() => undefined)
   }, [currentPlayerId, refreshSessions, sessionRepository])
 
   const cancelSession = useCallback(async (id: string) => {
@@ -149,6 +165,8 @@ export function PrototypeProvider({
       cancelSession,
       getPlayer,
       sessionsLoading,
+      sessionsError,
+      retrySessions,
     }),
     [
       players,
@@ -161,6 +179,8 @@ export function PrototypeProvider({
       cancelSession,
       getPlayer,
       sessionsLoading,
+      sessionsError,
+      retrySessions,
     ],
   )
 

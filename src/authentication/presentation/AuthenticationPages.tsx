@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { AuthPageLayout } from '../../shared/AuthPageLayout'
 import type { AuthenticationErrorCode } from '../application/authentication'
 import { useAuthentication } from './AuthenticationProvider'
@@ -13,15 +13,31 @@ type FormErrors = {
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-const errorMessages: Record<AuthenticationErrorCode, string> = {
+const specificErrorMessages: Record<Exclude<AuthenticationErrorCode, 'network' | 'unexpected'>, string> = {
   'email-already-in-use': 'Ya existe una cuenta con este correo electrónico.',
   'invalid-credentials': 'El correo o la contraseña no son correctos.',
   'invalid-email': 'Escribe un correo electrónico válido.',
-  network: 'No se ha podido conectar. Comprueba que los emuladores están en marcha e inténtalo de nuevo.',
   'too-many-attempts': 'Hay demasiados intentos. Espera unos minutos antes de volver a intentarlo.',
   'weak-password': 'La contraseña no cumple los requisitos de seguridad.',
-  unexpected: 'No hemos podido completar la operación. Inténtalo de nuevo.',
 }
+
+const operationErrorMessages = {
+  login: {
+    network: 'No hemos podido iniciar sesión. Comprueba tu conexión e inténtalo de nuevo.',
+    unexpected: 'No hemos podido iniciar sesión. Inténtalo de nuevo.',
+  },
+  register: {
+    network: 'No hemos podido crear tu cuenta. Comprueba tu conexión e inténtalo de nuevo.',
+    unexpected: 'No hemos podido crear tu cuenta. Inténtalo de nuevo.',
+  },
+} as const
+
+const getAuthenticationErrorMessage = (
+  error: AuthenticationErrorCode,
+  operation: keyof typeof operationErrorMessages,
+) => error === 'network' || error === 'unexpected'
+  ? operationErrorMessages[operation][error]
+  : specificErrorMessages[error]
 
 const validateCredentials = (email: string, password: string): FormErrors => {
   const errors: FormErrors = {}
@@ -74,6 +90,7 @@ function ArrowIcon() {
 
 export function LoginPage({ registrationEnabled }: { readonly registrationEnabled: boolean }) {
   const { login } = useAuthentication()
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
@@ -89,7 +106,7 @@ export function LoginPage({ registrationEnabled }: { readonly registrationEnable
     setIsSubmitting(true)
     const result = await login({ email: email.trim(), password })
     setIsSubmitting(false)
-    if (!result.ok) setErrors({ form: errorMessages[result.error] })
+    if (!result.ok) setErrors({ form: getAuthenticationErrorMessage(result.error, 'login') })
   }
 
   return (
@@ -151,7 +168,7 @@ export function LoginPage({ registrationEnabled }: { readonly registrationEnable
         {registrationEnabled ? (
           <div className="auth-form__switch-link">
             <span aria-hidden="true" />
-            <p className="auth-form__switch">¿Aún no tienes cuenta? <Link to="/register">Crear una cuenta</Link></p>
+            <p className="auth-form__switch">¿Aún no tienes cuenta? <Link state={location.state} to="/register">Crear una cuenta</Link></p>
             <span aria-hidden="true" />
           </div>
         ) : null}
@@ -162,6 +179,7 @@ export function LoginPage({ registrationEnabled }: { readonly registrationEnable
 
 export function RegisterPage() {
   const { register } = useAuthentication()
+  const location = useLocation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
@@ -182,7 +200,7 @@ export function RegisterPage() {
     setIsSubmitting(true)
     const result = await register({ email: email.trim(), password })
     setIsSubmitting(false)
-    if (!result.ok) setErrors({ form: errorMessages[result.error] })
+    if (!result.ok) setErrors({ form: getAuthenticationErrorMessage(result.error, 'register') })
   }
 
   return (
@@ -253,7 +271,7 @@ export function RegisterPage() {
         </button>
         <div className="auth-form__switch-link">
           <span aria-hidden="true" />
-          <p className="auth-form__switch">¿Ya tienes cuenta? <Link to="/login">Iniciar sesión</Link></p>
+          <p className="auth-form__switch">¿Ya tienes cuenta? <Link state={location.state} to="/login">Iniciar sesión</Link></p>
           <span aria-hidden="true" />
         </div>
       </form>

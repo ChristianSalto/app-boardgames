@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test:game-listings": "node --experimental-strip-types --test tests/game-listings.domain.test.ts tests/game-listings.application.test.ts",
     "test:game-sessions": "node scripts/run-game-session-tests.mjs",
+    "test:auth-routing": "node --experimental-strip-types --test tests/protected-route-navigation.test.ts",
     "test:player-trust": "node scripts/run-player-trust-tests.mjs",
     "test:beta-access": "node --experimental-strip-types --test tests/runtime-access-policy.test.ts",
     "test:beta-access:local-rules": "node scripts/run-local-beta-rules-tests.mjs",

@@ -4,6 +4,7 @@ import { usePrototype } from '../app/PrototypeContext'
 import { usePlayerTrustSummary } from '../player-trust/presentation/PlayerTrustProvider'
 import { ReviewParticipantsAction } from '../player-trust/presentation/ReviewParticipantsAction'
 import { AppIcon } from '../shared/AppIcon'
+import { SessionLoadErrorState } from './SessionLoadErrorState'
 import {
   formatSessionDate,
   formatSessionLongDate,
@@ -46,7 +47,10 @@ export function SessionDetailPage() {
     declineRequest,
     players,
     requestSeat,
+    retrySessions,
     sessions,
+    sessionsError,
+    sessionsLoading,
   } = usePrototype()
   const [confirmingDecline, setConfirmingDecline] = useState<string | null>(null)
   const [confirmingCancellation, setConfirmingCancellation] = useState(false)
@@ -60,6 +64,24 @@ export function SessionDetailPage() {
     () => new Map(players.map((player) => [player.id, player])),
     [players],
   )
+
+  if (sessionsLoading && !sessionsError) {
+    return <main className="auth-state" aria-live="polite"><p>Cargando partida…</p></main>
+  }
+
+  if (sessionsError) {
+    return (
+      <section className="page-container page-section">
+        <SessionLoadErrorState
+          loading={sessionsLoading}
+          title="No hemos podido cargar esta partida"
+          message="Comprueba tu conexión e inténtalo de nuevo."
+          onRetry={() => { void retrySessions() }}
+        />
+        <Link className="text-link" to="/">Volver a Explorar</Link>
+      </section>
+    )
+  }
 
   if (!session) {
     return (

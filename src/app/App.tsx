@@ -1,4 +1,10 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import {
+  getPostAuthenticationRedirect,
+  getPostProfileRedirect,
+  getProtectedRouteDestination,
+  getReturnDestination,
+} from './protectedRouteNavigation'
 import { PrototypeProvider } from './PrototypeContext'
 import { useAuthentication } from '../authentication/presentation/AuthenticationProvider'
 import { LoginPage, RegisterPage } from '../authentication/presentation/AuthenticationPages'
@@ -52,6 +58,9 @@ export function App({
 }) {
   const { status, user, logout } = useAuthentication()
   const { player, status: playerStatus, retryCurrentPlayer } = useCurrentPlayer()
+  const location = useLocation()
+  const protectedDestination = getProtectedRouteDestination(location)
+  const returnDestination = getReturnDestination(location.state) ?? protectedDestination
 
   if (
     status === 'resolving'
@@ -87,9 +96,28 @@ export function App({
 
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate replace to="/" /> : <LoginPage registrationEnabled={registrationEnabled} />} />
-      <Route path="/register" element={user || !registrationEnabled ? <Navigate replace to="/login" /> : <RegisterPage />} />
-      <Route path="/complete-profile" element={user && playerStatus === 'missing' ? <CompleteProfilePage /> : <Navigate replace to="/" />} />
+      <Route
+        path="/login"
+        element={user
+          ? <Navigate {...getPostAuthenticationRedirect(location.state, playerStatus === 'missing')} />
+          : <LoginPage registrationEnabled={registrationEnabled} />}
+      />
+      <Route
+        path="/register"
+        element={user
+          ? <Navigate {...getPostAuthenticationRedirect(location.state, playerStatus === 'missing')} />
+          : !registrationEnabled
+            ? <Navigate replace to="/login" state={returnDestination ? { from: returnDestination } : undefined} />
+            : <RegisterPage />}
+      />
+      <Route
+        path="/complete-profile"
+        element={user && playerStatus === 'missing'
+          ? <CompleteProfilePage />
+          : user && player
+            ? <Navigate {...getPostProfileRedirect(location.state)} />
+            : <Navigate replace to="/" />}
+      />
       <Route
         path="*"
         element={
@@ -103,7 +131,9 @@ export function App({
             listingImageRepository={listingImageRepository}
             listingCommandDependencies={listingCommandDependencies}
             playerReviewRepository={playerReviewRepository}
-          /> : user && playerStatus === 'missing' ? <Navigate replace to="/complete-profile" /> : <Navigate replace to="/login" />
+          /> : user && playerStatus === 'missing'
+            ? <Navigate replace to="/complete-profile" state={protectedDestination ? { from: protectedDestination } : undefined} />
+            : <Navigate replace to="/login" state={protectedDestination ? { from: protectedDestination } : undefined} />
         }
       />
     </Routes>
