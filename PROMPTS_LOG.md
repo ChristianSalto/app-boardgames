@@ -1,5 +1,12 @@
 # Registro de intervenciones
 
+## BETA-R01C-1 — Fix Auth Background Overflow on Real Mobile
+
+- **Fecha:** 2026-09-27
+- **Objetivo:** impedir que el fondo global quede visible bajo `auth-background` cuando el viewport real móvil distingue entre `vh` y `svh`.
+- **Agentes:** FrontendAgent y revisión independiente QA/UX.
+- **Resultado:** `body`, `#root` y las superficies Auth comparten `100dvh` con fallback `100vh`; se elimina el `100svh` discordante de la superficie con imagen. AppShell conserva su regla previa. `npm run typecheck`, `npm run build:cloud` y `git diff --check` pasan; el CSS compilado contiene las reglas dinámicas y ninguna `100svh`. Revisión independiente sin hallazgos P0/P1; validación en móvil real pendiente. No se accedió a Firebase cloud ni se hizo deploy.
+
 ## BETA-R01B-4 — Remove Development Language From User-facing Errors
 
 - **Fecha:** 2026-09-26

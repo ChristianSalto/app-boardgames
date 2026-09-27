@@ -228,6 +228,7 @@
 .auth-page {
   display: grid;
   min-height: 100vh;
+  min-height: 100dvh;
   place-items: center;
 }
 
@@ -285,7 +286,6 @@
 .auth-page--branded {
   width: 100%;
   max-width: none;
-  min-height: 100svh;
   padding: var(--space-4);
   background-color: var(--color-background);
   background-image: url('../../assets/images/auth-background.webp');

@@ -5,12 +5,13 @@
   margin-inline: auto;
 }
 
-#root,
-.app-shell {
+#root {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .app-shell {
+  min-height: 100vh;
   background: transparent;
 }
 
