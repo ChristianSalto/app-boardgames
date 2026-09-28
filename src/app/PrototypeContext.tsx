@@ -4,23 +4,22 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
 import {
   acceptParticipationRequest,
-  getParticipationForPlayer,
-  getPendingRequestsForSession,
   rejectParticipationRequest,
   requestParticipation,
   type ParticipationRequestRepository,
 } from '../game-sessions/application/participationRequestRepository'
-import type { CreateSessionInput, GameSession, ParticipationRequest, UpdateSessionInput } from '../game-sessions/types'
+import { observeSessionFeed, type SessionFeed } from '../game-sessions/application/observeSessionFeed.ts'
+import type { CreateSessionInput, GameSession, UpdateSessionInput } from '../game-sessions/types'
 import { initialPlayers } from '../mock-data/prototypeData'
 import {
   cancelGameSession,
   createGameSession as persistGameSession,
-  discoverGameSessions,
   type GameSessionRepository,
   updateGameSession as persistGameSessionUpdate,
 } from '../game-sessions/application/gameSessionRepository'
@@ -63,88 +62,106 @@ export function PrototypeProvider({
   const [sessions, setSessions] = useState<readonly GameSession[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
   const [sessionsError, setSessionsError] = useState(false)
+  const feedRef = useRef<SessionFeed | null>(null)
 
   useEffect(() => {
     setPlayers((current) => upsertPlayer(current, currentPlayer))
   }, [currentPlayer])
 
-  const refreshSessions = useCallback(async (showLoading = true) => {
-    if (showLoading) setSessionsLoading(true)
-    try {
-      const persistedSessions = await discoverGameSessions(sessionRepository)
-      const ownRequests = await getParticipationForPlayer(participationRequestRepository, currentPlayerId)
-      const organizedSessions = persistedSessions.filter((item) => item.organizerId === currentPlayerId)
-      const organizerRequests = await Promise.all(
-        organizedSessions.map((item) => getPendingRequestsForSession(participationRequestRepository, item.id)),
-      )
-      const requests = mergeRequests(ownRequests, organizerRequests.flat())
-      const requestPlayerIds = requests
-        .filter((item) => item.playerId !== currentPlayerId)
-        .map((item) => item.playerId)
-      const participantPlayerIds = persistedSessions
-        .flatMap((item) => item.participantIds)
-        .filter((id) => id !== currentPlayerId)
-      const persistedPlayers = await Promise.all(
-        [...new Set([...requestPlayerIds, ...participantPlayerIds])]
-          .map((id) => getPlayerById(playerRepository, id)),
-      )
-      setPlayers((current) => mergePlayers(upsertPlayer(current, currentPlayer), persistedPlayers))
-      setSessions(persistedSessions.map((session) => ({
-        ...session,
-        requests: requests.filter((request) => request.sessionId === session.id),
-      })))
-      setSessionsError(false)
-    } catch (error) {
-      setSessionsError(true)
-      throw error
-    } finally {
-      if (showLoading) setSessionsLoading(false)
+  useEffect(() => {
+    let active = true
+    let latestDelivery = 0
+    const playerLookups = new Map<string, Promise<Player | null>>()
+    const loadPlayer = (id: string) => {
+      const existing = playerLookups.get(id)
+      if (existing) return existing
+      const lookup = getPlayerById(playerRepository, id)
+        .then((player) => {
+          if (!player) playerLookups.delete(id)
+          return player
+        })
+        .catch((error: unknown) => {
+          playerLookups.delete(id)
+          throw error
+        })
+      playerLookups.set(id, lookup)
+      return lookup
+    }
+    const feed = observeSessionFeed(
+      sessionRepository,
+      participationRequestRepository,
+      currentPlayerId,
+      (state) => {
+        const delivery = ++latestDelivery
+        if (state.error) {
+          setSessionsError(true)
+          setSessionsLoading(false)
+          return
+        }
+        if (state.loading) {
+          setSessionsError(false)
+          setSessionsLoading(true)
+          return
+        }
+
+        const playerIds = [...new Set(state.sessions.flatMap((session) => [
+          ...session.participantIds,
+          ...session.requests.map((request) => request.playerId),
+        ]))].filter((id) => id !== currentPlayerId)
+        void Promise.all(playerIds.map(loadPlayer))
+          .then((persistedPlayers) => {
+            if (!active || delivery !== latestDelivery) return
+            setPlayers((current) => mergePlayers(upsertPlayer(current, currentPlayer), persistedPlayers))
+            setSessions(state.sessions)
+            setSessionsError(false)
+            setSessionsLoading(false)
+          })
+          .catch(() => {
+            if (!active || delivery !== latestDelivery) return
+            setSessionsError(true)
+            setSessionsLoading(false)
+          })
+      },
+    )
+    feedRef.current = feed
+    return () => {
+      active = false
+      latestDelivery += 1
+      feed.stop()
+      if (feedRef.current === feed) feedRef.current = null
     }
   }, [currentPlayer, currentPlayerId, participationRequestRepository, playerRepository, sessionRepository])
 
   const retrySessions = useCallback(async () => {
-    try {
-      await refreshSessions()
-    } catch {
-      // The provider records the failed state; the screen remains available for another retry.
-    }
-  }, [refreshSessions])
-
-  useEffect(() => {
-    refreshSessions()
-      .catch(() => undefined)
-  }, [refreshSessions])
+    feedRef.current?.retry()
+  }, [])
 
   const requestSeat = useCallback(async (sessionId: string) => {
     await requestParticipation(participationRequestRepository, sessionId, currentPlayerId)
-    await refreshSessions()
-  }, [currentPlayerId, participationRequestRepository, refreshSessions])
+  }, [currentPlayerId, participationRequestRepository])
 
   const acceptRequest = useCallback(async (sessionId: string, playerId: string) => {
     await acceptParticipationRequest(participationRequestRepository, sessionId, playerId, currentPlayerId)
-    await refreshSessions()
-  }, [currentPlayerId, participationRequestRepository, refreshSessions])
+  }, [currentPlayerId, participationRequestRepository])
 
   const declineRequest = useCallback(async (sessionId: string, playerId: string) => {
     await rejectParticipationRequest(participationRequestRepository, sessionId, playerId, currentPlayerId)
-    await refreshSessions()
-  }, [currentPlayerId, participationRequestRepository, refreshSessions])
+  }, [currentPlayerId, participationRequestRepository])
 
   const createSession = useCallback(async (input: CreateSessionInput) => {
     const session = await persistGameSession(sessionRepository, input, currentPlayerId)
-    await refreshSessions(false).catch(() => undefined)
+    feedRef.current?.includeCommittedSession(session)
+    setSessions((current) => current.some((item) => item.id === session.id) ? current : [...current, session])
     return session.id
-  }, [currentPlayerId, refreshSessions, sessionRepository])
+  }, [currentPlayerId, sessionRepository])
 
   const updateSession = useCallback(async (id: string, input: UpdateSessionInput) => {
     await persistGameSessionUpdate(sessionRepository, id, input, currentPlayerId)
-    await refreshSessions(false).catch(() => undefined)
-  }, [currentPlayerId, refreshSessions, sessionRepository])
+  }, [currentPlayerId, sessionRepository])
 
   const cancelSession = useCallback(async (id: string) => {
     await cancelGameSession(sessionRepository, id, currentPlayerId)
-    await refreshSessions()
-  }, [currentPlayerId, refreshSessions, sessionRepository])
+  }, [currentPlayerId, sessionRepository])
 
   const getPlayer = useCallback(async (id: string) => {
     const player = await getPlayerById(playerRepository, id)
@@ -196,12 +213,6 @@ const upsertPlayer = (players: readonly Player[], player: Player): readonly Play
   return hasPlayer
     ? players.map((item) => (item.id === player.id ? player : item))
     : [...players, player]
-}
-
-const mergeRequests = (...requestLists: readonly (readonly ParticipationRequest[])[]) => {
-  const byId = new Map<string, ParticipationRequest>()
-  requestLists.flat().forEach((request) => byId.set(request.id, request))
-  return [...byId.values()]
 }
 
 const mergePlayers = (

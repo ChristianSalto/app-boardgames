@@ -1,7 +1,8 @@
-import { addDoc, collection, doc, getDoc, getDocs, query, runTransaction, Timestamp, where, type Firestore } from 'firebase/firestore'
-import { isFutureSessionInput, isValidCapacity, sessionInstantFromMadridCivil } from '../model'
+import { addDoc, collection, doc, getDoc, getDocs, onSnapshot, query, runTransaction, Timestamp, where, type Firestore } from 'firebase/firestore'
+import { isFutureSessionInput, isValidCapacity, sessionInstantFromMadridCivil } from '../model.ts'
 import type { CreateSessionInput, GameSession, SessionLifecycle, SessionTone, UpdateSessionInput } from '../types'
 import type { GameSessionRepository } from '../application/gameSessionRepository'
+import { toSessionObservationError } from './firestoreSessionObservation.ts'
 
 type GameSessionDocument = Readonly<{ gameName: string; startsAt?: Timestamp; date?: string; time?: string; city: string; district: string; venue?: string; description?: string; capacity: number; organizerId: string; participantIds?: readonly string[]; pendingRequestIds?: readonly string[]; status: SessionLifecycle }>
 
@@ -32,6 +33,19 @@ const toMutableDocument = (input: UpdateSessionInput) => ({
 
 export const createFirestoreGameSessionRepository = (firestore: Firestore): GameSessionRepository => ({
   discover: async () => (await getDocs(collection(firestore, 'gameSessions'))).docs.map((snapshot) => toSession(snapshot.id, snapshot.data() as GameSessionDocument)),
+  observeAll: (observer) => onSnapshot(
+    collection(firestore, 'gameSessions'),
+    { includeMetadataChanges: true },
+    (snapshot) => {
+      if (snapshot.metadata.hasPendingWrites) return
+      try {
+        observer.next(snapshot.docs.map((item) => toSession(item.id, item.data() as GameSessionDocument)))
+      } catch (error) {
+        observer.error(toSessionObservationError(error))
+      }
+    },
+    (error) => observer.error(toSessionObservationError(error)),
+  ),
   getById: async (id) => { const snapshot = await getDoc(doc(firestore, 'gameSessions', id)); return snapshot.exists() ? toSession(snapshot.id, snapshot.data() as GameSessionDocument) : null },
   create: async (input, organizerId) => { const data = toDocument(input, organizerId); const snapshot = await addDoc(collection(firestore, 'gameSessions'), data); return toSession(snapshot.id, data) },
   update: async (id, input, organizerId) => {

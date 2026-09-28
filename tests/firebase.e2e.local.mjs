@@ -58,7 +58,7 @@ const createPage = async (rootClient, browserContextId) => {
       if (await evaluate(expression)) return
       await delay(100)
     }
-    const snapshot = await evaluate("JSON.stringify({ url: location.href, text: document.body.innerText })")
+    const snapshot = await evaluate("JSON.stringify({ url: location.href, text: document.body.innerText, active: document.activeElement?.outerHTML?.slice(0, 300) })")
     throw new Error(`Tiempo agotado: ${description}. Estado: ${snapshot}`)
   }
 
@@ -114,8 +114,16 @@ const createSession = async (page, { game, date, time, district, venue, descript
   await page.evaluate(clickText('[role=option]', district))
   await page.evaluate(fill('#place', venue))
   await page.evaluate(fill('#description', description))
+  await page.evaluate(`(() => {
+    window.__sawFalseNotFound = false;
+    new MutationObserver(() => {
+      if (document.body.innerText.includes('Partida no encontrada')) window.__sawFalseNotFound = true;
+    }).observe(document.body, { childList: true, characterData: true, subtree: true });
+  })()`)
   await page.evaluate("document.querySelector('form').requestSubmit()")
   await page.waitFor("location.pathname.startsWith('/sessions/')", 'publicar partida')
+  await page.waitFor(bodyHas(game), 'mostrar el detalle recién creado')
+  assert.equal(await page.evaluate('window.__sawFalseNotFound'), false, 'No debe aparecer un falso «Partida no encontrada».')
   const sessionId = await page.evaluate("location.pathname.split('/')[2]")
   assert.ok(sessionId, 'La partida creada debe tener identificador.')
   return sessionId
@@ -130,6 +138,7 @@ const run = async () => {
   const participantContext = (await rootClient.call('Target.createBrowserContext')).browserContextId
   const organizer = await createPage(rootClient, organizerContext)
   const participant = await createPage(rootClient, participantContext)
+  let organizerMirror
 
   const organizerEmail = `organizador-${runId}@test.local`
   const participantEmail = `jugador-${runId}@test.local`
@@ -138,6 +147,8 @@ const run = async () => {
 
   try {
     await registerAndCreatePlayer(organizer, organizerEmail, organizerName, 'Chamberí')
+    organizerMirror = await createPage(rootClient, organizerContext)
+    await organizerMirror.waitFor("location.pathname === '/'", 'restaurar la sesión del segundo navegador de Belial')
     const confirmedSessionId = await createSession(organizer, {
       game: 'Azul',
       date: '2031-06-20',
@@ -157,23 +168,24 @@ const run = async () => {
     await registerAndCreatePlayer(participant, participantEmail, participantName, 'Retiro')
     await participant.evaluate(navigate(`/sessions/${confirmedSessionId}`))
     await participant.waitFor(bodyHas(organizerName), 'mostrar el Player persistido de la organizadora')
+    await organizer.evaluate(navigate(`/sessions/${confirmedSessionId}`))
+    await organizer.waitFor(bodyHas('Gestionar partida'), 'mantener abierto el detalle de Belial')
     await participant.evaluate(clickText('button', 'Solicitar plaza'))
     await participant.waitFor(bodyHas('Solicitud pendiente'), 'mostrar solicitud pendiente')
-    await participant.evaluate('location.reload()')
-    await participant.waitFor(bodyHas('Solicitud pendiente'), 'conservar solicitud pendiente tras recarga')
-
-    await organizer.evaluate(navigate(`/sessions/${confirmedSessionId}`))
-    await organizer.evaluate('location.reload()')
-    await organizer.waitFor(bodyHas(participantName), 'mostrar la solicitud del participante')
+    await organizer.waitFor(bodyHas('1 solicitud pendiente'), 'mostrar la solicitud remota sin recargar')
+    await organizer.evaluate(clickText('summary', 'Revisar solicitudes'))
+    await organizer.waitFor(bodyHas(participantName), 'mostrar la persona solicitante')
+    await organizer.evaluate(`[...document.querySelectorAll('button')].find((item) => item.textContent.trim() === 'Aceptar solicitud').focus()`)
+    assert.equal(await organizer.evaluate("document.activeElement?.textContent?.trim()"), 'Aceptar solicitud', 'El botón de aceptación debe tener foco antes de activarlo.')
     await organizer.evaluate(clickText('button', 'Aceptar solicitud'))
     await organizer.waitFor(bodyHas('tiene ahora una plaza confirmada'), 'aceptar la solicitud')
     await organizer.waitFor(bodyHas('2/4 confirmados'), 'actualizar el aforo')
+    await organizer.waitFor("document.activeElement?.textContent?.trim() === 'Gestionar partida'", 'restaurar el foco tras cerrar la última solicitud')
 
-    await participant.evaluate(navigate(`/sessions/${confirmedSessionId}`))
+    await participant.waitFor(bodyHas('Plaza confirmada'), 'mostrar participación confirmada sin recargar')
+    await participant.waitFor(`!${bodyHas('aún no tienes una plaza confirmada')}`, 'retirar el aviso de solicitud pendiente tras aceptación')
     await participant.evaluate('location.reload()')
-    await participant.waitFor(bodyHas('Participación confirmada'), 'mostrar participación confirmada')
-    await participant.evaluate('location.reload()')
-    await participant.waitFor(bodyHas('Participación confirmada'), 'conservar participación confirmada tras recarga')
+    await participant.waitFor(bodyHas('Plaza confirmada'), 'conservar participación confirmada tras recarga')
 
     const lifecycleSessionId = await createSession(organizer, {
       game: 'Wingspan',
@@ -184,34 +196,47 @@ const run = async () => {
       description: 'Partida de ciclo de vida.',
     })
     await participant.evaluate(navigate(`/sessions/${lifecycleSessionId}`))
-    await participant.evaluate('location.reload()')
     await participant.waitFor(bodyHas('Wingspan'), 'abrir la segunda partida')
     await participant.evaluate(clickText('button', 'Solicitar plaza'))
     await participant.waitFor(bodyHas('Solicitud pendiente'), 'crear segunda solicitud')
 
-    await organizer.evaluate(navigate(`/sessions/${lifecycleSessionId}`))
-    await organizer.evaluate('location.reload()')
-    await organizer.waitFor(bodyHas(participantName), 'ver segunda solicitud')
+    await organizer.waitFor(bodyHas('1 solicitud pendiente'), 'ver segunda solicitud sin recargar')
+    await organizer.evaluate(clickText('summary', 'Revisar solicitudes'))
+    await organizer.waitFor(bodyHas(participantName), 'mostrar la segunda persona solicitante')
     await organizer.evaluate(clickText('button', 'Rechazar'))
     await organizer.waitFor(bodyHas('¿Rechazar esta solicitud?'), 'pedir confirmación de rechazo')
+    await organizer.evaluate(`[...document.querySelectorAll('button')].find((item) => item.textContent.trim() === 'Sí, rechazar').focus()`)
     await organizer.evaluate(clickText('button', 'Sí, rechazar'))
     await organizer.waitFor(bodyHas('no ha sido aceptada'), 'rechazar solicitud')
-    await participant.evaluate(navigate(`/sessions/${lifecycleSessionId}`))
-    await participant.evaluate('location.reload()')
-    await participant.waitFor(bodyHas('Solicitud no aceptada'), 'mostrar rechazo al participante')
+    await organizer.waitFor("document.activeElement?.textContent?.trim() === 'Gestionar partida'", 'restaurar el foco tras rechazar la última solicitud')
+    await participant.waitFor(bodyHas('Solicitud no aceptada'), 'mostrar rechazo sin recargar')
+    await participant.waitFor(`!${bodyHas('aún no tienes una plaza confirmada')}`, 'retirar el aviso pendiente tras rechazo')
 
     await organizer.evaluate(navigate(`/sessions/${lifecycleSessionId}/edit`))
-    await organizer.waitFor(bodyHas('Editar partida'), 'abrir edición')
-    await organizer.evaluate(fill('#time', '17:30'))
-    await organizer.evaluate("document.querySelector('form').requestSubmit()")
-    await organizer.waitFor(bodyHas('17:30'), 'guardar cambio de hora')
-    await organizer.evaluate('location.reload()')
-    await organizer.waitFor(bodyHas('17:30'), 'conservar cambio de hora tras recarga')
+    await organizer.waitFor("Boolean(document.querySelector('#description'))", 'abrir edición')
+    await organizer.evaluate(fill('#description', 'Mi borrador local sin guardar'))
+    await createSession(organizerMirror, {
+      game: 'Root',
+      date: '2031-06-22',
+      time: '16:00',
+      district: 'Chamberí',
+      venue: 'Sala paralela',
+      description: 'Otra partida de Belial.',
+    })
+    assert.equal(await organizer.evaluate("document.querySelector('#description')?.value"), 'Mi borrador local sin guardar', 'Una partida nueva en otra pestaña no debe desmontar el formulario dirty.')
+    await organizerMirror.evaluate(navigate(`/sessions/${lifecycleSessionId}/edit`))
+    await organizerMirror.waitFor("Boolean(document.querySelector('#time'))", 'abrir edición en otra pestaña de Belial')
+    await organizerMirror.evaluate(fill('#time', '17:30'))
+    await organizerMirror.evaluate("document.querySelector('form').requestSubmit()")
+    await organizerMirror.waitFor(bodyHas('17:30'), 'guardar cambio de hora remoto')
+    await participant.waitFor(bodyHas('17:30'), 'recibir edición remota sin recargar')
+    assert.equal(await organizer.evaluate("document.querySelector('#description').value"), 'Mi borrador local sin guardar', 'La edición remota no debe borrar el formulario dirty.')
 
-    await organizer.evaluate(clickText('button', 'Cancelar partida'))
-    await organizer.waitFor(bodyHas('¿Cancelar esta partida?'), 'pedir confirmación de cancelación')
-    await organizer.evaluate(clickText('button', 'Sí, cancelar partida'))
-    await organizer.waitFor(bodyHas('La partida se ha cancelado'), 'cancelar partida')
+    await organizerMirror.evaluate(clickText('button', 'Cancelar partida'))
+    await organizerMirror.waitFor(bodyHas('¿Cancelar esta partida?'), 'pedir confirmación de cancelación')
+    await organizerMirror.evaluate(clickText('button', 'Sí, cancelar partida'))
+    await organizerMirror.waitFor(bodyHas('La partida se ha cancelado'), 'cancelar partida')
+    await participant.waitFor(bodyHas('La partida ha sido cancelada'), 'recibir cancelación sin recargar')
     await organizer.evaluate(navigate('/'))
     await organizer.waitFor(
       `!document.querySelector('a[href="/sessions/${lifecycleSessionId}"]')`,
@@ -229,6 +254,7 @@ const run = async () => {
     }))
   } finally {
     organizer.client.close()
+    organizerMirror?.client.close()
     participant.client.close()
     await rootClient.call('Target.disposeBrowserContext', { browserContextId: organizerContext })
     await rootClient.call('Target.disposeBrowserContext', { browserContextId: participantContext })

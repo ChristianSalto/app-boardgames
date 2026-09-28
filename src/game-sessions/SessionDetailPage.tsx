@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
 import { usePlayerTrustSummary } from '../player-trust/presentation/PlayerTrustProvider'
@@ -21,6 +21,16 @@ const stateLabels = {
   cancelled: 'Cancelada',
   past: 'Pasada',
 } as const
+
+const isOutdatedActionMessage = (
+  message: string,
+  relation: ReturnType<typeof getUserRelation>,
+  state: ReturnType<typeof getSessionDisplayState>,
+) => (
+  (message.startsWith('Solicitud enviada.')
+    && (relation === 'confirmed' || relation === 'declined' || relation === 'not-confirmed' || state === 'cancelled'))
+  || (state === 'cancelled' && message.includes('tiene plaza confirmada'))
+)
 
 type ProfileNavigationState = {
   readonly from: string
@@ -54,11 +64,27 @@ export function SessionDetailPage() {
   } = usePrototype()
   const [confirmingDecline, setConfirmingDecline] = useState<string | null>(null)
   const [confirmingCancellation, setConfirmingCancellation] = useState(false)
+  const managementHeadingRef = useRef<HTMLHeadingElement>(null)
+  const requestsHadFocusRef = useRef(false)
   const [actionMessage, setActionMessage] = useState(
     locationState?.created ? 'Partida publicada correctamente.' : locationState?.edited ? 'Cambios guardados correctamente.' : '',
   )
 
   const session = sessions.find((item) => item.id === sessionId)
+  const pendingCount = session?.requests.filter((request) => request.status === 'pending').length ?? 0
+
+  useEffect(() => {
+    if (pendingCount !== 0 || session?.organizerId !== currentPlayerId || !requestsHadFocusRef.current) return
+    if (document.activeElement === document.body) managementHeadingRef.current?.focus()
+    requestsHadFocusRef.current = false
+  }, [currentPlayerId, pendingCount, session?.organizerId])
+
+  useEffect(() => {
+    if (!session || !actionMessage) return
+    const relation = getUserRelation(session, currentPlayerId)
+    const state = getSessionDisplayState(session)
+    if (isOutdatedActionMessage(actionMessage, relation, state)) setActionMessage('')
+  }, [actionMessage, currentPlayerId, session])
 
   const playerById = useMemo(
     () => new Map(players.map((player) => [player.id, player])),
@@ -101,6 +127,7 @@ export function SessionDetailPage() {
   const pendingRequests = session.requests.filter((request) => request.status === 'pending')
   const relation = getUserRelation(session, currentPlayerId)
   const displayState = getSessionDisplayState(session)
+  const visibleActionMessage = isOutdatedActionMessage(actionMessage, relation, displayState) ? '' : actionMessage
   const remainingSeats = getRemainingSeats(session)
   const isOrganizer = relation === 'organizer'
   const originPath = locationState?.from ?? '/'
@@ -137,6 +164,9 @@ export function SessionDetailPage() {
           ? `${player?.displayName ?? 'La persona'} tiene plaza confirmada. La partida está completa${requestsClosed > 0 ? ` y ${requestsClosed} ${requestsClosed === 1 ? 'solicitud restante se ha cerrado' : 'solicitudes restantes se han cerrado'} por falta de plazas` : ''}.`
           : `${player?.displayName ?? 'La persona'} tiene ahora una plaza confirmada.`,
       )
+      if (pendingRequests.length === 1) {
+        managementHeadingRef.current?.focus()
+      }
     } catch {
       setActionMessage('No se ha podido aceptar la solicitud. La partida puede haberse completado.')
     }
@@ -148,6 +178,9 @@ export function SessionDetailPage() {
       await declineRequest(session.id, playerId)
       setConfirmingDecline(null)
       setActionMessage(`La solicitud de ${player?.displayName ?? 'esta persona'} no ha sido aceptada.`)
+      if (pendingRequests.length === 1) {
+        managementHeadingRef.current?.focus()
+      }
     } catch {
       setActionMessage('No se ha podido rechazar la solicitud. Inténtalo de nuevo.')
     }
@@ -170,7 +203,7 @@ export function SessionDetailPage() {
     >
       {isOrganizer ? (
         <div className="participation-panel organizer-management">
-          <h2>{displayState === 'cancelled' ? 'Tu partida' : 'Gestionar partida'}</h2>
+          <h2 ref={managementHeadingRef} tabIndex={-1}>{displayState === 'cancelled' ? 'Tu partida' : 'Gestionar partida'}</h2>
           <p className={`organizer-management__pending${pendingRequests.length > 0 ? ' organizer-management__pending--active' : ''}`}>
             {pendingRequests.length === 0 ? 'No tienes solicitudes pendientes.' : (
               <>
@@ -180,7 +213,10 @@ export function SessionDetailPage() {
             )}
           </p>
           {displayState !== 'cancelled' && pendingRequests.length > 0 ? (
-            <details className="organizer-management__requests">
+            <details
+              className="organizer-management__requests"
+              onFocusCapture={() => { requestsHadFocusRef.current = true }}
+            >
               <summary className="button button--primary button--wide">Revisar solicitudes</summary>
               <OrganizerRequests
                 confirmingDecline={confirmingDecline}
@@ -254,10 +290,10 @@ export function SessionDetailPage() {
         </ol>
       </nav>
 
-      {actionMessage ? (
+      {visibleActionMessage ? (
         <div className="feedback-banner" role="status" tabIndex={-1}>
           <span aria-hidden="true">✓</span>
-          <p>{actionMessage}</p>
+          <p>{visibleActionMessage}</p>
         </div>
       ) : null}
 

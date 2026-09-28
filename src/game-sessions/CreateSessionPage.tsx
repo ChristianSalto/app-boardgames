@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
 import { gameOptions, madridZones } from '../mock-data/prototypeData'
 import { VisualSelect } from '../shared/VisualSelect'
+import { SessionLoadErrorState } from './SessionLoadErrorState'
 import { isFutureSessionInput } from './model'
 import { instantToMadridCivil, madridCivilToInstant } from './madridDateTime'
 import type { CreateSessionInput } from './types'
@@ -53,7 +54,7 @@ const validate = (form: CreateSessionInput): FormErrors => {
 }
 
 export function CreateSessionPage() {
-  const { createSession, currentPlayerId, sessions, sessionsLoading, updateSession } = usePrototype()
+  const { createSession, currentPlayerId, retrySessions, sessions, sessionsError, sessionsLoading, updateSession } = usePrototype()
   const { sessionId } = useParams()
   const navigate = useNavigate()
   const editingSession = sessionId ? sessions.find((session) => session.id === sessionId) : undefined
@@ -63,9 +64,20 @@ export function CreateSessionPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [saveError, setSaveError] = useState(false)
   const isSubmittingRef = useRef(false)
+  const initializedSessionIdRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!editingSession) return
+    if (!sessionId) {
+      if (initializedSessionIdRef.current !== null) {
+        initializedSessionIdRef.current = null
+        setForm(initialForm)
+        setErrors({})
+        setSaveError(false)
+      }
+      return
+    }
+    if (!editingSession || initializedSessionIdRef.current === editingSession.id) return
+    initializedSessionIdRef.current = editingSession.id
     const { date, time } = instantToMadridCivil(editingSession.startsAt)
     setForm({
       game: editingSession.game,
@@ -76,7 +88,9 @@ export function CreateSessionPage() {
       capacity: editingSession.capacity,
       description: editingSession.description,
     })
-  }, [editingSession])
+    setErrors({})
+    setSaveError(false)
+  }, [editingSession, sessionId])
 
   const update = <Key extends keyof CreateSessionInput>(
     key: Key,
@@ -132,6 +146,20 @@ export function CreateSessionPage() {
 
   if (isEditing && sessionsLoading) {
     return <main className="auth-state" aria-live="polite"><p>Cargando partida…</p></main>
+  }
+
+  if (isEditing && sessionsError) {
+    return (
+      <section className="page-container page-section">
+        <SessionLoadErrorState
+          loading={sessionsLoading}
+          title="No hemos podido cargar esta partida"
+          message="Comprueba tu conexión e inténtalo de nuevo."
+          onRetry={() => { void retrySessions() }}
+        />
+        <Link className="text-link" to="/my-sessions">Volver a Mis partidas</Link>
+      </section>
+    )
   }
 
   if (isEditing && (!editingSession || editingSession.organizerId !== currentPlayerId)) {

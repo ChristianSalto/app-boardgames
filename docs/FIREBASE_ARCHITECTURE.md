@@ -379,7 +379,7 @@ La validación end-to-end contra Auth Emulator y Firestore Emulator cubre dos cu
 
 La revisión detectó una carrera visual al restaurar una ruta protegida: Auth ya podía estar autenticado mientras `Player` aún permanecía en estado `idle`, lo que provocaba una redirección transitoria a Explorar. La composición espera ahora ese estado antes de decidir la ruta, preservando detalle y solicitudes tras F5.
 
-El prototipo recupera datos al volver a entrar o recargar. No implementa sincronización en tiempo real entre pestañas, notificaciones ni listeners en vivo; esa limitación no bloquea los flujos actuales y deberá reevaluarse cuando exista un requisito de actualización inmediata.
+La lectura puntual original recuperaba partidas y solicitudes al volver a entrar o recargar. BETA-R01C-3 incorpora observación en vivo únicamente para `gameSessions`, solicitudes del usuario y solicitudes de sus partidas organizadas. Application expone modelos y cancelación; Infrastructure usa `onSnapshot`, descarta emisiones con escrituras locales pendientes y traduce errores; PrototypeContext compone las fuentes y gestiona su ciclo de vida. Las escrituras siguen esperando su Promise de confirmación. No hay notificaciones, chat ni observación en vivo para otras capacidades.
 
 ## Decisiones pendientes
 

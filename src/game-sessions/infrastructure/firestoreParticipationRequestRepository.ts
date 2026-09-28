@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDocs,
+  onSnapshot,
   query,
   runTransaction,
   serverTimestamp,
@@ -11,6 +12,7 @@ import {
 } from 'firebase/firestore'
 import type { ParticipationRequestRepository } from '../application/participationRequestRepository'
 import type { ParticipationRequest, RequestState, SessionLifecycle } from '../types'
+import { toSessionObservationError } from './firestoreSessionObservation.ts'
 
 type ParticipationRequestDocument = Readonly<{
   sessionId: string
@@ -95,6 +97,22 @@ export const createFirestoreParticipationRequestRepository = (
       )
     },
 
+    observeForPlayer: (playerId, observer) => onSnapshot(
+      query(requests, where('playerId', '==', playerId)),
+      { includeMetadataChanges: true },
+      (snapshots) => {
+        if (snapshots.metadata.hasPendingWrites) return
+        try {
+          observer.next(snapshots.docs.map((snapshot) =>
+            toParticipationRequest(snapshot.id, snapshot.data() as ParticipationRequestDocument),
+          ))
+        } catch (error) {
+          observer.error(toSessionObservationError(error))
+        }
+      },
+      (error) => observer.error(toSessionObservationError(error)),
+    ),
+
     getPendingRequestsForSession: async (sessionId) => {
       const snapshots = await getDocs(query(requests, where('sessionId', '==', sessionId)))
       return snapshots.docs
@@ -103,6 +121,22 @@ export const createFirestoreParticipationRequestRepository = (
         )
         .filter((item) => item.status === 'pending')
     },
+
+    observePendingForSession: (sessionId, observer) => onSnapshot(
+      query(requests, where('sessionId', '==', sessionId)),
+      { includeMetadataChanges: true },
+      (snapshots) => {
+        if (snapshots.metadata.hasPendingWrites) return
+        try {
+          observer.next(snapshots.docs
+            .map((snapshot) => toParticipationRequest(snapshot.id, snapshot.data() as ParticipationRequestDocument))
+            .filter((item) => item.status === 'pending'))
+        } catch (error) {
+          observer.error(toSessionObservationError(error))
+        }
+      },
+      (error) => observer.error(toSessionObservationError(error)),
+    ),
 
     acceptParticipationRequest: async (sessionId, playerId, organizerId) => {
       const sessionReference = doc(sessions, sessionId)

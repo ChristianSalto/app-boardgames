@@ -1,7 +1,9 @@
 import type { CreateSessionInput, GameSession, UpdateSessionInput } from '../types'
+import type { SessionObserver, Unsubscribe } from './sessionObservation.ts'
 
 export type GameSessionRepository = Readonly<{
   discover: () => Promise<readonly GameSession[]>
+  observeAll: (observer: SessionObserver<readonly GameSession[]>) => Unsubscribe
   getById: (id: string) => Promise<GameSession | null>
   create: (input: CreateSessionInput, organizerId: string) => Promise<GameSession>
   update: (id: string, input: UpdateSessionInput, organizerId: string) => Promise<GameSession>

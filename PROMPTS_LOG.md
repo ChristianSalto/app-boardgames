@@ -1,5 +1,12 @@
 # Registro de intervenciones
 
+## BETA-R01C-3 — Realtime Game Session Synchronization
+
+- **Fecha:** 2026-09-28
+- **Objetivo:** sincronizar partidas y solicitudes entre sesiones abiertas sin recarga, preservando los límites Application/Infrastructure y los estados recuperables.
+- **Agentes:** Codex en implementación local; `boardgame_ux_reviewer` en revisión independiente de código como apoyo QA/UX.
+- **Resultado:** ports de observación y adaptadores `onSnapshot` para partidas, solicitudes propias y pendientes del organizador; composición con reconciliación de listeners, cleanup, reintento y protección de callbacks tardíos. Se ignoran snapshots con escrituras locales pendientes para no abrir consultas dependientes antes del commit. Crear mantiene la partida confirmada visible hasta recibirla del listener; editar conserva el formulario local. My Sessions y Edit distinguen carga/error de vacío o falta de permiso. Se corrigieron foco tras resolver la última solicitud, filtro de zona y aviso de participación obsoleto. Pruebas de feed y dos clientes con emulador, E2E local en dos navegadores, typecheck, build cloud, `test:game-sessions`, `test:rules` y diff-check superados. Revisión independiente sin hallazgos restantes en las correcciones; validación manual cloud con Belial y Redon pendiente. No se modificaron datos cloud ni se desplegó.
+
 ## BETA-R01C-1 — Fix Auth Background Overflow on Real Mobile
 
 - **Fecha:** 2026-09-27

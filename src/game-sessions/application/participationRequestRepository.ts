@@ -1,9 +1,12 @@
 import type { ParticipationRequest } from '../types'
+import type { SessionObserver, Unsubscribe } from './sessionObservation.ts'
 
 export type ParticipationRequestRepository = Readonly<{
   requestParticipation: (sessionId: string, playerId: string) => Promise<void>
   getParticipationForPlayer: (playerId: string) => Promise<readonly ParticipationRequest[]>
+  observeForPlayer: (playerId: string, observer: SessionObserver<readonly ParticipationRequest[]>) => Unsubscribe
   getPendingRequestsForSession: (sessionId: string) => Promise<readonly ParticipationRequest[]>
+  observePendingForSession: (sessionId: string, observer: SessionObserver<readonly ParticipationRequest[]>) => Unsubscribe
   acceptParticipationRequest: (
     sessionId: string,
     playerId: string,

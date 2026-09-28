@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
 import { getUserRelation, sortSessionsByDate } from './model'
 import { SessionCard } from './SessionCard'
+import { SessionLoadErrorState } from './SessionLoadErrorState'
 
 type MySessionsTab = 'organized' | 'participating'
 
 export function MySessionsPage() {
-  const { currentPlayerId, sessions } = usePrototype()
+  const { currentPlayerId, retrySessions, sessions, sessionsError, sessionsLoading } = usePrototype()
   const [activeTab, setActiveTab] = useState<MySessionsTab>('organized')
 
   const organized = useMemo(
@@ -27,6 +28,23 @@ export function MySessionsPage() {
   )
 
   const displayedSessions = activeTab === 'organized' ? organized : participating
+
+  if (sessionsLoading) {
+    return <main className="auth-state" aria-live="polite"><p>Cargando partidas…</p></main>
+  }
+
+  if (sessionsError) {
+    return (
+      <section className="page-container page-section">
+        <SessionLoadErrorState
+          loading={sessionsLoading}
+          title="No hemos podido cargar tus partidas"
+          message="Comprueba tu conexión e inténtalo de nuevo."
+          onRetry={() => { void retrySessions() }}
+        />
+      </section>
+    )
+  }
 
   return (
     <section className="page-container page-section">

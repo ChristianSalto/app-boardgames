@@ -45,8 +45,11 @@ export function ExplorePage() {
   )
 
   const zones = useMemo(
-    () => [...new Set(availableSessions.map((session) => session.zone))].sort(),
-    [availableSessions],
+    () => [...new Set([
+      ...availableSessions.map((session) => session.zone),
+      ...(zone === 'all' ? [] : [zone]),
+    ])].sort(),
+    [availableSessions, zone],
   )
 
   const filteredSessions = useMemo(() => {
