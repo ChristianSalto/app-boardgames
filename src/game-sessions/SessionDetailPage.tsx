@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
-import { usePlayerTrustSummary } from '../player-trust/presentation/PlayerTrustProvider'
+import { PlayerReputationSignal } from '../player-trust/presentation/PlayerReputationSignal'
 import { ReviewParticipantsAction } from '../player-trust/presentation/ReviewParticipantsAction'
 import { AppIcon } from '../shared/AppIcon'
 import { SessionLoadErrorState } from './SessionLoadErrorState'
@@ -204,20 +204,16 @@ export function SessionDetailPage() {
       {isOrganizer ? (
         <div className="participation-panel organizer-management">
           <h2 ref={managementHeadingRef} tabIndex={-1}>{displayState === 'cancelled' ? 'Tu partida' : 'Gestionar partida'}</h2>
-          <p className={`organizer-management__pending${pendingRequests.length > 0 ? ' organizer-management__pending--active' : ''}`}>
+          <p aria-live="polite" className={`organizer-management__pending${pendingRequests.length > 0 ? ' organizer-management__pending--active' : ''}`}>
             {pendingRequests.length === 0 ? 'No tienes solicitudes pendientes.' : (
-              <>
-                {pendingRequests.length} {pendingRequests.length === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'}
-                <span className="organizer-management__hint">Esperan tu revisión.</span>
-              </>
+              <>{pendingRequests.length} {pendingRequests.length === 1 ? 'solicitud pendiente' : 'solicitudes pendientes'}</>
             )}
           </p>
           {displayState !== 'cancelled' && pendingRequests.length > 0 ? (
-            <details
+            <div
               className="organizer-management__requests"
               onFocusCapture={() => { requestsHadFocusRef.current = true }}
             >
-              <summary className="button button--primary button--wide">Revisar solicitudes</summary>
               <OrganizerRequests
                 confirmingDecline={confirmingDecline}
                 onAccept={handleAccept}
@@ -232,10 +228,11 @@ export function SessionDetailPage() {
                 playerLoadStates={playerLoadStates}
                 profileNavigationState={profileNavigationState}
               />
-            </details>
+            </div>
           ) : null}
           {displayState !== 'cancelled' ? (
-            <div className="detail-organizer-actions">
+            <section aria-labelledby="organizer-session-actions-title" className="detail-organizer-actions">
+              <h3 id="organizer-session-actions-title">Gestión de la partida</h3>
               <Link className="button button--ghost" to={`/sessions/${session.id}/edit`}>Editar partida</Link>
               <button
                 className="button detail-organizer-actions__cancel"
@@ -244,7 +241,7 @@ export function SessionDetailPage() {
               >
                 Cancelar partida
               </button>
-            </div>
+            </section>
           ) : null}
           {confirmingCancellation ? (
             <div className="inline-confirm" role="group" aria-label="Confirmar cancelación de la partida">
@@ -366,7 +363,7 @@ export function SessionDetailPage() {
                       <span>
                         <strong>{player.displayName}</strong>
                         <small>{id === session.organizerId ? 'Organiza la partida' : player.district ?? 'Madrid'}</small>
-                        {id === session.organizerId ? <OrganizerReputationSignal playerId={id} /> : null}
+                        {id === session.organizerId ? <PlayerReputationSignal playerId={id} /> : null}
                       </span>
                       <AppIcon name="arrow" size={18} />
                     </Link>
@@ -450,27 +447,6 @@ function ParticipationPanel({
   )
 }
 
-function OrganizerReputationSignal({ playerId }: { readonly playerId: string }) {
-  const summary = usePlayerTrustSummary(playerId)
-  if (!summary) return null
-  if (summary.state === 'new') {
-    return <small className="organizer-reputation-signal">Nuevo en Mesa Abierta</small>
-  }
-
-  const rating = summary.averageRating?.toLocaleString('es-ES', {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-  })
-  const reviewLabel = summary.reviewCount === 1 ? 'valoración' : 'valoraciones'
-
-  return (
-    <small className="organizer-reputation-signal">
-      {rating ? <><span aria-hidden="true">★</span> {rating} · </> : null}
-      {summary.reviewCount} {reviewLabel}
-    </small>
-  )
-}
-
 type OrganizerRequestsProps = {
   readonly confirmingDecline: string | null
   readonly onAccept: (playerId: string) => Promise<void>
@@ -523,7 +499,7 @@ function OrganizerRequests({
   }
 
   return (
-    <ul className="request-list">
+    <ul aria-label="Solicitudes pendientes" className="request-list">
       {pendingRequests.map(({ playerId, player }) => (
         <li className="request-card" key={playerId}>
           <div className="person-row person-row--static">
@@ -534,6 +510,7 @@ function OrganizerRequests({
             </span>
             {player ? (
               <Link
+                aria-label={`Ver perfil de ${player.displayName}`}
                 className="text-link"
                 state={profileNavigationState}
                 to={`/players/${playerId}`}
@@ -542,7 +519,8 @@ function OrganizerRequests({
               </Link>
             ) : null}
           </div>
-          {player?.description ? <p>{player.description}</p> : null}
+          {player ? <div className="request-card__reputation"><PlayerReputationSignal playerId={playerId} showNoReviews /></div> : null}
+          {player?.description ? <p className="request-card__bio"><span>Descripción del perfil:</span> {player.description}</p> : null}
           {!player ? (
             <>
               <p role="status">
@@ -573,8 +551,8 @@ function OrganizerRequests({
             </div>
           ) : (
             <div className="request-card__actions">
-              <button className="button button--primary" onClick={() => onAccept(playerId)} type="button">Aceptar solicitud</button>
-              <button className="button button--ghost" onClick={() => onStartDecline(playerId)} type="button">Rechazar</button>
+              <button aria-label={`Aceptar solicitud de ${player.displayName}`} className="button button--primary" onClick={() => onAccept(playerId)} type="button">Aceptar solicitud</button>
+              <button aria-label={`Rechazar solicitud de ${player.displayName}`} className="button button--ghost" onClick={() => onStartDecline(playerId)} type="button">Rechazar</button>
             </div>
           )}
         </li>

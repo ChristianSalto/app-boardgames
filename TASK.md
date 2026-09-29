@@ -4,13 +4,13 @@
 Fase 7 — Trust & Reputation MVP
 
 **Tarea activa:**  
-BETA-R01C-3A — Diagnose and fix incomplete realtime reconciliation.
+BETA-R01C-UX1 — Rediseño de gestión de solicitudes.
 
 **Estado:**  
-La validación manual cloud de BETA-R01C-3 con Belial y Redon encontró estados que seguían obsoletos hasta F5; BETA-R01C-3 no está cerrada. El diagnóstico local descartó la ausencia de eventos de metadatos: los listeners ya usan `includeMetadataChanges`. La causa reproducible estaba en PrototypeContext, que esperaba todas las lecturas de perfiles antes de publicar una entrega realtime. Ahora publica partidas/solicitudes inmediatamente, resuelve perfiles por separado y evita resolver solicitudes sin identificar a la persona. La prueba de dos clientes, el E2E sin recargas, typecheck, build cloud y 48 pruebas de Rules pasan; la revisión independiente del código no dejó hallazgos pendientes. Falta revalidación manual cloud de BETA-R01C-3A antes de cerrar el P1.
+Según la validación manual cloud comunicada en la solicitud, el flujo realtime de BETA-R01C-3A funciona y queda fuera del alcance UX actual. BETA-R01C-UX1 muestra las solicitudes pendientes directamente en la columna de gestión, agrupa identidad, reputación real, descripción de perfil y acciones por persona, y separa editar/cancelar. Trust solo respalda media y cantidad de valoraciones; no hay asistencia verificada ni contador de partidas con significado equivalente. La comprobación local cubrió 0/1/2/4 solicitudes, 390 px y escritorio, teclado, texto largo, reputación real/nueva y perfil pendiente/error/reintento. Typecheck, build cloud, `test:game-sessions`, `test:player-trust` y el E2E local completo de BETA-R01C-UX1A pasan. La revisión independiente de código no encontró hallazgos P0–P2 restantes; lector real, zoom 200 %, render independiente y beta humana siguen pendientes. El error preexistente de lectura de Trust carece de estado recuperable. No hubo deploy ni acceso cloud.
 
 **Último cierre de fase:**  
 PROMPT-008F — Player Trust integrado y validado de extremo a extremo: reviews persistentes, resumen global, opiniones recientes y paginadas, fiabilidad diferenciada, autoridad temporal `startsAt`, lifecycle y Security Rules verificados sin bloqueos.
 
 **Restricción:**  
-BETA-R01C-3A se limita a la reconciliación de game-sessions, participationRequests y perfiles necesarios para identificarlos. No modifica Rules, datos cloud ni despliega. La validación final en móvil real de BETA-R01C-1 permanece pendiente por separado.
+BETA-R01C-UX1 se limita a Presentation/SCSS y pruebas locales. No modifica Application, Infrastructure, realtime, Rules ni datos cloud. La validación final en móvil real de BETA-R01C-1 permanece pendiente por separado.

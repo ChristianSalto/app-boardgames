@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solicitudes del organizador · fixture local</title>
+  </head>
+  <body>
+    <script type="module">
+      const params = new URLSearchParams(location.search)
+      await import('/src/styles/main.scss')
+      if (params.get('scenario') === 'profile-error') {
+        const { checkUnidentifiedRequestsCannotBeResolved } = await import('./prototype-context.realtime.browser.ts')
+        await checkUnidentifiedRequestsCannotBeResolved()
+        document.body.textContent = 'Perfil pendiente y reintento: correcto'
+      } else {
+        const { mountOrganizerRequestsFixture } = await import('./organizer-requests.browser.ts')
+        const count = Number(params.get('count') ?? '2')
+        const result = await mountOrganizerRequestsFixture(count)
+        if (result.hasAccordion || result.horizontalOverflow || !result.hasManagementActions || result.count !== count) {
+          throw new Error(`Fixture failed: ${JSON.stringify(result)}`)
+        }
+        if (count >= 2 && (!result.rated || !result.newPlayer || !result.biographyLabeled)) {
+          throw new Error(`Trust/profile fixture failed: ${JSON.stringify(result)}`)
+        }
+      }
+    </script>
+  </body>
+</html>

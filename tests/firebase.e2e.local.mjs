@@ -149,6 +149,20 @@ const run = async () => {
     await registerAndCreatePlayer(organizer, organizerEmail, organizerName, 'Chamberí')
     await organizer.evaluate("import('/tests/prototype-context.realtime.browser.ts').then((module) => module.checkDelayedProfileDoesNotBlockSessions())")
     await organizer.evaluate("import('/tests/prototype-context.realtime.browser.ts').then((module) => module.checkUnidentifiedRequestsCannotBeResolved())")
+    for (const count of [0, 1, 2, 4]) {
+      const result = await organizer.evaluate(`import('/tests/organizer-requests.browser.ts').then(async (module) => {
+        try { return await module.mountOrganizerRequestsFixture(${count}) }
+        finally { module.unmountOrganizerRequestsFixture() }
+      })`)
+      assert.equal(result.count, count, `La lista debe mostrar ${count} solicitudes.`)
+      assert.equal(result.hasAccordion, false, 'Las solicitudes no deben ocultarse en un acordeón.')
+      assert.equal(result.horizontalOverflow, false, 'Las solicitudes no deben desbordar horizontalmente.')
+      assert.equal(result.hasManagementActions, true, 'Editar y cancelar permanecen en una sección separada.')
+      if (count >= 2) {
+        assert.equal(result.rated && result.newPlayer && result.biographyLabeled, true,
+          'La lista debe distinguir reputación real, nuevos usuarios y descripción de perfil.')
+      }
+    }
     organizerMirror = await createPage(rootClient, organizerContext)
     await organizerMirror.waitFor("location.pathname === '/'", 'restaurar la sesión del segundo navegador de Belial')
     await registerAndCreatePlayer(participant, participantEmail, participantName, 'Retiro')
@@ -182,8 +196,8 @@ const run = async () => {
     await participant.evaluate(navigate(`/sessions/${confirmedSessionId}`))
     await participant.waitFor(bodyHas('Solicitud pendiente'), 'conservar estado pendiente al volver al detalle')
     await organizer.waitFor(bodyHas('1 solicitud pendiente'), 'mostrar la solicitud remota sin recargar')
-    await organizer.evaluate(clickText('summary', 'Revisar solicitudes'))
     await organizer.waitFor(bodyHas(participantName), 'mostrar la persona solicitante')
+    assert.equal(await organizer.evaluate("Boolean(document.querySelector('summary'))"), false, 'Las solicitudes deben estar visibles sin acordeón.')
     await organizer.evaluate(`[...document.querySelectorAll('button')].find((item) => item.textContent.trim() === 'Aceptar solicitud').focus()`)
     assert.equal(await organizer.evaluate("document.activeElement?.textContent?.trim()"), 'Aceptar solicitud', 'El botón de aceptación debe tener foco antes de activarlo.')
     await organizer.evaluate(clickText('button', 'Aceptar solicitud'))
@@ -208,7 +222,6 @@ const run = async () => {
     await participant.waitFor(bodyHas('Solicitud pendiente'), 'crear segunda solicitud')
 
     await organizer.waitFor(bodyHas('1 solicitud pendiente'), 'ver segunda solicitud sin recargar')
-    await organizer.evaluate(clickText('summary', 'Revisar solicitudes'))
     await organizer.waitFor(bodyHas(participantName), 'mostrar la segunda persona solicitante')
     await organizer.evaluate(clickText('button', 'Rechazar'))
     await organizer.waitFor(bodyHas('¿Rechazar esta solicitud?'), 'pedir confirmación de rechazo')

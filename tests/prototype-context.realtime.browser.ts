@@ -143,9 +143,10 @@ export const checkUnidentifiedRequestsCannotBeResolved = async () => {
         createElement(Routes, null,
           createElement(Route, { path: '/sessions/:sessionId', element: createElement(SessionDetailPage) }))))))
     await until(() => container.textContent?.includes('2 solicitudes pendientes') ?? false, 'pending organizer requests')
-    const review = [...container.querySelectorAll('summary')].find((item) => item.textContent?.includes('Revisar solicitudes'))
-    review?.click()
     await until(() => container.querySelectorAll('.request-card').length === 2, 'two request cards')
+    if (container.querySelector('summary') || !container.querySelector('ul[aria-label="Solicitudes pendientes"]')) {
+      throw new Error('Pending requests must be directly visible as a named list')
+    }
     const actionLabels = [...container.querySelectorAll('.request-card button')].map((button) => button.textContent?.trim())
     if (actionLabels.includes('Aceptar solicitud') || actionLabels.includes('Rechazar') || actionLabels.includes('Sí, rechazar')) {
       throw new Error('Unidentified requests expose resolution actions')

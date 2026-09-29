@@ -2029,12 +2029,13 @@
 
 .detail-organizer-actions {
   display: grid;
-  gap: 0.2rem;
-  margin-top: 0.4rem;
-  padding-top: 0.65rem;
+  gap: 0.35rem;
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
   border-top: 1px solid var(--color-line);
 }
 
+.detail-organizer-actions h3 { margin: 0 0 0.3rem; font-size: 0.86rem; font-weight: 780; }
 .detail-organizer-actions .button { min-width: 0; width: 100%; }
 .detail-organizer-actions .detail-organizer-actions__cancel {
   justify-self: start;
@@ -2049,18 +2050,21 @@
 .organizer-management { min-width: 0; }
 .organizer-management > .organizer-management__pending { margin: 0; color: var(--color-ink-soft); font-size: 0.85rem; }
 .detail-aside .organizer-management > .organizer-management__pending--active { color: var(--color-forest-dark); font-weight: 750; }
-.organizer-management__hint { display: block; margin-top: 0.15rem; color: var(--color-ink-soft); font-weight: 400; }
-.organizer-management__requests { margin-top: 0.55rem; }
-.organizer-management__requests > summary { list-style: none; cursor: pointer; }
-.organizer-management__requests > summary::-webkit-details-marker { display: none; }
-.organizer-management .request-list { gap: 0; margin-top: 0.7rem; border-top: 1px solid var(--color-line); }
-.organizer-management .request-card { min-width: 0; padding: 0.8rem 0; border: 0; border-radius: 0; background: transparent; }
+.organizer-management__requests { margin-top: 0.45rem; }
+.organizer-management .request-list { gap: 0; border-top: 1px solid var(--color-line); }
+.organizer-management .request-card { display: grid; min-width: 0; gap: 0.5rem; padding: 0.8rem 0; border: 0; border-radius: 0; background: transparent; }
 .organizer-management .request-card + .request-card { border-top: 1px solid var(--color-line); }
-.organizer-management .person-row { grid-template-columns: auto minmax(0, 1fr); }
-.organizer-management .person-row .text-link { grid-column: 2; justify-self: start; }
+.organizer-management .person-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.55rem; min-height: 0; }
+.organizer-management .person-row .text-link { align-self: start; white-space: nowrap; font-size: 0.78rem; }
 .organizer-management .person-row strong,
 .organizer-management .person-row small { overflow-wrap: anywhere; }
-.organizer-management .request-card > p { overflow-wrap: anywhere; }
+.organizer-management .request-card__reputation { min-height: 1rem; }
+.organizer-management .request-card__reputation .organizer-reputation-signal { color: var(--color-ink-soft); font-weight: 650; }
+.organizer-management .request-card > p { margin: 0; overflow-wrap: anywhere; }
+.organizer-management .request-card__bio { font-size: 0.83rem; line-height: 1.4; }
+.organizer-management .request-card__bio span { font-weight: 700; }
+.organizer-management .request-card__actions { gap: 0.4rem; }
+.organizer-management .request-card__actions .button { flex: 1 1 8rem; min-width: 0; padding-inline: 0.65rem; font-size: 0.84rem; }
 .detail-page #session-management { scroll-margin-top: 6.5rem; }
 .session-overview-card {
   display: grid;

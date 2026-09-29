@@ -1,5 +1,18 @@
 # Registro de intervenciones
 
+## BETA-R01C-UX1A — Cierre de validación E2E
+
+- **Fecha:** 2026-09-29
+- **Objetivo:** ejecutar el E2E local completo adaptado al rediseño de solicitudes.
+- **Resultado:** `node tests/firebase.e2e.local.mjs` pasó con Auth, Firestore y Storage en emuladores, Vite local y Edge headless. La prueba cubrió la lista sin acordeón y el recorrido de creación, solicitud, aceptación, rechazo, edición y cancelación sin recarga. No hubo cambios de código; se detuvieron los procesos iniciados y quedaron libres sus puertos. Sin acceso cloud ni deploy.
+
+## BETA-R01C-UX1 — Rediseño de gestión de solicitudes
+
+- **Fecha:** 2026-09-29
+- **Objetivo:** hacer visibles y compactas las solicitudes pendientes del organizador en Session Detail sin modificar el flujo realtime ni la persistencia.
+- **Agentes:** Codex en implementación Presentation; `boardgame_ux_architect` en recomendación de estructura y `boardgame_ux_reviewer` en revisión independiente.
+- **Resultado:** se retiró el acordeón y el texto redundante; cada solicitud reúne identidad, enlace de perfil, media/recuento de valoraciones reales, biografía etiquetada cuando existe y acciones. Editar/cancelar quedan bajo «Gestión de la partida». No existe mensaje de solicitud ni dato verificable de asistencia o número relevante de partidas, por lo que no se añadieron. Fixture local cubrió 0/1/2/4 entradas, reputación, textos largos, 390 px/escritorio, teclado y recuperación de perfil; typecheck, build cloud, `test:game-sessions` y `test:player-trust` pasaron. Revisión independiente sin P0–P2 pendientes tras aclarar la escala de valoración; lectura de Trust fallida y validación con lector/zoom quedan pendientes. No se tocaron realtime, Rules ni cloud; sin deploy.
+
 ## BETA-R01C-3A — Diagnose and fix incomplete realtime reconciliation
 
 - **Fecha:** 2026-09-29
