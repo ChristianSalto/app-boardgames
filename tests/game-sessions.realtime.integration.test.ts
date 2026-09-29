@@ -26,9 +26,11 @@ const collectFeed = (
   playerId: string,
 ) => {
   let latest: SessionFeedState | null = null
+  const states: SessionFeedState[] = []
   const waiters = new Set<() => void>()
   const feed = observeSessionFeed(sessionRepository, requestRepository, playerId, (state) => {
     latest = state
+    states.push(state)
     waiters.forEach((notify) => notify())
   })
   const waitFor = (predicate: (state: SessionFeedState) => boolean, label: string) => new Promise<SessionFeedState>((resolve, reject) => {
@@ -45,7 +47,7 @@ const collectFeed = (
     waiters.add(inspect)
     inspect()
   })
-  return { feed, waitFor }
+  return { feed, states, waitFor }
 }
 
 test('two authorized clients see requests, resolution and session lifecycle without rereading', async () => {
@@ -78,9 +80,8 @@ test('two authorized clients see requests, resolution and session lifecycle with
     ])
 
     const created = await belialSessions.create(input('Azul'), 'belial')
-    belialFeed.feed.includeCommittedSession(created)
     await Promise.all([
-      belialFeed.waitFor((state) => !state.loading && state.sessions.some((item) => item.id === created.id), 'Belial creation'),
+      belialFeed.waitFor((state) => !state.loading && state.sessions.some((item) => item.id === created.id), 'Belial confirmed creation from listener'),
       redonFeed.waitFor((state) => !state.loading && state.sessions.some((item) => item.id === created.id), 'Redon discovery'),
     ])
 
@@ -95,28 +96,56 @@ test('two authorized clients see requests, resolution and session lifecycle with
     ])
 
     await belialRequests.acceptParticipationRequest(created.id, 'redon', 'belial')
-    await redonFeed.waitFor((state) => {
+    const isConfirmed = (state: SessionFeedState) => {
       const item = state.sessions.find((session) => session.id === created.id)
       return Boolean(item?.participantIds.includes('redon')
         && item.requests.some((request) => request.playerId === 'redon' && request.status === 'confirmed'))
-    }, 'Redon confirmed status')
+    }
+    await Promise.all([
+      belialFeed.waitFor((state) => {
+        const item = state.sessions.find((session) => session.id === created.id)
+        return Boolean(item?.participantIds.includes('redon') && !item.requests.some((request) => request.status === 'pending'))
+      }, 'Belial confirmed status'),
+      redonFeed.waitFor(isConfirmed, 'Redon confirmed status'),
+    ])
 
     const rejectedSession = await belialSessions.create(input('Wingspan'), 'belial')
     await redonFeed.waitFor((state) => state.sessions.some((item) => item.id === rejectedSession.id), 'second session discovery')
     await redonRequests.requestParticipation(rejectedSession.id, 'redon')
-    await belialFeed.waitFor((state) => state.sessions.find((item) => item.id === rejectedSession.id)?.requests.some(
-      (item) => item.playerId === 'redon' && item.status === 'pending',
-    ) ?? false, 'second pending request')
+    await Promise.all([
+      belialFeed.waitFor((state) => state.sessions.find((item) => item.id === rejectedSession.id)?.requests.some(
+        (item) => item.playerId === 'redon' && item.status === 'pending',
+      ) ?? false, 'Belial second pending request'),
+      redonFeed.waitFor((state) => state.sessions.find((item) => item.id === rejectedSession.id)?.requests.some(
+        (item) => item.playerId === 'redon' && item.status === 'pending',
+      ) ?? false, 'Redon second pending request'),
+    ])
     await belialRequests.rejectParticipationRequest(rejectedSession.id, 'redon', 'belial')
-    await redonFeed.waitFor((state) => state.sessions.find((item) => item.id === rejectedSession.id)?.requests.some(
-      (item) => item.playerId === 'redon' && item.status === 'rejected',
-    ) ?? false, 'Redon rejected status')
+    await Promise.all([
+      belialFeed.waitFor((state) => !state.sessions.find((item) => item.id === rejectedSession.id)?.requests.some(
+        (item) => item.status === 'pending',
+      ), 'Belial rejected status'),
+      redonFeed.waitFor((state) => state.sessions.find((item) => item.id === rejectedSession.id)?.requests.some(
+        (item) => item.playerId === 'redon' && item.status === 'rejected',
+      ) ?? false, 'Redon rejected status'),
+    ])
 
     await belialSessions.update(created.id, { ...input('Azul', '17:30'), place: 'Sala nueva' }, 'belial')
-    await redonFeed.waitFor((state) => state.sessions.find((item) => item.id === created.id)?.place === 'Sala nueva', 'remote edit')
+    await Promise.all([
+      belialFeed.waitFor((state) => state.sessions.find((item) => item.id === created.id)?.place === 'Sala nueva', 'Belial confirmed edit'),
+      redonFeed.waitFor((state) => state.sessions.find((item) => item.id === created.id)?.place === 'Sala nueva', 'Redon observed edit'),
+    ])
     await belialSessions.cancel(created.id, 'belial')
-    const cancelled = await redonFeed.waitFor((state) => state.sessions.find((item) => item.id === created.id)?.lifecycle === 'cancelled', 'remote cancellation')
-    assert.equal(cancelled.sessions.find((item) => item.id === created.id)?.place, 'Sala nueva')
+    const [belialCancelled, redonCancelled] = await Promise.all([
+      belialFeed.waitFor((state) => state.sessions.find((item) => item.id === created.id)?.lifecycle === 'cancelled', 'Belial confirmed cancellation'),
+      redonFeed.waitFor((state) => state.sessions.find((item) => item.id === created.id)?.lifecycle === 'cancelled', 'Redon observed cancellation'),
+    ])
+    assert.equal(belialCancelled.sessions.find((item) => item.id === created.id)?.place, 'Sala nueva')
+    assert.equal(redonCancelled.sessions.find((item) => item.id === created.id)?.place, 'Sala nueva')
+
+    await assert.rejects(setDoc(doc(belialDb, 'gameSessions', 'invalid-local-write'), { gameName: 'Invalid' }))
+    assert.ok(!belialFeed.states.some((state) => state.sessions.some((item) => item.id === 'invalid-local-write')),
+      'A rejected local write must never appear as a confirmed session')
   } finally {
     belialFeed?.feed.stop()
     redonFeed?.feed.stop()

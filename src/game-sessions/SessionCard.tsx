@@ -86,7 +86,7 @@ export function SessionCard({ session, showRelation = false }: SessionCardProps)
         </dl>
 
         <p className="session-card__organizer">
-          Organiza <strong>{organizer?.displayName ?? 'Perfil no disponible'}</strong>
+          Organiza <strong>{organizer?.displayName ?? 'Persona organizadora'}</strong>
         </p>
 
         {relation === 'organizer' && pendingRequests > 0 ? (

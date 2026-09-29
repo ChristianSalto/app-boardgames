@@ -55,6 +55,8 @@ export function SessionDetailPage() {
     cancelSession,
     currentPlayerId,
     declineRequest,
+    getPlayer,
+    playerLoadStates,
     players,
     requestSeat,
     retrySessions,
@@ -121,9 +123,7 @@ export function SessionDetailPage() {
     )
   }
 
-  const participants = session.participantIds
-    .map((id) => playerById.get(id))
-    .filter((player) => player !== undefined)
+  const participants = session.participantIds.map((id) => ({ id, player: playerById.get(id) }))
   const pendingRequests = session.requests.filter((request) => request.status === 'pending')
   const relation = getUserRelation(session, currentPlayerId)
   const displayState = getSessionDisplayState(session)
@@ -223,11 +223,13 @@ export function SessionDetailPage() {
                 onAccept={handleAccept}
                 onCancelDecline={() => setConfirmingDecline(null)}
                 onConfirmDecline={handleDecline}
+                onRetryPlayer={getPlayer}
                 onStartDecline={setConfirmingDecline}
                 pendingRequests={pendingRequests.map((request) => ({
                   playerId: request.playerId,
                   player: playerById.get(request.playerId),
                 }))}
+                playerLoadStates={playerLoadStates}
                 profileNavigationState={profileNavigationState}
               />
             </details>
@@ -349,24 +351,34 @@ export function SessionDetailPage() {
           <div className="content-block" id="session-management" tabIndex={-1}>
             <div className="content-block__heading">
               <h2>Participantes confirmados</h2>
-              <span>{participants.length}/{session.capacity}</span>
+              <span>{session.participantIds.length}/{session.capacity}</span>
             </div>
             <ul className="people-list">
-              {participants.map((player) => (
-                <li key={player.id}>
-                  <Link
-                    className="person-row"
-                    state={player.id === currentPlayerId ? undefined : profileNavigationState}
-                    to={player.id === currentPlayerId ? '/profile' : `/players/${player.id}`}
-                  >
-                    <span className="avatar" aria-hidden="true">{getInitials(player.displayName)}</span>
-                    <span>
-                      <strong>{player.displayName}</strong>
-                      <small>{player.id === session.organizerId ? 'Organiza la partida' : player.district ?? 'Madrid'}</small>
-                      {player.id === session.organizerId ? <OrganizerReputationSignal playerId={player.id} /> : null}
-                    </span>
-                    <AppIcon name="arrow" size={18} />
-                  </Link>
+              {participants.map(({ id, player }) => (
+                <li key={id}>
+                  {player ? (
+                    <Link
+                      className="person-row"
+                      state={id === currentPlayerId ? undefined : profileNavigationState}
+                      to={id === currentPlayerId ? '/profile' : `/players/${id}`}
+                    >
+                      <span className="avatar" aria-hidden="true">{getInitials(player.displayName)}</span>
+                      <span>
+                        <strong>{player.displayName}</strong>
+                        <small>{id === session.organizerId ? 'Organiza la partida' : player.district ?? 'Madrid'}</small>
+                        {id === session.organizerId ? <OrganizerReputationSignal playerId={id} /> : null}
+                      </span>
+                      <AppIcon name="arrow" size={18} />
+                    </Link>
+                  ) : (
+                    <div className="person-row">
+                      <span className="avatar" aria-hidden="true">?</span>
+                      <span>
+                        <strong>{id === session.organizerId ? 'Persona organizadora' : 'Participante confirmado'}</strong>
+                        <small>{id === session.organizerId ? 'Organiza la partida' : 'Plaza confirmada'}</small>
+                      </span>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -464,11 +476,13 @@ type OrganizerRequestsProps = {
   readonly onAccept: (playerId: string) => Promise<void>
   readonly onCancelDecline: () => void
   readonly onConfirmDecline: (playerId: string) => Promise<void>
+  readonly onRetryPlayer: ReturnType<typeof usePrototype>['getPlayer']
   readonly onStartDecline: (playerId: string) => void
   readonly pendingRequests: readonly {
     readonly playerId: string
     readonly player: ReturnType<Map<string, ReturnType<typeof usePrototype>['players'][number]>['get']>
   }[]
+  readonly playerLoadStates: ReturnType<typeof usePrototype>['playerLoadStates']
   readonly profileNavigationState: ProfileNavigationState
 }
 
@@ -477,10 +491,37 @@ function OrganizerRequests({
   onAccept,
   onCancelDecline,
   onConfirmDecline,
+  onRetryPlayer,
   onStartDecline,
   pendingRequests,
+  playerLoadStates,
   profileNavigationState,
 }: OrganizerRequestsProps) {
+  const [retryingProfiles, setRetryingProfiles] = useState<ReadonlySet<string>>(() => new Set())
+  const [profileErrors, setProfileErrors] = useState<ReadonlySet<string>>(() => new Set())
+
+  const retryProfile = async (playerId: string) => {
+    setRetryingProfiles((current) => new Set(current).add(playerId))
+    setProfileErrors((current) => {
+      const next = new Set(current)
+      next.delete(playerId)
+      return next
+    })
+    try {
+      if (!await onRetryPlayer(playerId)) {
+        setProfileErrors((current) => new Set(current).add(playerId))
+      }
+    } catch {
+      setProfileErrors((current) => new Set(current).add(playerId))
+    } finally {
+      setRetryingProfiles((current) => {
+        const next = new Set(current)
+        next.delete(playerId)
+        return next
+      })
+    }
+  }
+
   return (
     <ul className="request-list">
       {pendingRequests.map(({ playerId, player }) => (
@@ -488,19 +529,43 @@ function OrganizerRequests({
           <div className="person-row person-row--static">
             <span className="avatar" aria-hidden="true">{getInitials(player?.displayName ?? '?')}</span>
             <span>
-              <strong>{player?.displayName ?? 'Perfil no disponible'}</strong>
+              <strong>{player?.displayName ?? 'Persona solicitante'}</strong>
               <small>{player?.district ? `${player.district} · Madrid` : 'Madrid'}</small>
             </span>
-            <Link
-              className="text-link"
-              state={profileNavigationState}
-              to={`/players/${playerId}`}
-            >
-              Ver perfil
-            </Link>
+            {player ? (
+              <Link
+                className="text-link"
+                state={profileNavigationState}
+                to={`/players/${playerId}`}
+              >
+                Ver perfil
+              </Link>
+            ) : null}
           </div>
           {player?.description ? <p>{player.description}</p> : null}
-          {confirmingDecline === playerId ? (
+          {!player ? (
+            <>
+              <p role="status">
+                {retryingProfiles.has(playerId)
+                  ? 'Cargando perfil…'
+                  : profileErrors.has(playerId) || playerLoadStates[playerId] === 'error'
+                    ? 'No hemos podido cargar este perfil. Inténtalo de nuevo.'
+                    : playerLoadStates[playerId] === 'missing'
+                      ? 'Este perfil no está disponible. Reintenta antes de responder.'
+                      : 'El perfil aún no se muestra. Espera o reintenta para identificar a esta persona antes de responder.'}
+              </p>
+              <div className="request-card__actions">
+                <button
+                  className="button button--ghost"
+                  disabled={retryingProfiles.has(playerId)}
+                  onClick={() => { void retryProfile(playerId) }}
+                  type="button"
+                >
+                  Reintentar carga del perfil
+                </button>
+              </div>
+            </>
+          ) : confirmingDecline === playerId ? (
             <div className="inline-confirm" role="group" aria-label={`Confirmar rechazo de ${player?.displayName ?? 'la solicitud'}`}>
               <p>¿Rechazar esta solicitud?</p>
               <button className="button button--danger" onClick={() => onConfirmDecline(playerId)} type="button">Sí, rechazar</button>

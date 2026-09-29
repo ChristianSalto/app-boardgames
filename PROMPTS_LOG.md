@@ -1,5 +1,12 @@
 # Registro de intervenciones
 
+## BETA-R01C-3A — Diagnose and fix incomplete realtime reconciliation
+
+- **Fecha:** 2026-09-29
+- **Objetivo:** corregir los estados obsoletos que la validación manual cloud de BETA-R01C-3 detectó en las sesiones de Belial y Redon sin añadir recargas ni refrescos tras escrituras.
+- **Agentes:** Codex en diagnóstico e implementación local; `boardgame_ux_reviewer` en revisión independiente de código como apoyo QA/UX.
+- **Resultado:** los listeners ya observaban cambios solo de metadatos, y la prueba local de escritor y segundo cliente converge sin lecturas manuales. Se reprodujo un bloqueo en PrototypeContext: una lectura de perfil pendiente impedía publicar la sesión ya recibida. Las sesiones se publican al llegar el feed y los perfiles se resuelven individualmente; se retiró la inserción adicional de la partida creada en el estado React. El detalle cuenta participantes desde `participantIds` y evita aceptar/rechazar solicitudes sin identidad, mostrando carga/error y reintento de perfil. Las pruebas cubren escritor y segundo cliente en las seis operaciones, escritura local rechazada, perfiles pendientes/error/reintento, formulario dirty y creación sin falso «no encontrada». Typecheck, build cloud, `test:game-sessions`, 48 pruebas de Rules, E2E local sin F5 y diff-check pasan. La revisión independiente no dejó hallazgos pendientes en el código; revalidación manual cloud aún necesaria. No se accedió ni modificó cloud y no hubo deploy.
+
 ## BETA-R01C-3 — Realtime Game Session Synchronization
 
 - **Fecha:** 2026-09-28

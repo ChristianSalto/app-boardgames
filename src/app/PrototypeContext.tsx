@@ -29,6 +29,7 @@ import { getPlayerById, type PlayerRepository } from '../players/application/pla
 type PrototypeContextValue = {
   readonly currentPlayerId: string
   readonly players: readonly Player[]
+  readonly playerLoadStates: Readonly<Record<string, 'loading' | 'missing' | 'error'>>
   readonly sessions: readonly GameSession[]
   readonly requestSeat: (sessionId: string) => Promise<void>
   readonly acceptRequest: (sessionId: string, playerId: string) => Promise<void>
@@ -59,6 +60,7 @@ export function PrototypeProvider({
 }) {
   const currentPlayerId = currentPlayer.id
   const [players, setPlayers] = useState<readonly Player[]>(() => upsertPlayer(initialPlayers, currentPlayer))
+  const [playerLoadStates, setPlayerLoadStates] = useState<Readonly<Record<string, 'loading' | 'missing' | 'error'>>>({})
   const [sessions, setSessions] = useState<readonly GameSession[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
   const [sessionsError, setSessionsError] = useState(false)
@@ -75,12 +77,20 @@ export function PrototypeProvider({
     const loadPlayer = (id: string) => {
       const existing = playerLookups.get(id)
       if (existing) return existing
+      setPlayerLoadStates((current) => ({ ...current, [id]: 'loading' }))
       const lookup = getPlayerById(playerRepository, id)
         .then((player) => {
+          if (active) setPlayerLoadStates((current) => {
+            const next = { ...current }
+            if (player) delete next[id]
+            else next[id] = 'missing'
+            return next
+          })
           if (!player) playerLookups.delete(id)
           return player
         })
         .catch((error: unknown) => {
+          if (active) setPlayerLoadStates((current) => ({ ...current, [id]: 'error' }))
           playerLookups.delete(id)
           throw error
         })
@@ -104,23 +114,22 @@ export function PrototypeProvider({
           return
         }
 
+        setSessions(state.sessions)
+        setSessionsError(false)
+        setSessionsLoading(false)
+
         const playerIds = [...new Set(state.sessions.flatMap((session) => [
           ...session.participantIds,
           ...session.requests.map((request) => request.playerId),
         ]))].filter((id) => id !== currentPlayerId)
-        void Promise.all(playerIds.map(loadPlayer))
-          .then((persistedPlayers) => {
-            if (!active || delivery !== latestDelivery) return
-            setPlayers((current) => mergePlayers(upsertPlayer(current, currentPlayer), persistedPlayers))
-            setSessions(state.sessions)
-            setSessionsError(false)
-            setSessionsLoading(false)
-          })
-          .catch(() => {
-            if (!active || delivery !== latestDelivery) return
-            setSessionsError(true)
-            setSessionsLoading(false)
-          })
+        playerIds.forEach((id) => {
+          void loadPlayer(id)
+            .then((player) => {
+              if (!active || delivery !== latestDelivery || !player) return
+              setPlayers((current) => upsertPlayer(current, player))
+            })
+            .catch(() => {})
+        })
       },
     )
     feedRef.current = feed
@@ -151,7 +160,6 @@ export function PrototypeProvider({
   const createSession = useCallback(async (input: CreateSessionInput) => {
     const session = await persistGameSession(sessionRepository, input, currentPlayerId)
     feedRef.current?.includeCommittedSession(session)
-    setSessions((current) => current.some((item) => item.id === session.id) ? current : [...current, session])
     return session.id
   }, [currentPlayerId, sessionRepository])
 
@@ -173,6 +181,7 @@ export function PrototypeProvider({
     () => ({
       currentPlayerId,
       players,
+      playerLoadStates,
       sessions,
       requestSeat,
       acceptRequest,
@@ -187,6 +196,7 @@ export function PrototypeProvider({
     }),
     [
       players,
+      playerLoadStates,
       sessions,
       requestSeat,
       acceptRequest,
@@ -214,14 +224,6 @@ const upsertPlayer = (players: readonly Player[], player: Player): readonly Play
     ? players.map((item) => (item.id === player.id ? player : item))
     : [...players, player]
 }
-
-const mergePlayers = (
-  currentPlayers: readonly Player[],
-  additionalPlayers: readonly (Player | null)[],
-): readonly Player[] => additionalPlayers.reduce(
-  (players, player) => player ? upsertPlayer(players, player) : players,
-  currentPlayers,
-)
 
 export const usePrototype = () => {
   const context = useContext(PrototypeContext)

@@ -147,8 +147,11 @@ const run = async () => {
 
   try {
     await registerAndCreatePlayer(organizer, organizerEmail, organizerName, 'Chamberí')
+    await organizer.evaluate("import('/tests/prototype-context.realtime.browser.ts').then((module) => module.checkDelayedProfileDoesNotBlockSessions())")
+    await organizer.evaluate("import('/tests/prototype-context.realtime.browser.ts').then((module) => module.checkUnidentifiedRequestsCannotBeResolved())")
     organizerMirror = await createPage(rootClient, organizerContext)
     await organizerMirror.waitFor("location.pathname === '/'", 'restaurar la sesión del segundo navegador de Belial')
+    await registerAndCreatePlayer(participant, participantEmail, participantName, 'Retiro')
     const confirmedSessionId = await createSession(organizer, {
       game: 'Azul',
       date: '2031-06-20',
@@ -158,20 +161,26 @@ const run = async () => {
       description: 'Partida de validación A/B.',
     })
     await organizer.waitFor(bodyHas('16:00'), 'mostrar la hora creada')
-    await organizer.evaluate('location.reload()')
-    await organizer.waitFor(bodyHas('16:00'), 'recuperar la partida tras recarga')
-    await organizer.evaluate(navigate(`/sessions/${confirmedSessionId}`))
-    await organizer.waitFor(bodyHas('Café QA'), 'recuperar el detalle persistido tras recarga')
     await organizer.evaluate(navigate('/my-sessions'))
-    await organizer.waitFor(bodyHas('Azul'), 'mostrar la partida organizada')
+    await organizer.waitFor(bodyHas('Azul'), 'mostrar la partida organizada sin recargar')
+    await organizerMirror.waitFor(bodyHas('Azul'), 'mostrar la nueva partida en la segunda pestaña sin recargar')
+    await participant.waitFor(
+      `Boolean(document.querySelector('a[href="/sessions/${confirmedSessionId}"]'))`,
+      'mostrar la nueva partida a Redon sin recargar',
+    )
 
-    await registerAndCreatePlayer(participant, participantEmail, participantName, 'Retiro')
     await participant.evaluate(navigate(`/sessions/${confirmedSessionId}`))
     await participant.waitFor(bodyHas(organizerName), 'mostrar el Player persistido de la organizadora')
     await organizer.evaluate(navigate(`/sessions/${confirmedSessionId}`))
     await organizer.waitFor(bodyHas('Gestionar partida'), 'mantener abierto el detalle de Belial')
     await participant.evaluate(clickText('button', 'Solicitar plaza'))
     await participant.waitFor(bodyHas('Solicitud pendiente'), 'mostrar solicitud pendiente')
+    await participant.evaluate(navigate('/my-sessions'))
+    await participant.waitFor(bodyHas('Participo / he solicitado 1'), 'contar la solicitud propia sin recargar')
+    await participant.evaluate(clickText('button', 'Participo / he solicitado 1'))
+    await participant.waitFor(bodyHas('Azul'), 'mostrar solicitud propia en Mis partidas sin recargar')
+    await participant.evaluate(navigate(`/sessions/${confirmedSessionId}`))
+    await participant.waitFor(bodyHas('Solicitud pendiente'), 'conservar estado pendiente al volver al detalle')
     await organizer.waitFor(bodyHas('1 solicitud pendiente'), 'mostrar la solicitud remota sin recargar')
     await organizer.evaluate(clickText('summary', 'Revisar solicitudes'))
     await organizer.waitFor(bodyHas(participantName), 'mostrar la persona solicitante')
@@ -184,8 +193,6 @@ const run = async () => {
 
     await participant.waitFor(bodyHas('Plaza confirmada'), 'mostrar participación confirmada sin recargar')
     await participant.waitFor(`!${bodyHas('aún no tienes una plaza confirmada')}`, 'retirar el aviso de solicitud pendiente tras aceptación')
-    await participant.evaluate('location.reload()')
-    await participant.waitFor(bodyHas('Plaza confirmada'), 'conservar participación confirmada tras recarga')
 
     const lifecycleSessionId = await createSession(organizer, {
       game: 'Wingspan',
