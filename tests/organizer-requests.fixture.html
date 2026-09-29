@@ -13,6 +13,12 @@
         const { checkUnidentifiedRequestsCannotBeResolved } = await import('./prototype-context.realtime.browser.ts')
         await checkUnidentifiedRequestsCannotBeResolved()
         document.body.textContent = 'Perfil pendiente y reintento: correcto'
+      } else if (params.get('scenario') === 'density') {
+        const { checkOrganizerRequestDensity } = await import('./organizer-requests.browser.ts')
+        document.body.textContent = JSON.stringify(await checkOrganizerRequestDensity())
+      } else if (params.get('scenario') === 'focus-loss') {
+        const { checkFocusedMoreRemoved } = await import('./organizer-requests.browser.ts')
+        document.body.textContent = JSON.stringify(await checkFocusedMoreRemoved())
       } else {
         const { mountOrganizerRequestsFixture } = await import('./organizer-requests.browser.ts')
         const count = Number(params.get('count') ?? '2')

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
 import { PlayerReputationSignal } from '../player-trust/presentation/PlayerReputationSignal'
@@ -21,6 +21,8 @@ const stateLabels = {
   cancelled: 'Cancelada',
   past: 'Pasada',
 } as const
+
+const mobileRequestBatchSize = 3
 
 const isOutdatedActionMessage = (
   message: string,
@@ -215,7 +217,9 @@ export function SessionDetailPage() {
               onFocusCapture={() => { requestsHadFocusRef.current = true }}
             >
               <OrganizerRequests
+                key={`${currentPlayerId}:${session.id}`}
                 confirmingDecline={confirmingDecline}
+                managementHeadingRef={managementHeadingRef}
                 onAccept={handleAccept}
                 onCancelDecline={() => setConfirmingDecline(null)}
                 onConfirmDecline={handleDecline}
@@ -449,6 +453,7 @@ function ParticipationPanel({
 
 type OrganizerRequestsProps = {
   readonly confirmingDecline: string | null
+  readonly managementHeadingRef: RefObject<HTMLHeadingElement | null>
   readonly onAccept: (playerId: string) => Promise<void>
   readonly onCancelDecline: () => void
   readonly onConfirmDecline: (playerId: string) => Promise<void>
@@ -464,6 +469,7 @@ type OrganizerRequestsProps = {
 
 function OrganizerRequests({
   confirmingDecline,
+  managementHeadingRef,
   onAccept,
   onCancelDecline,
   onConfirmDecline,
@@ -475,6 +481,21 @@ function OrganizerRequests({
 }: OrganizerRequestsProps) {
   const [retryingProfiles, setRetryingProfiles] = useState<ReadonlySet<string>>(() => new Set())
   const [profileErrors, setProfileErrors] = useState<ReadonlySet<string>>(() => new Set())
+  const [visibleCount, setVisibleCount] = useState(mobileRequestBatchSize)
+  const remainingCount = Math.max(0, pendingRequests.length - visibleCount)
+  const moreHadFocusRef = useRef(false)
+
+  useEffect(() => {
+    const lastBatch = Math.max(mobileRequestBatchSize,
+      Math.ceil(pendingRequests.length / mobileRequestBatchSize) * mobileRequestBatchSize)
+    setVisibleCount((current) => Math.min(current, lastBatch))
+  }, [pendingRequests.length])
+
+  useEffect(() => {
+    if (pendingRequests.length > mobileRequestBatchSize || !moreHadFocusRef.current) return
+    moreHadFocusRef.current = false
+    if (document.activeElement === document.body) managementHeadingRef.current?.focus()
+  }, [managementHeadingRef, pendingRequests.length])
 
   const retryProfile = async (playerId: string) => {
     setRetryingProfiles((current) => new Set(current).add(playerId))
@@ -499,9 +520,10 @@ function OrganizerRequests({
   }
 
   return (
+    <>
     <ul aria-label="Solicitudes pendientes" className="request-list">
-      {pendingRequests.map(({ playerId, player }) => (
-        <li className="request-card" key={playerId}>
+      {pendingRequests.map(({ playerId, player }, index) => (
+        <li className={`request-card${index >= visibleCount ? ' request-card--mobile-hidden' : ''}`} key={playerId}>
           <div className="person-row person-row--static">
             <span className="avatar" aria-hidden="true">{getInitials(player?.displayName ?? '?')}</span>
             <span>
@@ -558,6 +580,19 @@ function OrganizerRequests({
         </li>
       ))}
     </ul>
+    {pendingRequests.length > mobileRequestBatchSize ? (
+      <button
+        className="button button--ghost organizer-management__more"
+        onFocus={() => { moreHadFocusRef.current = true }}
+        onClick={() => setVisibleCount((current) => remainingCount > 0 ? current + mobileRequestBatchSize : mobileRequestBatchSize)}
+        type="button"
+      >
+        {remainingCount > 0
+          ? `Ver ${remainingCount} ${remainingCount === 1 ? 'solicitud' : 'solicitudes'} más`
+          : 'Mostrar menos'}
+      </button>
+    ) : null}
+    </>
   )
 }
 

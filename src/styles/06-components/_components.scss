@@ -2052,7 +2052,9 @@
 .detail-aside .organizer-management > .organizer-management__pending--active { color: var(--color-forest-dark); font-weight: 750; }
 .organizer-management__requests { margin-top: 0.45rem; }
 .organizer-management .request-list { gap: 0; border-top: 1px solid var(--color-line); }
+.organizer-management__more { width: 100%; margin-top: 0.35rem; font-size: 0.84rem; }
 .organizer-management .request-card { display: grid; min-width: 0; gap: 0.5rem; padding: 0.8rem 0; border: 0; border-radius: 0; background: transparent; }
+.organizer-management .request-card--mobile-hidden { display: none; }
 .organizer-management .request-card + .request-card { border-top: 1px solid var(--color-line); }
 .organizer-management .person-row { grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.55rem; min-height: 0; }
 .organizer-management .person-row .text-link { align-self: start; white-space: nowrap; font-size: 0.78rem; }
@@ -2184,6 +2186,15 @@
 }
 
 @media (min-width: 68rem) {
+  .organizer-management .request-list {
+    max-height: clamp(15rem, calc(100dvh - 24rem), 28rem);
+    padding-right: 0.35rem;
+    overflow-y: auto;
+    scrollbar-color: var(--color-border-strong) transparent;
+    scrollbar-width: thin;
+  }
+  .organizer-management .request-card--mobile-hidden { display: grid; }
+  .organizer-management__more { display: none; }
   .detail-page > .breadcrumb li[aria-current='page'] { display: list-item; }
   .detail-heading .detail-context,
   .detail-heading__summary { display: block; }

@@ -1,5 +1,11 @@
 # Registro de intervenciones
 
+## BETA-R01C-UX1B — Escalado de solicitudes pendientes
+
+- **Fecha:** 2026-09-29
+- **Objetivo:** mantener accesible la gestión de partida cuando hay varias solicitudes, sin cambiar cada solicitud ni el flujo de datos.
+- **Resultado:** en el breakpoint amplio existente (68 rem), solo la lista tiene scroll con altura máxima adaptable; en móvil se muestran tres solicitudes y «Ver N más» avanza de tres en tres. La expansión se reinicia al cambiar de partida o usuario y se reconcilia con adiciones/resoluciones realtime; el foco vuelve al encabezado si la reducción elimina el botón enfocado. Fixtures locales cubrieron los recuentos y cambios solicitados, teclado y ausencia de overflow horizontal. Typecheck, build cloud, `test:game-sessions` y `test:player-trust` pasaron; el E2E Firebase existente no se modificó. Revisión independiente sin P0–P2 pendientes. Lector real, zoom 200 % y dispositivo móvil real no comprobados. Sin cloud ni deploy.
+
 ## BETA-R01C-UX1A — Cierre de validación E2E
 
 - **Fecha:** 2026-09-29
