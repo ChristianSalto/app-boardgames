@@ -1,5 +1,17 @@
 # Registro de intervenciones
 
+## BETA-R02C — GameCombobox accesible y búsqueda local determinista
+
+- **Fecha:** 2026-10-01
+- **Objetivo:** preparar un selector de juego reutilizable con búsqueda local, selección catalogada y opción explícita de nombre sin catálogo, sin integrarlo aún en pantallas reales.
+- **Resultado:** `GameCombobox` consume `GameSelection` y una búsqueda asíncrona inyectada; Application normaliza mayúsculas, espacios y acentos, busca nombre/alias y limita resultados. `Game.aliases` es opcional y el adaptador Firestore conserva documentos con solo `name`; la fixture añade `Ticket to Ride`/`Aventureros al Tren` sin seed cloud. El fallback aparece solo ante cero resultados y permiso explícito; error ofrece reintento. La fixture local cubrió teclado, selección, limpieza, error, Escape, validación requerida y 375/400 px sin overflow. Pasaron pruebas de búsqueda/semántica, typecheck, build cloud, `test:game-sessions` (12+5) y `test:rules` (52). Revisión QA/UX independiente detectó cuatro casos de validación/IME/ARIA/límite y confirmó su corrección en código. No se tocaron pantallas reales ni Rules en R02C; sin acceso cloud ni deploy. Pendientes validación humana, lector de pantalla, IME y dispositivo táctil real antes de integrar en R02D.
+
+## BETA-R02B — Identidad de juego y catálogo interno mínimo
+
+- **Fecha:** 2026-09-30
+- **Objetivo:** preparar una identidad interna opcional de juego para partidas, manteniendo los datos actuales y sin cambiar la interfaz.
+- **Resultado:** `games` contiene un modelo de ID/nombre, una selección discriminada, un port de lectura y su adaptador Firestore. Las partidas conservan `gameName` en Firestore y `game` en la app, con `gameId` opcional; la edición actual preserva el ID si no cambia el nombre y lo retira al elegir otro nombre sin ID. Rules habilitan lectura beta de `games` y niegan escrituras de clientes; aceptan partidas antiguas y validan el formato del ID opcional. Fixtures locales reproducen los ocho juegos del selector. Pasaron typecheck, build cloud, 12 pruebas unitarias y 5 de integración de sesiones/catálogo, y 52 de Rules. Pendientes QA humana e integridad entre ID y nombre antes de usar el catálogo en UI. Sin cambio visual, cloud ni deploy.
+
 ## BETA-R01C-UX1B — Escalado de solicitudes pendientes
 
 - **Fecha:** 2026-09-29

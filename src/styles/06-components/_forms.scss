@@ -87,6 +87,84 @@
   color: var(--color-text);
 }
 
+.game-combobox {
+  position: relative;
+  min-width: 0;
+  width: 100%;
+}
+
+.game-combobox__label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 760;
+}
+
+.game-combobox__control { position: relative; }
+
+.game-combobox__control input {
+  width: 100%;
+  min-height: 3.15rem;
+  padding: 0.78rem 3rem 0.78rem var(--space-4);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-elevated);
+  color: var(--color-text);
+}
+
+.game-combobox__control input:hover:not(:disabled) { border-color: var(--color-brand); }
+.game-combobox__control input[aria-invalid='true'] { border-color: var(--color-error); }
+.game-combobox__control input:disabled { background: var(--color-surface-secondary); color: var(--color-text-muted); }
+
+.game-combobox__clear {
+  position: absolute;
+  top: 50%;
+  right: var(--space-2);
+  transform: translateY(-50%);
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 1.5rem;
+}
+
+.game-combobox__clear:hover { background: var(--color-surface-secondary); color: var(--color-text); }
+.game-combobox__status { min-height: 1.5rem; margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.game-combobox__retry { min-height: 2.75rem; margin-top: var(--space-2); }
+
+.game-combobox__list {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  left: 0;
+  max-height: min(18rem, 42vh);
+  margin: 0;
+  padding: var(--space-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-elevated);
+  box-shadow: var(--shadow-2);
+  list-style: none;
+}
+
+.game-combobox__option {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.game-combobox__option:hover,
+.game-combobox__option.is-active { background: var(--color-surface-secondary); color: var(--color-text); }
+
 .filter-field legend,
 .filters .field label,
 .form-card .field label,

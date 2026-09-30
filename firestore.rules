@@ -71,6 +71,11 @@ service cloud.firestore {
         && hasValidPlayerShape(request.resource.data);
     }
 
+    match /games/{gameId} {
+      allow get, list: if hasActiveBetaAccess();
+      allow create, update, delete: if false;
+    }
+
     match /gameSessions/{sessionId} {
       function hasValidLegacyCivilTime(data) {
         let hasDate = data.keys().hasAny(['date']);
@@ -90,11 +95,14 @@ service cloud.firestore {
             'organizerId', 'participantIds', 'pendingRequestIds', 'status'
           ])
           && data.keys().hasOnly([
-            'gameName', 'startsAt', 'date', 'time', 'city', 'district', 'venue',
+            'gameName', 'gameId', 'startsAt', 'date', 'time', 'city', 'district', 'venue',
             'description', 'capacity', 'organizerId', 'participantIds',
             'pendingRequestIds', 'status'
           ])
           && isNonEmptyString(data.gameName, 120)
+          && (!data.keys().hasAny(['gameId'])
+            || (data.gameId is string
+              && data.gameId.matches('^[a-z0-9][a-z0-9-]{0,63}$')))
           && hasValidLegacyCivilTime(data)
           && data.startsAt is timestamp
           && data.city == 'Madrid'
@@ -133,7 +141,7 @@ service cloud.firestore {
           && resource.data.startsAt > request.time
           && request.resource.data.status == 'scheduled'
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'gameName', 'startsAt', 'district', 'venue', 'description', 'capacity'
+            'gameName', 'gameId', 'startsAt', 'district', 'venue', 'description', 'capacity'
           ])
           && (
             request.resource.data.startsAt == resource.data.startsAt

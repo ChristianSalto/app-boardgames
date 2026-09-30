@@ -9,6 +9,7 @@ import {
 import {
   Timestamp,
   collection,
+  deleteField,
   deleteDoc,
   doc,
   getDoc,
@@ -176,6 +177,27 @@ describe('players', () => {
   })
 })
 
+describe('game catalog', () => {
+  test('allows active beta readers and denies other readers', async () => {
+    await seed([
+      ['games/azul', { name: 'Azul' }],
+      ['betaTesters/f', betaTester(false)],
+    ])
+    await assertSucceeds(getDoc(doc(dbFor('a'), 'games', 'azul')))
+    await assertSucceeds(getDocs(collection(dbFor('b'), 'games')))
+    await assertFails(getDoc(doc(dbFor('f'), 'games', 'azul')))
+    await assertFails(getDocs(collection(dbFor('g'), 'games')))
+    await assertFails(getDoc(doc(anonymousDb(), 'games', 'azul')))
+  })
+
+  test('denies every catalog write from normal beta users', async () => {
+    await seed([['games/azul', { name: 'Azul' }]])
+    await assertFails(setDoc(doc(dbFor('a'), 'games', 'root'), { name: 'Root' }))
+    await assertFails(updateDoc(doc(dbFor('a'), 'games', 'azul'), { name: 'Azul nuevo' }))
+    await assertFails(deleteDoc(doc(dbFor('a'), 'games', 'azul')))
+  })
+})
+
 describe('game sessions', () => {
   test('allows A to create, edit and cancel own session; B can read it', async () => {
     const a = dbFor('a')
@@ -187,6 +209,27 @@ describe('game sessions', () => {
       capacity: 3,
     }))
     await assertSucceeds(updateDoc(reference, { status: 'cancelled', pendingRequestIds: [] }))
+  })
+
+  test('accepts both legacy names and optional valid game IDs on creation and organizer edit', async () => {
+    const a = dbFor('a')
+    const legacy = doc(a, 'gameSessions', 'legacy-game-name')
+    const cataloged = doc(a, 'gameSessions', 'cataloged-game')
+    await assertSucceeds(setDoc(legacy, session('a')))
+    await assertSucceeds(setDoc(cataloged, session('a', { gameId: 'azul' })))
+    await assertSucceeds(updateDoc(legacy, { gameName: 'Root', gameId: 'root' }))
+    await assertSucceeds(updateDoc(cataloged, { gameName: 'Juego local', gameId: deleteField() }))
+    await assertSucceeds(getDoc(doc(dbFor('b'), 'gameSessions', 'cataloged-game')))
+  })
+
+  test('rejects malformed game IDs and unauthorized identity changes', async () => {
+    const a = dbFor('a')
+    for (const invalid of ['', 'Azul', 'invalid/id', 'x'.repeat(65), 123]) {
+      await assertFails(setDoc(doc(a, 'gameSessions', `bad-game-${String(invalid).length}`), session('a', { gameId: invalid })))
+    }
+    await seed([['gameSessions/session-a', session('a')]])
+    await assertFails(updateDoc(doc(dbFor('b'), 'gameSessions', 'session-a'), { gameId: 'azul' }))
+    await assertFails(updateDoc(doc(a, 'gameSessions', 'session-a'), { gameId: 'Azul' }))
   })
 
   test('denies a false organizer, non-organizer edits, over-capacity writes and hard delete', async () => {

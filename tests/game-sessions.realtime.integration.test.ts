@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing'
-import { doc, setDoc } from 'firebase/firestore'
+import { Timestamp, doc, getDoc, setDoc } from 'firebase/firestore'
 import { observeSessionFeed, type SessionFeedState } from '../src/game-sessions/application/observeSessionFeed.ts'
 import { createFirestoreGameSessionRepository } from '../src/game-sessions/infrastructure/firestoreGameSessionRepository.ts'
 import { createFirestoreParticipationRequestRepository } from '../src/game-sessions/infrastructure/firestoreParticipationRequestRepository.ts'
@@ -148,6 +148,60 @@ test('two authorized clients see requests, resolution and session lifecycle with
       'A rejected local write must never appear as a confirmed session')
   } finally {
     belialFeed?.feed.stop()
+    redonFeed?.feed.stop()
+    await environment.cleanup()
+  }
+})
+
+test('legacy names and optional catalog IDs survive repository reads, writes, edits and realtime delivery', async () => {
+  const environment = await initializeTestEnvironment({
+    projectId,
+    firestore: { host: '127.0.0.1', port },
+  })
+  let redonFeed: ReturnType<typeof collectFeed> | null = null
+  try {
+    await environment.clearFirestore()
+    await environment.withSecurityRulesDisabled(async (context) => {
+      const database = context.firestore()
+      await Promise.all([
+        setDoc(doc(database, 'betaTesters', 'belial'), { active: true }),
+        setDoc(doc(database, 'betaTesters', 'redon'), { active: true }),
+        setDoc(doc(database, 'gameSessions', 'legacy-name-only'), {
+          gameName: 'Root', startsAt: Timestamp.fromDate(new Date('2031-06-20T14:00:00.000Z')),
+          city: 'Madrid', district: 'Centro', capacity: 4, organizerId: 'belial',
+          participantIds: ['belial'], pendingRequestIds: [], status: 'scheduled',
+        }),
+      ])
+    })
+    const belialDb = environment.authenticatedContext('belial').firestore()
+    const redonDb = environment.authenticatedContext('redon').firestore()
+    const belialSessions = createFirestoreGameSessionRepository(belialDb)
+    const redonSessions = createFirestoreGameSessionRepository(redonDb)
+    const legacy = await belialSessions.getById('legacy-name-only')
+    assert.equal(legacy?.game, 'Root')
+    assert.equal(legacy?.gameId, undefined)
+
+    redonFeed = collectFeed(redonSessions, createFirestoreParticipationRequestRepository(redonDb), 'redon')
+    await redonFeed.waitFor((state) => !state.loading && !state.error, 'initial legacy feed')
+    const created = await belialSessions.create({ ...input('Azul'), gameId: 'azul' }, 'belial')
+    assert.equal(created.gameId, 'azul')
+    await redonFeed.waitFor((state) => state.sessions.find((item) => item.id === created.id)?.gameId === 'azul', 'cataloged realtime session')
+    const createdDocument = await getDoc(doc(belialDb, 'gameSessions', created.id))
+    assert.equal(createdDocument.data()?.gameName, 'Azul')
+    assert.equal(createdDocument.data()?.gameId, 'azul')
+
+    await belialSessions.update(created.id, { ...input('Azul'), place: 'Sala nueva' }, 'belial')
+    assert.equal((await belialSessions.getById(created.id))?.gameId, 'azul', 'old select retains identity when the name is unchanged')
+    await belialSessions.update(created.id, input('Wingspan'), 'belial')
+    assert.equal((await belialSessions.getById(created.id))?.gameId, undefined, 'changing the name without an ID unlinks it')
+    assert.equal((await getDoc(doc(belialDb, 'gameSessions', created.id))).data()?.gameId, undefined)
+
+    await belialSessions.update('legacy-name-only', { ...input('Root'), gameId: 'root' }, 'belial')
+    assert.equal((await redonSessions.getById('legacy-name-only'))?.gameId, 'root')
+    assert.equal((await getDoc(doc(belialDb, 'gameSessions', 'legacy-name-only'))).data()?.gameName, 'Root')
+    assert.deepEqual((await belialSessions.discover()).map((item) => item.id).sort(), [created.id, 'legacy-name-only'].sort())
+    await assert.rejects(belialSessions.create({ ...input('Azul'), gameId: 'Azul' }, 'belial'), /INVALID_GAME_SELECTION/)
+  } finally {
     redonFeed?.feed.stop()
     await environment.cleanup()
   }

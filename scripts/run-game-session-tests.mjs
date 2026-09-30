@@ -16,11 +16,12 @@ const unit = run(process.execPath, [
   '--test',
   'tests/game-sessions.time.test.ts',
   'tests/game-sessions.feed.test.ts',
+  'tests/game-catalog.test.ts',
 ])
 if (unit.error) throw unit.error
 if (unit.status !== 0) process.exit(unit.status ?? 1)
 
-const migrationCommand = 'node --experimental-strip-types --test --test-concurrency=1 tests/game-sessions.migration.test.ts tests/game-sessions.realtime.integration.test.ts'
+const migrationCommand = 'node --experimental-strip-types --test --test-concurrency=1 tests/game-sessions.migration.test.ts tests/game-sessions.realtime.integration.test.ts tests/game-catalog.firestore.integration.test.ts'
 const migration = run(process.execPath, [
   firebaseCli,
   'emulators:exec',

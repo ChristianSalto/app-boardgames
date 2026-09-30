@@ -1,3 +1,5 @@
+import type { GameId } from '../games/domain/game.ts'
+
 export type SessionLifecycle = 'scheduled' | 'cancelled'
 export type RequestState = 'pending' | 'confirmed' | 'rejected'
 export type SessionTone = 'terracotta' | 'forest' | 'mustard' | 'blue' | 'plum'
@@ -13,6 +15,7 @@ export type ParticipationRequest = {
 export type GameSession = {
   readonly id: string
   readonly game: string
+  readonly gameId?: GameId
   readonly startsAt: string
   readonly city: string
   readonly zone: string
@@ -28,6 +31,7 @@ export type GameSession = {
 
 export type CreateSessionInput = {
   readonly game: string
+  readonly gameId?: GameId
   readonly date: string
   readonly time: string
   readonly zone: string

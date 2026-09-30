@@ -1,16 +1,16 @@
 # Estado actual
 
 **Fase actual:**  
-Fase 7 — Trust & Reputation MVP
+Bloque BETA-R02 — Identidad y catálogo de juegos
 
 **Tarea activa:**  
-BETA-R01C-UX1B — Escalado de la lista de solicitudes pendientes.
+BETA-R02C — GameCombobox accesible y búsqueda local determinista.
 
 **Estado:**  
-BETA-R01C-UX1B limita la altura de la lista de solicitudes en escritorio y muestra las solicitudes móviles de tres en tres, con contador y estado de expansión locales a Presentation. Las pruebas de navegador con datos locales cubren 0/1/2/3/4/5/10 solicitudes en escritorio, 0/1/2/3/4/5/7 a 390–400 px, cambios de lista mientras está expandida y recuperación del foco si desaparece «Ver más». La revisión independiente no encontró P0–P2 pendientes. Typecheck, build cloud, `test:game-sessions` y `test:player-trust` pasan; no se modificó el E2E Firebase. Siguen pendientes lector real, zoom 200 %, dispositivo móvil real y revisión humana del resultado. Sin acceso cloud ni deploy.
+BETA-R02C implementado localmente: `GameCombobox` reutilizable y controlado por `GameSelection`, búsqueda Application local normalizada y limitada sobre el port existente, alias opcional compatible con documentos antiguos y fallback explícito solo ante búsqueda vacía satisfactoria. Fixture aislada permite probar resultados, error, reintento y teclado sin tocar las pantallas reales. Pasan typecheck, build cloud, pruebas de búsqueda/semántica, `test:game-sessions` (12 unitarias y 5 de integración con emulador) y `test:rules` (52 pruebas). La fixture se comprobó a 375 y 400 px sin overflow horizontal y con opciones de 44 px; el formulario requerido bloquea texto sin selección. La revisión QA/UX independiente encontró cuatro casos y confirmó su corrección en código. Pendientes validación humana, lector de pantalla, IME y dispositivo táctil real; no se modificaron Rules en R02C, ni hubo acceso cloud o deploy.
 
 **Último cierre de fase:**  
 PROMPT-008F — Player Trust integrado y validado de extremo a extremo: reviews persistentes, resumen global, opiniones recientes y paginadas, fiabilidad diferenciada, autoridad temporal `startsAt`, lifecycle y Security Rules verificados sin bloqueos.
 
 **Restricción:**  
-BETA-R01C-UX1B se limita a Presentation/SCSS, pruebas de navegador y documentación de tarea. No modifica Application, Infrastructure, realtime, Rules ni datos cloud. La validación final en móvil real de BETA-R01C-1 permanece pendiente por separado.
+BETA-R02C no integra todavía el componente en Crear/Editar/Explorar/Marketplace ni sustituye el selector actual. La integración real, la estrategia de carga del catálogo y la integridad entre ID y nombre quedan para R02D.

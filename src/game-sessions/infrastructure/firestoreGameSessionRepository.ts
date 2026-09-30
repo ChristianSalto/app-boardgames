@@ -1,10 +1,11 @@
-import { addDoc, collection, doc, getDoc, getDocs, onSnapshot, query, runTransaction, Timestamp, where, type Firestore } from 'firebase/firestore'
+import { addDoc, collection, deleteField, doc, getDoc, getDocs, onSnapshot, query, runTransaction, Timestamp, where, type Firestore } from 'firebase/firestore'
+import { isValidGameId, isValidGameName } from '../../games/domain/game.ts'
 import { isFutureSessionInput, isValidCapacity, sessionInstantFromMadridCivil } from '../model.ts'
 import type { CreateSessionInput, GameSession, SessionLifecycle, SessionTone, UpdateSessionInput } from '../types'
 import type { GameSessionRepository } from '../application/gameSessionRepository'
 import { toSessionObservationError } from './firestoreSessionObservation.ts'
 
-type GameSessionDocument = Readonly<{ gameName: string; startsAt?: Timestamp; date?: string; time?: string; city: string; district: string; venue?: string; description?: string; capacity: number; organizerId: string; participantIds?: readonly string[]; pendingRequestIds?: readonly string[]; status: SessionLifecycle }>
+type GameSessionDocument = Readonly<{ gameName: string; gameId?: string; startsAt?: Timestamp; date?: string; time?: string; city: string; district: string; venue?: string; description?: string; capacity: number; organizerId: string; participantIds?: readonly string[]; pendingRequestIds?: readonly string[]; status: SessionLifecycle }>
 
 const tones: readonly SessionTone[] = ['forest', 'terracotta', 'mustard', 'blue', 'plum']
 const toneFor = (value: string) => tones[value.length % tones.length] ?? 'forest'
@@ -14,12 +15,19 @@ const canonicalStartsAt = (data: GameSessionDocument) => {
   throw new Error('SESSION_STARTS_AT_MISSING')
 }
 
-const toSession = (id: string, data: GameSessionDocument): GameSession => ({ id, game: data.gameName, startsAt: canonicalStartsAt(data), city: data.city, zone: data.district, place: data.venue ?? '', description: data.description ?? '', capacity: data.capacity, organizerId: data.organizerId, lifecycle: data.status, participantIds: data.participantIds ?? [data.organizerId], requests: [], tone: toneFor(data.gameName) })
+const toSession = (id: string, data: GameSessionDocument): GameSession => ({ id, game: data.gameName, ...(data.gameId === undefined ? {} : { gameId: data.gameId }), startsAt: canonicalStartsAt(data), city: data.city, zone: data.district, place: data.venue ?? '', description: data.description ?? '', capacity: data.capacity, organizerId: data.organizerId, lifecycle: data.status, participantIds: data.participantIds ?? [data.organizerId], requests: [], tone: toneFor(data.gameName) })
+
+const validateGameInput = (input: CreateSessionInput) => {
+  if (!isValidGameName(input.game) || (input.gameId !== undefined && !isValidGameId(input.gameId))) {
+    throw new Error('INVALID_GAME_SELECTION')
+  }
+}
 
 const toDocument = (input: CreateSessionInput, organizerId: string): GameSessionDocument => {
   if (!isValidCapacity(input.capacity)) throw new Error('Invalid capacity')
+  validateGameInput(input)
   const startsAt = Timestamp.fromDate(new Date(sessionInstantFromMadridCivil(input.date, input.time)))
-  return { gameName: input.game, startsAt, city: 'Madrid', district: input.zone, ...(input.place ? { venue: input.place } : {}), ...(input.description ? { description: input.description } : {}), capacity: input.capacity, organizerId, participantIds: [organizerId], pendingRequestIds: [], status: 'scheduled' }
+  return { gameName: input.game, ...(input.gameId === undefined ? {} : { gameId: input.gameId }), startsAt, city: 'Madrid', district: input.zone, ...(input.place ? { venue: input.place } : {}), ...(input.description ? { description: input.description } : {}), capacity: input.capacity, organizerId, participantIds: [organizerId], pendingRequestIds: [], status: 'scheduled' }
 }
 
 const toMutableDocument = (input: UpdateSessionInput) => ({
@@ -30,6 +38,9 @@ const toMutableDocument = (input: UpdateSessionInput) => ({
   description: input.description.trim(),
   capacity: input.capacity,
 })
+
+const gameIdForUpdate = (input: UpdateSessionInput, current: GameSessionDocument) =>
+  input.gameId ?? (input.game === current.gameName ? current.gameId : undefined)
 
 export const createFirestoreGameSessionRepository = (firestore: Firestore): GameSessionRepository => ({
   discover: async () => (await getDocs(collection(firestore, 'gameSessions'))).docs.map((snapshot) => toSession(snapshot.id, snapshot.data() as GameSessionDocument)),
@@ -61,9 +72,11 @@ export const createFirestoreGameSessionRepository = (firestore: Firestore): Game
       if (!isValidCapacity(input.capacity) || input.capacity < (current.participantIds ?? [current.organizerId]).length) {
         throw new Error('INVALID_CAPACITY')
       }
+      validateGameInput(input)
       const changes = toMutableDocument(input)
-      transaction.update(reference, changes)
-      return toSession(id, { ...current, ...changes })
+      const gameId = gameIdForUpdate(input, current)
+      transaction.update(reference, { ...changes, gameId: gameId ?? deleteField() })
+      return toSession(id, { ...current, ...changes, gameId })
     })
   },
   cancel: async (id, organizerId) => {
