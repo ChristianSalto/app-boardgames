@@ -1,10 +1,10 @@
 # BETA-R02D3 — Catálogo inicial DEV y plan de publicación
 
-**Estado:** propuesta local para revisión humana. No se ha consultado ni modificado cloud. Este documento no autoriza bootstrap o despliegue.
+**Estado:** D3 aprobado y D4A implementado/probado solo en local. No se ha consultado ni modificado cloud. Este documento no autoriza D4B ni despliegue.
 
 ## Catálogo exacto
 
-Fuente: `tests/fixtures/catalogGames.ts`, arreglo `catalogGames`, con ocho entradas. `searchCatalogGames` añade una novena entrada de prueba, `ticket-to-ride` / Ticket to Ride / «Aventureros al Tren», que **no** pertenece al lote inicial. La fixture de anuncios de Marketplace tampoco es fuente para este catálogo.
+Fuente definitiva desde D4A: `src/games/initialCatalogGames.ts`, arreglo `initialCatalogGames`, con ocho entradas. `tests/fixtures/catalogGames.ts` lo reutiliza como `catalogGames`. `searchCatalogGames` añade una novena entrada de prueba, `ticket-to-ride` / Ticket to Ride / «Aventureros al Tren», que **no** pertenece al lote inicial. La fixture de anuncios de Marketplace tampoco es fuente para este catálogo.
 
 | gameId (`games/{id}`) | Nombre canónico (`name`) | Aliases | Motivo de alias |
 | --- | --- | --- | --- |
@@ -23,18 +23,18 @@ Los ocho IDs son literales internos de la fixture, únicos y válidos conforme a
 
 ## Contrato del bootstrap propuesto
 
-Diseñar y, **tras revisión manual**, implementar `scripts/bootstrap-game-catalog-dev.mjs` con `firebase-admin` como dependencia de desarrollo directa y lockfile actualizado. No existe Admin SDK en las dependencias actuales. El script importará solo `catalogGames`, no `searchCatalogGames`, para evitar duplicar datos. El runtime local es Node 24 y puede cargar la fixture TypeScript con `--experimental-strip-types`; se deberá fijar/verificar Node antes de ejecutarlo. No usar SDK cliente: las Rules deniegan escrituras de clientes en `games` y Admin requiere protección explícita del destino.
+Implementado en D4A: `scripts/bootstrap-game-catalog-dev.mjs`, con `firebase-admin` como dependencia de desarrollo directa y lockfile actualizado. El script importa solo `initialCatalogGames`, no `searchCatalogGames`, para evitar duplicar datos. El runtime local es Node 24 y puede cargar el módulo TypeScript con `--experimental-strip-types`; se deberá fijar/verificar Node antes de ejecutarlo. No usar SDK cliente: las Rules deniegan escrituras de clientes en `games` y Admin requiere protección explícita del destino.
 
-- El comportamiento por defecto será **dry-run de solo lectura**. Exigir `--project mesa-abierta-dev` siempre. La escritura exige además `--apply --confirm-project mesa-abierta-dev`. Rechazar argumentos desconocidos, `FIRESTORE_EMULATOR_HOST` en la operación DEV y variables explícitas de proyecto contradictorias. Verificar el proyecto real de las credenciales ADC/servicio antes de inicializar Firestore; inicializar con proyecto literal `mesa-abierta-dev` y base `(default)`. No mostrar credenciales ni guardar claves en Git. Usar identidad administrativa limitada al proyecto DEV. La sesión de Firebase CLI no sustituye necesariamente las credenciales ADC del Admin SDK.
+- El modo se elige explícitamente con `--dry-run` o `--apply`; el dry-run es de solo lectura. Exigir `--project mesa-abierta-dev` siempre. La escritura exige además `--apply --confirm-project mesa-abierta-dev`. Rechazar argumentos desconocidos, `FIRESTORE_EMULATOR_HOST` en la operación DEV y variables explícitas de proyecto contradictorias. Verificar el proyecto real de las credenciales ADC/servicio antes de inicializar Firestore; inicializar con proyecto literal `mesa-abierta-dev` y base `(default)`. No mostrar credenciales ni guardar claves en Git. Usar identidad administrativa limitada al proyecto DEV. La sesión de Firebase CLI no sustituye necesariamente las credenciales ADC del Admin SDK.
 - Validar ocho IDs únicos, formato y nombre; no aceptar aliases nuevos. Leer la colección `games` completa: si hay IDs ajenos al lote, abortar para revisión. Clasificar por ID como **CREAR** (ausente), **SIN CAMBIOS** (documento exactamente `{name}`) o **CONFLICTO / ACTUALIZARÍA** (campos o valores distintos). Mostrar IDs y recuentos de las tres clases. En este bootstrap `ACTUALIZARÍA` significa bloqueo: ninguna actualización automática está autorizada.
 - Ante cualquier conflicto, abortar antes de escribir. Con `--apply`, crear todos los ausentes en un único batch atómico con `WriteBatch.create` (precondición de inexistencia), sin `set`, merge ni upsert. Una carrera entre lectura y creación hace fallar el batch entero. Releer los ocho tras commit y exigir igualdad exacta. Repetir tras éxito produce `CREAR 0 / SIN CAMBIOS 8 / CONFLICTO 0`, sin escrituras. Código de salida no cero para destino/credenciales dudosos, extras, conflictos, fallo de commit o verificación.
 - Probar antes la clasificación, carrera y fallos con adaptador falso o Emulator local; no ejecutar aún dry-run ni apply sobre DEV.
 
-El Admin SDK usa credenciales privilegiadas y omite Rules ([Firebase](https://firebase.google.com/docs/firestore/security/get-started)); `WriteBatch.create` falla si un documento existe y el commit es atómico ([Firestore](https://googleapis.dev/nodejs/firestore/latest/WriteBatch.html)). En D3 se entrega este diseño; **no se instala Admin SDK ni se crea/ejecuta el script** hasta que se aprueben los ocho registros.
+El Admin SDK usa credenciales privilegiadas y omite Rules ([Firebase](https://firebase.google.com/docs/firestore/security/get-started)); `WriteBatch.create` falla si un documento existe y el commit es atómico ([Firestore](https://googleapis.dev/nodejs/firestore/latest/WriteBatch.html)). D4A implementó y probó el script solo contra Firestore Emulator. No se ha ejecutado ninguna lectura ni escritura contra DEV.
 
 ## Orden exacto para una tarea posterior autorizada
 
-**Preflight:** fijar un commit revisado que incluya R02D1/D2 y las Rules; hoy hay cambios sin commit. Registrar contenido y versión de las Rules remotas, release anterior de Hosting, cuenta y proyecto. Confirmar que `.env.cloud.local` privado apunta a `mesa-abierta-dev` con `VITE_USE_FIREBASE_EMULATORS=false`, sin imprimir valores sensibles. Verificar Auth, Player y `betaTesters/{uid}.active=true` de Belial/Redon/Pau/Ivy sin inventar UIDs. Implementar y probar localmente el script. Estos comandos son **futuros, no ejecutados en D3**:
+**Preflight:** fijar un commit revisado que incluya R02D1/D2 y las Rules; hoy hay cambios sin commit. Registrar contenido y versión de las Rules remotas, release anterior de Hosting, cuenta y proyecto. Confirmar que `.env.cloud.local` privado apunta a `mesa-abierta-dev` con `VITE_USE_FIREBASE_EMULATORS=false`, sin imprimir valores sensibles. Verificar Auth, Player y `betaTesters/{uid}.active=true` de Belial/Redon/Pau/Ivy sin inventar UIDs. El script ya está implementado y probado localmente en D4A. Estos comandos son **futuros, no ejecutados en D3**:
 
 ```powershell
 npm.cmd run typecheck
@@ -85,4 +85,7 @@ Registrar resultados y IDs de prueba; no crear cuentas ni datos masivos como par
 
 ## Riesgos y decisión pendiente
 
-El estado cloud actual (Rules, Hosting, ausencia de `games`) procede del contexto humano; **D3 no lo ha comprobado remotamente**. Antes de autorizar escritura: aprobar los ocho registros, preparar credenciales ADC DEV de alcance mínimo, implementar y probar script/Admin SDK y fijar commit/artefacto. El alias «Aventureros al Tren» es solo del noveno juego de prueba; no hay aliases aprobados para estos ocho. Sin cambios de Marketplace, sesiones históricas ni datos remotos.
+El estado cloud actual (Rules, Hosting, ausencia de `games`) procede del contexto humano; **D3 no lo ha comprobado remotamente**. Antes de autorizar escritura: aprobar los ocho registros, preparar una credencial de cuenta de servicio DEV de alcance mínimo fuera del repositorio y fijar commit/artefacto. El script/Admin SDK ya están implementados y probados localmente en D4A. El alias «Aventureros al Tren» es solo del noveno juego de prueba; no hay aliases aprobados para estos ocho. Sin cambios de Marketplace, sesiones históricas ni datos remotos.
+## Ejecución futura del bootstrap (D4B, no realizada)
+
+Configurar `GOOGLE_APPLICATION_CREDENTIALS` con una cuenta de servicio de `mesa-abierta-dev` fuera del repositorio; `firebase login` no basta para Admin SDK. El script lee y valida ese JSON antes de conectar; rechaza variables de proyecto contradictorias y `FIRESTORE_EMULATOR_HOST`. Ejecutar primero el dry-run de la secuencia anterior, revisar CREATE/UNCHANGED/CONFLICT/EXTRA y autorizar apply por separado. `test:game-catalog-bootstrap` usa exclusivamente un proyecto demo y Firestore Emulator en 127.0.0.1:8180. No ejecutar D4B como parte de D4A.

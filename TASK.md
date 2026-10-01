@@ -1,22 +1,13 @@
 # Estado actual
 
-**Fase actual:**
-Bloque BETA-R02 — Identidad y catálogo de juegos
+**Fase actual:** Bloque BETA-R02 — Identidad y catálogo de juegos.
 
-**Tarea activa:**
-BETA-R02D3 — Preparar catálogo inicial DEV y plan de despliegue.
+**Tarea activa:** BETA-R02D4A — Bootstrap local del catálogo inicial.
 
-**Estado:**
-Plan local preparado en `docs/GAME_CATALOG_DEV_PLAN.md`: ocho juegos exactos de `catalogGames`, sin aliases; IDs literales aptos si permanecen inmutables; diseño de bootstrap idempotente con dry-run, guardas de proyecto y creación atómica; orden Rules → catálogo DEV → Hosting; rollback y smoke Belial/Redon/Pau/Ivy. No se añadió ni ejecutó un script con acceso privilegiado, ni se consultó o modificó cloud. El script y la dependencia Admin SDK se implementarán tras revisar el catálogo y el diseño.
+**Estado:** herramienta local implementada en `scripts/bootstrap-game-catalog-dev.mjs` y probada con Firestore Emulator. Los ocho registros aprobados viven en `src/games/initialCatalogGames.ts`; `tests/fixtures/catalogGames.ts` los reutiliza y mantiene aparte la novena entrada exclusivamente para búsqueda. IDs inmutables y nombres exactos de D3, sin aliases.
 
-**Validación D3:**
-Inspección de fixture, adaptador, Rules, composición cloud, `firebase.json`, `.firebaserc`, scripts y CLI local. `git diff --check` al cierre. Sin cambios en aplicación, Marketplace ni Rules respecto al working tree recibido. D3 es un diseño, no un despliegue.
+**Validación D4A:** siete pruebas del bootstrap en Emulator demo: vacío 8 CREATE, segunda ejecución 8 UNCHANGED, conflicto y documento extra bloquean apply sin otras escrituras, proyecto y confirmación incorrectos rechazados, ruta DEV rechaza entorno Emulator o falta de credencial antes de conectar. `test:game-sessions` pasó (14 unitarias y 5 integración, incluido catálogo); typecheck y build:cloud pasaron. `git diff --check` pasó al cierre.
 
-**Pendientes / gate:**
-Revisión humana de los ocho registros; autorización explícita antes de cualquier escritura cloud; preflight remoto de Rules/Hosting/credenciales/colección en la tarea futura. Implementar y probar localmente el script Admin con dependencia directa y lockfile antes del dry-run y la secuencia de publicación. Sin avance de fase por este documento.
+**Protección:** DEV exige `--project mesa-abierta-dev`, `GOOGLE_APPLICATION_CREDENTIALS` apuntando a JSON de cuenta de servicio cuyo `project_id` sea DEV, ausencia de Emulator y `--confirm-project mesa-abierta-dev` para apply. Emulator exige bandera separada, proyecto demo y host local exacto. Conflictos y documentos extra bloquean; solo `batch.create` para ausentes, verificación posterior. No se ha ejecutado lectura, escritura, seed ni deploy cloud.
 
-**Último incremento validado localmente:**
-BETA-R02D2 — GameCombobox en Explorar; typecheck, build:cloud, 18 pruebas afectadas, test:game-sessions y navegador local aprobados; QA independiente recomendó aceptación. Deuda UX de lector, IME, táctil y zoom real 200 % registrada en PROMPTS_LOG.md.
-
-**Restricción:**
-No seed, deploy, migración, vinculación automática ni escritura cloud. Conservar cambios locales previos R02D1/D2 sin commit.
+**Pendiente / gate D4B:** revisión humana de script y salida local; preparar credencial de servicio DEV fuera del repositorio; preflight de Rules/Hosting y estado remoto solo cuando se autorice; ejecutar secuencia Rules → dry-run DEV → apply DEV → verificación → Hosting, con smoke manual. D4A no autoriza D4B ni avance de fase. Sin Marketplace, migraciones, imágenes, BGG ni expansiones.

@@ -441,3 +441,11 @@ Este archivo conserva trazabilidad breve. No contiene prompts completos ni datos
 - **Objetivo:** revisar los ocho juegos de la fixture y dejar preparada para revisión la secuencia Rules → bootstrap → Hosting, sin acción remota.
 - **Resultado:** `docs/GAME_CATALOG_DEV_PLAN.md` contiene IDs/nombres/aliases exactos, aptitud e inmutabilidad de IDs, contrato del script Admin idempotente con dry-run y guardas DEV, comandos futuros, rollback y smoke con cuatro cuentas. La novena entrada de `searchCatalogGames` se excluye. No se instalaron dependencias ni se implementó/ejecutó el script privilegiado antes de revisar el diseño. Sin consulta, seed, escritura ni deploy cloud; Marketplace intacto.
 - **Validación:** inspección local de fixture, adaptador, Rules y configuración; CLI `--help` únicamente. `git diff --check` al cierre. Pendientes la revisión humana de catálogo/plan, script/pruebas locales, preflight remoto y autorización de despliegue.
+
+## BETA-R02D4A — Bootstrap local del catálogo
+
+- **Fecha:** 2026-10-01.
+- **Alcance:** extraer los ocho IDs aprobados a `src/games/initialCatalogGames.ts`; fixture y bootstrap comparten la fuente. `firebase-admin` se añade solo a devDependencies. Script explícito con `--dry-run`/`--apply`, `--project` obligatorio y confirmación para apply; destino cloud limitado a `mesa-abierta-dev` con cuenta de servicio DEV verificada antes de conectar. Modo Emulator separado y limitado a host local/proyecto demo.
+- **Seguridad:** clasificación CREATE/UNCHANGED/CONFLICT y documentos EXTRA; conflictos o extras bloquean todo apply. Sin overwrite, delete ni cambios de documentos ajenos. Creación de ausentes en un batch `create` y verificación posterior. La credencial efímera de Emulator se genera en memoria; no se consultó ADC en las pruebas finales.
+- **Validación:** `test:game-catalog-bootstrap` 7/7 en Firestore Emulator; `test:game-sessions` 14 unitarias y 5 integraciones (incluido catálogo) superadas; `typecheck` y `build:cloud` superados. Una invocación directa de la prueba de integración sin Emulator dio ECONNREFUSED; se repitió mediante el runner correcto y pasó. `git diff --check` al cierre.
+- **Límite:** sin lectura/escritura cloud, seed ni deploy; no se ejecutó `--apply` ni `--dry-run` contra DEV. No se tocó Marketplace. D4B queda pendiente de autorización y credenciales DEV apropiadas.
