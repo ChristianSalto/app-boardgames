@@ -2,12 +2,16 @@
 
 **Fase actual:** Bloque BETA-R02 — Identidad y catálogo de juegos.
 
-**Tarea activa:** BETA-R02D4A — Bootstrap local del catálogo inicial.
+**Tarea activa:** BETA-R02D4B-1 — Preflight cloud DEV y despliegue controlado de Firestore Rules.
 
-**Estado:** herramienta local implementada en `scripts/bootstrap-game-catalog-dev.mjs` y probada con Firestore Emulator. Los ocho registros aprobados viven en `src/games/initialCatalogGames.ts`; `tests/fixtures/catalogGames.ts` los reutiliza y mantiene aparte la novena entrada exclusivamente para búsqueda. IDs inmutables y nombres exactos de D3, sin aliases.
+**Estado:** completado el 2026-10-01. Working tree limpio antes del despliegue; R02 versionado en 4f3dfeab5aab63049d94b59c1ae459fe91c8f72e. CLI autenticado, proyecto mesa-abierta-dev confirmado y seleccionado explícitamente sin cambiar el alias por defecto.
 
-**Validación D4A:** siete pruebas del bootstrap en Emulator demo: vacío 8 CREATE, segunda ejecución 8 UNCHANGED, conflicto y documento extra bloquean apply sin otras escrituras, proyecto y confirmación incorrectos rechazados, ruta DEV rechaza entorno Emulator o falta de credencial antes de conectar. `test:game-sessions` pasó (14 unitarias y 5 integración, incluido catálogo); typecheck y build:cloud pasaron. `git diff --check` pasó al cierre.
+**Preflight remoto:** Rules previas equivalentes al commit 6040735ebce49099d263700b91d15ac5c40fbbd8; delta limitado al catálogo games y gameId opcional/coherente en partidas. Marketplace sin cambios. Respaldo local ignorado en .qa-r02d4b.local/before-firestore.rules y metadatos before-release.json.
 
-**Protección:** DEV exige `--project mesa-abierta-dev`, `GOOGLE_APPLICATION_CREDENTIALS` apuntando a JSON de cuenta de servicio cuyo `project_id` sea DEV, ausencia de Emulator y `--confirm-project mesa-abierta-dev` para apply. Emulator exige bandera separada, proyecto demo y host local exacto. Conflictos y documentos extra bloquean; solo `batch.create` para ausentes, verificación posterior. No se ha ejecutado lectura, escritura, seed ni deploy cloud.
+**Validación:** npm run test:rules pasó (54 pruebas, 10 suites) en Emulator demo; procesos cerrados automáticamente, puertos 8180/9150/9299 libres. git diff --check pasó antes del despliegue. No se modificó la fuente de Rules.
 
-**Pendiente / gate D4B:** revisión humana de script y salida local; preparar credencial de servicio DEV fuera del repositorio; preflight de Rules/Hosting y estado remoto solo cuando se autorice; ejecutar secuencia Rules → dry-run DEV → apply DEV → verificación → Hosting, con smoke manual. D4A no autoriza D4B ni avance de fase. Sin Marketplace, migraciones, imágenes, BGG ni expansiones.
+**Deploy ejecutado:** .\node_modules\.bin\firebase.cmd deploy --only firestore:rules --project mesa-abierta-dev; exit 0, Deploy complete. Release activa projects/mesa-abierta-dev/rulesets/2c7126e4-932f-42e7-8598-e5459c628377, actualizada 2026-10-01T17:32:39.219210Z. Verificación remota posterior: fuente idéntica tras normalizar BOM/saltos de línea, SHA-256 d23885f4b4b1a9d053ac12258a3c599196f8f55435d6069998ee7def5b6d6a2a.
+
+**Restricciones cumplidas:** ningún documento Firestore cloud leído o escrito; ningún bootstrap, seed, migración, Hosting, índices, Functions o Storage desplegado. Sin creación de cuentas de servicio, descarga de claves ni modificación de GOOGLE_APPLICATION_CREDENTIALS. El CLI leyó el archivo local de índices durante la preparación, pero no los desplegó.
+
+**Pendiente:** BETA-R02D4B-2 no iniciado. El catálogo aún no se ha cargado por esta tarea; cualquier siguiente operación requiere su alcance autorizado. Detención tras D4B-1, sin avance automático de fase.
