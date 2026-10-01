@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
 import { VisualSelect } from '../shared/VisualSelect'
@@ -11,6 +11,13 @@ import {
 import { SessionCard } from './SessionCard'
 import { CommunityListingsSection } from '../game-listings/presentation/CommunityListingsSection'
 import type { DateFilter } from './types'
+import type { GameCatalogRepository } from '../games/application/gameCatalogRepository'
+import type { Game } from '../games/domain/game'
+import { isValidGameId } from '../games/domain/game'
+import type { GameSelection } from '../games/application/gameSelection'
+import type { GameSearch } from '../games/application/searchGames'
+import { GameCombobox } from '../games/presentation/GameCombobox'
+import { clearExploreFilters, matchesExploreGame, readExploreGameFilter, writeExploreGameFilter } from './exploreGameFilter'
 
 const dateOptions = [
   { value: 'all', label: 'Cualquier fecha' },
@@ -19,10 +26,32 @@ const dateOptions = [
   { value: 'weekend', label: 'Este fin de semana' },
 ] satisfies ReadonlyArray<{ value: DateFilter; label: string }>
 
-export function ExplorePage() {
+export function ExplorePage({ searchGameCatalog, loadGameCatalog }: {
+  readonly searchGameCatalog: GameSearch
+  readonly loadGameCatalog: GameCatalogRepository['list']
+}) {
   const { retrySessions, sessions, sessionsError, sessionsLoading } = usePrototype()
   const [searchParams, setSearchParams] = useSearchParams()
   const game = searchParams.get('game') ?? ''
+  const gameId = searchParams.get('gameId') ?? ''
+  const [resolved, setResolved] = useState<{ id: string; game: Game | null } | null>(null)
+  useEffect(() => {
+    if (!isValidGameId(gameId)) return
+    let cancelled = false
+    void loadGameCatalog().then(
+      (games) => { if (!cancelled) setResolved({ id: gameId, game: games.find((item) => item.id === gameId) ?? null }) },
+      () => { if (!cancelled) setResolved({ id: gameId, game: null }) },
+    )
+    return () => { cancelled = true }
+  }, [gameId, loadGameCatalog])
+  const selection = useMemo(
+    () => readExploreGameFilter(new URLSearchParams({ game, gameId }), resolved?.id === gameId ? resolved.game : undefined),
+    [game, gameId, resolved],
+  )
+  const updateGame = (next: GameSelection | null) => {
+    if (next?.kind === 'cataloged') setResolved({ id: next.id, game: { id: next.id, name: next.name } })
+    setSearchParams(writeExploreGameFilter(searchParams, next), { replace: true })
+  }
   const dateValue = searchParams.get('date')
   const date = dateOptions.some((option) => option.value === dateValue)
     ? dateValue as DateFilter
@@ -53,17 +82,16 @@ export function ExplorePage() {
   )
 
   const filteredSessions = useMemo(() => {
-    const normalizedGame = game.trim().toLocaleLowerCase('es-ES')
     return availableSessions.filter(
       (session) =>
-        session.game.toLocaleLowerCase('es-ES').includes(normalizedGame) &&
+        matchesExploreGame(session, selection) &&
         matchesDateFilter(session.startsAt, date) &&
         (zone === 'all' || session.zone === zone),
     )
-  }, [availableSessions, date, game, zone])
+  }, [availableSessions, date, selection, zone])
 
-  const hasFilters = game !== '' || date !== 'all' || zone !== 'all'
-  const clearFilters = () => setSearchParams(new URLSearchParams(), { replace: true })
+  const hasFilters = (game !== '' || gameId !== '') || date !== 'all' || zone !== 'all'
+  const clearFilters = () => setSearchParams(clearExploreFilters(searchParams), { replace: true })
 
   return (
     <>
@@ -87,26 +115,15 @@ export function ExplorePage() {
       <section className="page-container explore-section" aria-label="Búsqueda de partidas">
         <div className="filters" aria-label="Filtros de partidas">
           <div className="field filters__game">
-            <label htmlFor="game-filter">Juego</label>
-            <div className="search-control">
-              <input
-                id="game-filter"
-                onChange={(event) => updateFilter('game', event.target.value, '')}
-                placeholder="Ej. Wingspan"
-                type="search"
-                value={game}
-              />
-              {game ? (
-                <button
-                  aria-label="Limpiar filtro de juego"
-                  className="search-control__clear"
-                  onClick={() => updateFilter('game', '', '')}
-                  type="button"
-                >
-                  <span aria-hidden="true">×</span>
-                </button>
-              ) : null}
-            </div>
+            <GameCombobox
+              id="game-filter"
+              label="Juego"
+              value={selection}
+              onChange={updateGame}
+              search={searchGameCatalog}
+              allowUncataloged
+              allowTextSearch
+            />
           </div>
           <fieldset className="filter-field filters__date">
             <legend>Fecha</legend>

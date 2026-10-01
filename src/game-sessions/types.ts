@@ -40,7 +40,9 @@ export type CreateSessionInput = {
   readonly description: string
 }
 
-export type UpdateSessionInput = CreateSessionInput
+export type UpdateSessionInput = Omit<CreateSessionInput, 'gameId'> & {
+  readonly gameId?: GameId | null
+}
 
 export type DateFilter = 'all' | 'today' | 'seven-days' | 'weekend'
 export type SessionDisplayState = 'open' | 'complete' | 'cancelled' | 'past'

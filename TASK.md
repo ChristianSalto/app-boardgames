@@ -1,16 +1,22 @@
 # Estado actual
 
-**Fase actual:**  
+**Fase actual:**
 Bloque BETA-R02 — Identidad y catálogo de juegos
 
-**Tarea activa:**  
-BETA-R02C — GameCombobox accesible y búsqueda local determinista.
+**Tarea activa:**
+BETA-R02D3 — Preparar catálogo inicial DEV y plan de despliegue.
 
-**Estado:**  
-BETA-R02C implementado localmente: `GameCombobox` reutilizable y controlado por `GameSelection`, búsqueda Application local normalizada y limitada sobre el port existente, alias opcional compatible con documentos antiguos y fallback explícito solo ante búsqueda vacía satisfactoria. Fixture aislada permite probar resultados, error, reintento y teclado sin tocar las pantallas reales. Pasan typecheck, build cloud, pruebas de búsqueda/semántica, `test:game-sessions` (12 unitarias y 5 de integración con emulador) y `test:rules` (52 pruebas). La fixture se comprobó a 375 y 400 px sin overflow horizontal y con opciones de 44 px; el formulario requerido bloquea texto sin selección. La revisión QA/UX independiente encontró cuatro casos y confirmó su corrección en código. Pendientes validación humana, lector de pantalla, IME y dispositivo táctil real; no se modificaron Rules en R02C, ni hubo acceso cloud o deploy.
+**Estado:**
+Plan local preparado en `docs/GAME_CATALOG_DEV_PLAN.md`: ocho juegos exactos de `catalogGames`, sin aliases; IDs literales aptos si permanecen inmutables; diseño de bootstrap idempotente con dry-run, guardas de proyecto y creación atómica; orden Rules → catálogo DEV → Hosting; rollback y smoke Belial/Redon/Pau/Ivy. No se añadió ni ejecutó un script con acceso privilegiado, ni se consultó o modificó cloud. El script y la dependencia Admin SDK se implementarán tras revisar el catálogo y el diseño.
 
-**Último cierre de fase:**  
-PROMPT-008F — Player Trust integrado y validado de extremo a extremo: reviews persistentes, resumen global, opiniones recientes y paginadas, fiabilidad diferenciada, autoridad temporal `startsAt`, lifecycle y Security Rules verificados sin bloqueos.
+**Validación D3:**
+Inspección de fixture, adaptador, Rules, composición cloud, `firebase.json`, `.firebaserc`, scripts y CLI local. `git diff --check` al cierre. Sin cambios en aplicación, Marketplace ni Rules respecto al working tree recibido. D3 es un diseño, no un despliegue.
 
-**Restricción:**  
-BETA-R02C no integra todavía el componente en Crear/Editar/Explorar/Marketplace ni sustituye el selector actual. La integración real, la estrategia de carga del catálogo y la integridad entre ID y nombre quedan para R02D.
+**Pendientes / gate:**
+Revisión humana de los ocho registros; autorización explícita antes de cualquier escritura cloud; preflight remoto de Rules/Hosting/credenciales/colección en la tarea futura. Implementar y probar localmente el script Admin con dependencia directa y lockfile antes del dry-run y la secuencia de publicación. Sin avance de fase por este documento.
+
+**Último incremento validado localmente:**
+BETA-R02D2 — GameCombobox en Explorar; typecheck, build:cloud, 18 pruebas afectadas, test:game-sessions y navegador local aprobados; QA independiente recomendó aceptación. Deuda UX de lector, IME, táctil y zoom real 200 % registrada en PROMPTS_LOG.md.
+
+**Restricción:**
+No seed, deploy, migración, vinculación automática ni escritura cloud. Conservar cambios locales previos R02D1/D2 sin commit.

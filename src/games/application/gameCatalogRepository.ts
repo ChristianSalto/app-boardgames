@@ -5,3 +5,16 @@ export type GameCatalogRepository = Readonly<{
 }>
 
 export const listGames = (repository: GameCatalogRepository) => repository.list()
+
+export const cacheGameCatalog = (repository: GameCatalogRepository): GameCatalogRepository => {
+  let pending: Promise<readonly Game[]> | null = null
+  return {
+    list: () => {
+      pending ??= repository.list().catch((error: unknown) => {
+        pending = null
+        throw error
+      })
+      return pending
+    },
+  }
+}

@@ -118,6 +118,12 @@ service cloud.firestore {
           && data.status in ['scheduled', 'cancelled'];
       }
 
+      function hasMatchingCatalogGame(data) {
+        return !data.keys().hasAny(['gameId'])
+          || (exists(/databases/$(database)/documents/games/$(data.gameId))
+            && get(/databases/$(database)/documents/games/$(data.gameId)).data.name == data.gameName);
+      }
+
       function isRequestAppend() {
         let expectedRequestId = sessionId + '_' + request.auth.uid;
         let pendingRequest = getAfter(requestPath(expectedRequestId)).data;
@@ -143,6 +149,8 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'gameName', 'gameId', 'startsAt', 'district', 'venue', 'description', 'capacity'
           ])
+          && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['gameName', 'gameId'])
+            || hasMatchingCatalogGame(request.resource.data))
           && (
             request.resource.data.startsAt == resource.data.startsAt
             || (resource.data.startsAt > request.time && request.resource.data.startsAt > request.time)
@@ -204,6 +212,7 @@ service cloud.firestore {
       allow read: if hasActiveBetaAccess();
       allow create: if hasActiveBetaAccess()
         && hasValidSessionShape(request.resource.data)
+        && hasMatchingCatalogGame(request.resource.data)
         && !request.resource.data.keys().hasAny(['date', 'time'])
         && request.resource.data.organizerId == request.auth.uid
         && request.resource.data.status == 'scheduled'

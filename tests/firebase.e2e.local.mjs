@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict'
+import { initializeTestEnvironment } from '@firebase/rules-unit-testing'
+import { doc, setDoc } from 'firebase/firestore'
+import { catalogGames } from './fixtures/catalogGames.ts'
 
 const browserDebugPort = Number(process.env.BROWSER_DEBUG_PORT ?? 9226)
 const appOrigin = process.env.APP_ORIGIN ?? 'http://127.0.0.1:5176'
@@ -85,6 +88,16 @@ const clickText = (selector, text) => `(() => {
   element.click();
 })()`
 
+const selectGame = async (page, game) => {
+  await page.evaluate(fill('#game', game))
+  await page.waitFor(
+    `Boolean([...document.querySelectorAll('[role=option]')].find((item) => item.textContent.trim() === ${JSON.stringify(game)}))`,
+    `encontrar ${game} en el catálogo local`,
+  )
+  await page.evaluate(clickText('[role=option]', game))
+  await page.waitFor("document.querySelector('#game-status')?.textContent === 'Juego seleccionado.'", 'seleccionar juego catalogado')
+}
+
 const navigate = (path) => `(() => {
   window.history.pushState({}, '', ${JSON.stringify(path)});
   window.dispatchEvent(new PopStateEvent('popstate'));
@@ -107,7 +120,7 @@ const registerAndCreatePlayer = async (page, email, displayName, district) => {
 const createSession = async (page, { game, date, time, district, venue, description }) => {
   await page.evaluate(navigate('/create'))
   await page.waitFor("Boolean(document.querySelector('#game'))", 'abrir Crear partida')
-  await page.evaluate(fill('#game', game))
+  await selectGame(page, game)
   await page.evaluate(fill('#date', date))
   await page.evaluate(fill('#time', time))
   await page.evaluate("document.querySelector('#zone').click()")
@@ -132,6 +145,18 @@ const createSession = async (page, { game, date, time, district, venue, descript
 const bodyHas = (text) => `document.body.innerText.includes(${JSON.stringify(text)})`
 
 const run = async () => {
+  const catalogEnvironment = await initializeTestEnvironment({
+    projectId: 'demo-mesa-abierta',
+    firestore: { host: '127.0.0.1', port: 8080 },
+  })
+  try {
+    await catalogEnvironment.withSecurityRulesDisabled(async (context) => {
+      const database = context.firestore()
+      await Promise.all(catalogGames.map((game) => setDoc(doc(database, 'games', game.id), { name: game.name })))
+    })
+  } finally {
+    await catalogEnvironment.cleanup()
+  }
   const version = await (await fetch(`http://127.0.0.1:${browserDebugPort}/json/version`)).json()
   const rootClient = await createClient(version.webSocketDebuggerUrl)
   const organizerContext = (await rootClient.call('Target.createBrowserContext')).browserContextId

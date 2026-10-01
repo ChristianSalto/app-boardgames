@@ -215,11 +215,38 @@ describe('game sessions', () => {
     const a = dbFor('a')
     const legacy = doc(a, 'gameSessions', 'legacy-game-name')
     const cataloged = doc(a, 'gameSessions', 'cataloged-game')
+    await seed([
+      ['games/azul', { name: 'Azul' }],
+      ['games/root', { name: 'Root' }],
+    ])
     await assertSucceeds(setDoc(legacy, session('a')))
     await assertSucceeds(setDoc(cataloged, session('a', { gameId: 'azul' })))
     await assertSucceeds(updateDoc(legacy, { gameName: 'Root', gameId: 'root' }))
+    await assertSucceeds(updateDoc(cataloged, { gameName: 'Root', gameId: 'root' }))
     await assertSucceeds(updateDoc(cataloged, { gameName: 'Juego local', gameId: deleteField() }))
     await assertSucceeds(getDoc(doc(dbFor('b'), 'gameSessions', 'cataloged-game')))
+  })
+
+  test('cataloged writes require an existing ID with its canonical name while uncataloged writes remain valid', async () => {
+    const a = dbFor('a')
+    await seed([['games/azul', { name: 'Azul', aliases: ['Azul juego'] }]])
+    await assertSucceeds(setDoc(doc(a, 'gameSessions', 'valid-cataloged'), session('a', { gameId: 'azul' })))
+    await assertSucceeds(setDoc(doc(a, 'gameSessions', 'valid-uncataloged'), session('a', { gameName: 'Juego local' })))
+    await assertFails(setDoc(doc(a, 'gameSessions', 'missing-game'), session('a', { gameName: 'Root', gameId: 'root' })))
+    await assertFails(setDoc(doc(a, 'gameSessions', 'mismatched-name'), session('a', { gameName: 'Root', gameId: 'azul' })))
+    await assertFails(updateDoc(doc(a, 'gameSessions', 'valid-uncataloged'), { gameName: 'Root', gameId: 'azul' }))
+    await assertSucceeds(updateDoc(doc(a, 'gameSessions', 'valid-cataloged'), { gameName: 'Juego local', gameId: deleteField() }))
+  })
+
+  test('unrelated edits keep historical identity even if its catalog entry is gone', async () => {
+    const a = dbFor('a')
+    await seed([
+      ['gameSessions/historical-name', session('a', { gameName: 'Juego antiguo' })],
+      ['gameSessions/historical-id', session('a', { gameName: 'Nombre antiguo', gameId: 'missing' })],
+    ])
+    await assertSucceeds(updateDoc(doc(a, 'gameSessions', 'historical-name'), { venue: 'Mesa nueva' }))
+    await assertSucceeds(updateDoc(doc(a, 'gameSessions', 'historical-id'), { venue: 'Mesa nueva' }))
+    await assertFails(updateDoc(doc(a, 'gameSessions', 'historical-id'), { gameName: 'Otro nombre' }))
   })
 
   test('rejects malformed game IDs and unauthorized identity changes', async () => {

@@ -1,17 +1,20 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
-import type { Game } from '../domain/game.ts'
+import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
+import { MAX_GAME_NAME_LENGTH, type Game } from '../domain/game.ts'
 import type { GameSelection } from '../application/gameSelection.ts'
 
 export type GameComboboxProps = Readonly<{
   id?: string
-  label: string
+  label: ReactNode
   value: GameSelection | null
   onChange: (value: GameSelection | null) => void
   search: (query: string) => Promise<readonly Game[]>
   allowUncataloged?: boolean
+  allowTextSearch?: boolean
   maxResults?: number
   disabled?: boolean
   required?: boolean
+  ariaDescribedBy?: string
+  ariaInvalid?: boolean
 }>
 
 type SearchState =
@@ -20,8 +23,8 @@ type SearchState =
   | { query: string; status: 'error' }
 
 export function GameCombobox({
-  id, label, value, onChange, search, allowUncataloged = false, maxResults = 8,
-  disabled = false, required = false,
+  id, label, value, onChange, search, allowUncataloged = false, allowTextSearch = false, maxResults = 8,
+  disabled = false, required = false, ariaDescribedBy, ariaInvalid = false,
 }: GameComboboxProps) {
   const generatedId = useId()
   const inputId = id ?? `${generatedId}-game`
@@ -49,8 +52,9 @@ export function GameCombobox({
   }, [required, value])
 
   const trimmed = query.trim()
+  const searching = !value || (allowTextSearch && value.kind === 'uncataloged' && open)
   useEffect(() => {
-    if (value || !trimmed) return
+    if (!searching || !trimmed) return
     let cancelled = false
     const currentQuery = query
     setState({ query: currentQuery, status: 'loading' })
@@ -65,10 +69,10 @@ export function GameCombobox({
       () => { if (!cancelled) setState({ query: currentQuery, status: 'error' }) },
     )
     return () => { cancelled = true }
-  }, [query, trimmed, value, search, retry, maxResults])
+  }, [query, trimmed, searching, search, retry, maxResults])
 
-  const current = !value && trimmed && state?.query === query ? state : null
-  const status = value ? 'selected' : !trimmed ? 'idle' : current?.status ?? 'loading'
+  const current = searching && trimmed && state?.query === query ? state : null
+  const status = value && !searching ? 'selected' : !trimmed ? 'idle' : current?.status ?? 'loading'
   const games = current?.status === 'results' ? current.games : []
   const hasFallback = status === 'results' && games.length === 0 && allowUncataloged
   const optionsCount = games.length + (hasFallback ? 1 : 0)
@@ -111,6 +115,10 @@ export function GameCombobox({
       event.preventDefault()
       setOpen(false)
       setActiveIndex(-1)
+    } else if (allowTextSearch && value?.kind === 'uncataloged' && trimmed && !open && event.key === 'ArrowDown') {
+      event.preventDefault()
+      setOpen(true)
+      setActiveIndex(0)
     } else if ((event.key === 'ArrowDown' || event.key === 'ArrowUp') && optionsCount > 0) {
       event.preventDefault()
       setOpen(true)
@@ -137,7 +145,7 @@ export function GameCombobox({
         setActiveIndex(-1)
       }
     }}>
-      <label className="game-combobox__label" htmlFor={inputId}>{label}</label>
+      <label className="field__label game-combobox__label" htmlFor={inputId}>{label}</label>
       <div className="game-combobox__control">
         <input
           ref={inputRef}
@@ -149,13 +157,17 @@ export function GameCombobox({
           aria-expanded={showList}
           aria-controls={showList ? listId : undefined}
           aria-activedescendant={activeOptionId}
-          aria-describedby={statusId}
+          aria-describedby={[statusId, ariaDescribedBy].filter(Boolean).join(' ')}
+          aria-invalid={ariaInvalid || undefined}
           value={query}
+          maxLength={MAX_GAME_NAME_LENGTH}
           disabled={disabled}
           required={required}
-          onFocus={() => { if (trimmed && !value) setOpen(true) }}
+          onFocus={() => { if (trimmed && (!value || (allowTextSearch && value.kind === 'uncataloged'))) setOpen(true) }}
           onChange={(event) => {
-            if (value) {
+            if (allowTextSearch) {
+              onChange(event.target.value ? { kind: 'uncataloged', name: event.target.value } : null)
+            } else if (value) {
               internalDeselect.current = true
               onChange(null)
             }
@@ -200,7 +212,7 @@ export function GameCombobox({
           </ul>
         )}
       </div>
-      <div id={statusId} className="game-combobox__status" aria-live="polite">{statusText}</div>
+      <div id={statusId} className={`game-combobox__status${allowTextSearch && status !== 'error' ? ' u-visually-hidden' : ''}`} aria-live="polite">{statusText}</div>
       {status === 'error' && !disabled && (
         <button className="game-combobox__retry" type="button" onClick={() => { setRetry((count) => count + 1); setOpen(true) }}>
           Reintentar búsqueda

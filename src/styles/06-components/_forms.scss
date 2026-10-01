@@ -115,6 +115,9 @@
 .game-combobox__control input:hover:not(:disabled) { border-color: var(--color-brand); }
 .game-combobox__control input[aria-invalid='true'] { border-color: var(--color-error); }
 .game-combobox__control input:disabled { background: var(--color-surface-secondary); color: var(--color-text-muted); }
+.form-card .field .game-combobox__control input { padding-right: 3rem; }
+.filters .field .game-combobox__control input { padding-right: 3.5rem; }
+.filters__game .game-combobox__option { overflow-wrap: anywhere; }
 
 .game-combobox__clear {
   position: absolute;

@@ -1,6 +1,8 @@
 import type { Game } from '../domain/game.ts'
 import type { GameCatalogRepository } from './gameCatalogRepository.ts'
 
+export type GameSearch = (query: string) => Promise<readonly Game[]>
+
 export const normalizeGameQuery = (value: string) => value.trim().replace(/\s+/g, ' ')
   .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es')
 

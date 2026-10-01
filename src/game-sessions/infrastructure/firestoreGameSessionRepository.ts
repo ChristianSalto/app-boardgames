@@ -1,5 +1,6 @@
 import { addDoc, collection, deleteField, doc, getDoc, getDocs, onSnapshot, query, runTransaction, Timestamp, where, type Firestore } from 'firebase/firestore'
 import { isValidGameId, isValidGameName } from '../../games/domain/game.ts'
+import { matchesCatalogGame } from '../../games/application/gameSelection.ts'
 import { isFutureSessionInput, isValidCapacity, sessionInstantFromMadridCivil } from '../model.ts'
 import type { CreateSessionInput, GameSession, SessionLifecycle, SessionTone, UpdateSessionInput } from '../types'
 import type { GameSessionRepository } from '../application/gameSessionRepository'
@@ -17,8 +18,8 @@ const canonicalStartsAt = (data: GameSessionDocument) => {
 
 const toSession = (id: string, data: GameSessionDocument): GameSession => ({ id, game: data.gameName, ...(data.gameId === undefined ? {} : { gameId: data.gameId }), startsAt: canonicalStartsAt(data), city: data.city, zone: data.district, place: data.venue ?? '', description: data.description ?? '', capacity: data.capacity, organizerId: data.organizerId, lifecycle: data.status, participantIds: data.participantIds ?? [data.organizerId], requests: [], tone: toneFor(data.gameName) })
 
-const validateGameInput = (input: CreateSessionInput) => {
-  if (!isValidGameName(input.game) || (input.gameId !== undefined && !isValidGameId(input.gameId))) {
+const validateGameInput = (input: CreateSessionInput | UpdateSessionInput) => {
+  if (!isValidGameName(input.game) || (input.gameId !== undefined && input.gameId !== null && !isValidGameId(input.gameId))) {
     throw new Error('INVALID_GAME_SELECTION')
   }
 }
@@ -40,7 +41,14 @@ const toMutableDocument = (input: UpdateSessionInput) => ({
 })
 
 const gameIdForUpdate = (input: UpdateSessionInput, current: GameSessionDocument) =>
-  input.gameId ?? (input.game === current.gameName ? current.gameId : undefined)
+  input.gameId === null ? undefined : input.gameId ?? (input.game === current.gameName ? current.gameId : undefined)
+
+const assertCatalogPair = async (firestore: Firestore, gameId: string, gameName: string) => {
+  const snapshot = await getDoc(doc(firestore, 'games', gameId))
+  if (!matchesCatalogGame(snapshot.exists() ? { id: snapshot.id, name: snapshot.data().name } : null, gameId, gameName)) {
+    throw new Error('INVALID_GAME_SELECTION')
+  }
+}
 
 export const createFirestoreGameSessionRepository = (firestore: Firestore): GameSessionRepository => ({
   discover: async () => (await getDocs(collection(firestore, 'gameSessions'))).docs.map((snapshot) => toSession(snapshot.id, snapshot.data() as GameSessionDocument)),
@@ -58,7 +66,12 @@ export const createFirestoreGameSessionRepository = (firestore: Firestore): Game
     (error) => observer.error(toSessionObservationError(error)),
   ),
   getById: async (id) => { const snapshot = await getDoc(doc(firestore, 'gameSessions', id)); return snapshot.exists() ? toSession(snapshot.id, snapshot.data() as GameSessionDocument) : null },
-  create: async (input, organizerId) => { const data = toDocument(input, organizerId); const snapshot = await addDoc(collection(firestore, 'gameSessions'), data); return toSession(snapshot.id, data) },
+  create: async (input, organizerId) => {
+    const data = toDocument(input, organizerId)
+    if (data.gameId) await assertCatalogPair(firestore, data.gameId, data.gameName)
+    const snapshot = await addDoc(collection(firestore, 'gameSessions'), data)
+    return toSession(snapshot.id, data)
+  },
   update: async (id, input, organizerId) => {
     const reference = doc(firestore, 'gameSessions', id)
     return runTransaction(firestore, async (transaction) => {
@@ -75,6 +88,14 @@ export const createFirestoreGameSessionRepository = (firestore: Firestore): Game
       validateGameInput(input)
       const changes = toMutableDocument(input)
       const gameId = gameIdForUpdate(input, current)
+      if (gameId && (gameId !== current.gameId || input.game !== current.gameName)) {
+        const catalogSnapshot = await transaction.get(doc(firestore, 'games', gameId))
+        if (!matchesCatalogGame(
+          catalogSnapshot.exists() ? { id: catalogSnapshot.id, name: catalogSnapshot.data().name } : null,
+          gameId,
+          input.game,
+        )) throw new Error('INVALID_GAME_SELECTION')
+      }
       transaction.update(reference, { ...changes, gameId: gameId ?? deleteField() })
       return toSession(id, { ...current, ...changes, gameId })
     })

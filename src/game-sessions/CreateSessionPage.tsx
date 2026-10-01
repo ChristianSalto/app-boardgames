@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { usePrototype } from '../app/PrototypeContext'
-import { gameOptions, madridZones } from '../mock-data/prototypeData'
+import { madridZones } from '../mock-data/prototypeData'
+import { gameFieldsForSelection, gameFieldsForUpdateSelection, gameSelectionForStoredGame, type GameSelection } from '../games/application/gameSelection'
+import type { GameSearch } from '../games/application/searchGames'
+import { isValidGameName, MAX_GAME_NAME_LENGTH } from '../games/domain/game'
+import { GameCombobox } from '../games/presentation/GameCombobox'
 import { VisualSelect } from '../shared/VisualSelect'
 import { SessionLoadErrorState } from './SessionLoadErrorState'
 import { isFutureSessionInput } from './model'
 import { instantToMadridCivil, madridCivilToInstant } from './madridDateTime'
-import type { CreateSessionInput } from './types'
+import type { CreateSessionInput, UpdateSessionInput } from './types'
 
-type FormErrors = Partial<Record<keyof CreateSessionInput, string>>
+type SessionForm = Omit<CreateSessionInput, 'game' | 'gameId'> & { readonly gameSelection: GameSelection | null }
+type FormErrors = Partial<Record<keyof SessionForm, string>>
 
 const toDateInputValue = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
@@ -21,8 +26,8 @@ const tomorrow = () => {
   return toDateInputValue(date)
 }
 
-const initialForm: CreateSessionInput = {
-  game: '',
+const initialForm: SessionForm = {
+  gameSelection: null,
   date: tomorrow(),
   time: '19:00',
   zone: '',
@@ -31,9 +36,12 @@ const initialForm: CreateSessionInput = {
   description: '',
 }
 
-const validate = (form: CreateSessionInput): FormErrors => {
+const validate = (form: SessionForm): FormErrors => {
   const errors: FormErrors = {}
-  if (!form.game) errors.game = 'Selecciona el juego de la partida.'
+  if (!form.gameSelection) errors.gameSelection = 'Selecciona el juego de la partida.'
+  else if (!isValidGameName(form.gameSelection.name)) {
+    errors.gameSelection = `El nombre del juego debe tener entre 1 y ${MAX_GAME_NAME_LENGTH} caracteres.`
+  }
   if (!form.date) errors.date = 'Indica la fecha de la partida.'
   if (!form.time) errors.time = 'Indica la hora de la partida.'
   if (form.date && form.time) {
@@ -53,13 +61,13 @@ const validate = (form: CreateSessionInput): FormErrors => {
   return errors
 }
 
-export function CreateSessionPage() {
+export function CreateSessionPage({ searchGameCatalog }: { readonly searchGameCatalog: GameSearch }) {
   const { createSession, currentPlayerId, retrySessions, sessions, sessionsError, sessionsLoading, updateSession } = usePrototype()
   const { sessionId } = useParams()
   const navigate = useNavigate()
   const editingSession = sessionId ? sessions.find((session) => session.id === sessionId) : undefined
   const isEditing = Boolean(sessionId)
-  const [form, setForm] = useState<CreateSessionInput>(initialForm)
+  const [form, setForm] = useState<SessionForm>(initialForm)
   const [errors, setErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [saveError, setSaveError] = useState(false)
@@ -80,7 +88,7 @@ export function CreateSessionPage() {
     initializedSessionIdRef.current = editingSession.id
     const { date, time } = instantToMadridCivil(editingSession.startsAt)
     setForm({
-      game: editingSession.game,
+      gameSelection: gameSelectionForStoredGame(editingSession),
       date: date ?? '',
       time,
       zone: editingSession.zone,
@@ -92,9 +100,9 @@ export function CreateSessionPage() {
     setSaveError(false)
   }, [editingSession, sessionId])
 
-  const update = <Key extends keyof CreateSessionInput>(
+  const update = <Key extends keyof SessionForm>(
     key: Key,
-    value: CreateSessionInput[Key],
+    value: SessionForm[Key],
   ) => {
     setForm((current) => ({ ...current, [key]: value }))
     setErrors((current) => {
@@ -112,7 +120,7 @@ export function CreateSessionPage() {
     if (editingSession && form.capacity < editingSession.participantIds.length) {
       nextErrors.capacity = `El aforo no puede ser inferior a las ${editingSession.participantIds.length} plazas ya confirmadas.`
     }
-    if (Object.keys(nextErrors).length > 0) {
+    if (Object.keys(nextErrors).length > 0 || !form.gameSelection) {
       setErrors(nextErrors)
       requestAnimationFrame(() => document.getElementById('form-errors')?.focus())
       return
@@ -124,13 +132,16 @@ export function CreateSessionPage() {
     requestAnimationFrame(() => document.getElementById('save-status')?.focus())
 
     try {
+      const { gameSelection, ...fields } = form
       if (editingSession) {
-        await updateSession(editingSession.id, form)
+        const input: UpdateSessionInput = { ...fields, ...gameFieldsForUpdateSelection(gameSelection) }
+        await updateSession(editingSession.id, input)
         navigate(`/sessions/${editingSession.id}`, {
           state: { edited: true, from: '/my-sessions', fromLabel: 'Mis partidas' },
         })
       } else {
-        const createdSessionId = await createSession(form)
+        const input: CreateSessionInput = { ...fields, ...gameFieldsForSelection(gameSelection) }
+        const createdSessionId = await createSession(input)
         navigate(`/sessions/${createdSessionId}`, {
           state: { created: true, from: '/my-sessions', fromLabel: 'Mis partidas' },
         })
@@ -201,23 +212,18 @@ export function CreateSessionPage() {
 
         <div className="form-grid">
           <div className="field form-field--wide">
-            <label className="field__label" htmlFor="game">
-              <span>Juego</span><span className="field__requirement">Obligatorio</span>
-            </label>
-            <div className="select-wrap">
-              <select
-                aria-describedby={errors.game ? 'game-error' : undefined}
-                aria-invalid={Boolean(errors.game)}
-                id="game"
-                onChange={(event) => update('game', event.target.value)}
-                required
-                value={form.game}
-              >
-                <option value="">Selecciona un juego</option>
-                {gameOptions.map((game) => <option key={game}>{game}</option>)}
-              </select>
-            </div>
-            {errors.game ? <p className="field__error" id="game-error">{errors.game}</p> : null}
+            <GameCombobox
+              ariaDescribedBy={errors.gameSelection ? 'game-error' : undefined}
+              ariaInvalid={Boolean(errors.gameSelection)}
+              id="game"
+              label={<><span>Juego</span><span className="field__requirement">Obligatorio</span></>}
+              onChange={(selection) => update('gameSelection', selection)}
+              required
+              search={searchGameCatalog}
+              allowUncataloged
+              value={form.gameSelection}
+            />
+            {errors.gameSelection ? <p className="field__error" id="game-error">{errors.gameSelection}</p> : null}
           </div>
 
           <div className="field">

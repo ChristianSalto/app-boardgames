@@ -18,6 +18,7 @@ test('combobox renders a real label, input relationship and idle announcement', 
   assert.match(html, /aria-autocomplete="list"/)
   assert.match(html, /aria-expanded="false"/)
   assert.match(html, /aria-describedby="game-test-status"/)
+  assert.match(html, /maxLength="120"/)
   assert.match(html, /aria-live="polite"[^>]*>Escribe para buscar un juego\./)
 })
 

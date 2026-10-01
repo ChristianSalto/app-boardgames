@@ -9,6 +9,9 @@ import { AuthenticationProvider } from './authentication/presentation/Authentica
 import { ClosedBetaGuard } from './authentication/presentation/ClosedBetaGuard'
 import { createFirestorePlayerRepository } from './players/infrastructure/firestorePlayerRepository'
 import { createFirestoreGameSessionRepository } from './game-sessions/infrastructure/firestoreGameSessionRepository'
+import { createFirestoreGameCatalogRepository } from './games/infrastructure/firestoreGameCatalogRepository'
+import { cacheGameCatalog } from './games/application/gameCatalogRepository'
+import { searchGames } from './games/application/searchGames'
 import { createFirestoreParticipationRequestRepository } from './game-sessions/infrastructure/firestoreParticipationRequestRepository'
 import { CurrentPlayerProvider } from './players/presentation/CurrentPlayerProvider'
 import { createFirestoreGameListingRepository } from './game-listings/infrastructure/firestoreGameListingRepository'
@@ -29,6 +32,8 @@ const authenticationGateway = createFirebaseAuthenticationGateway(firebaseInfras
 const betaAccessRepository = createFirestoreBetaAccessRepository(firebaseInfrastructure.firestore)
 const playerRepository = createFirestorePlayerRepository(firebaseInfrastructure.firestore)
 const gameSessionRepository = createFirestoreGameSessionRepository(firebaseInfrastructure.firestore)
+const gameCatalogRepository = cacheGameCatalog(createFirestoreGameCatalogRepository(firebaseInfrastructure.firestore))
+const searchGameCatalog = (query: string) => searchGames(gameCatalogRepository, query)
 const participationRequestRepository = createFirestoreParticipationRequestRepository(firebaseInfrastructure.firestore)
 const gameListingRepository = createFirestoreGameListingRepository(firebaseInfrastructure.firestore)
 const listingInterestRepository = createFirestoreListingInterestRepository(firebaseInfrastructure.firestore)
@@ -55,6 +60,8 @@ createRoot(rootElement).render(
           <CurrentPlayerProvider repository={playerRepository}>
             <App
               gameSessionRepository={gameSessionRepository}
+              searchGameCatalog={searchGameCatalog}
+              loadGameCatalog={gameCatalogRepository.list}
               participationRequestRepository={participationRequestRepository}
               playerRepository={playerRepository}
               gameListingRepository={gameListingRepository}

@@ -34,9 +34,13 @@ import { PlayerTrustProvider } from '../player-trust/presentation/PlayerTrustPro
 import { ReviewParticipantsPage } from '../player-trust/presentation/ReviewParticipantsPage'
 import { PlayerReviewsPage } from '../player-trust/presentation/PlayerReviewsPage'
 import type { PlayerReviewRepository } from '../player-trust/application/playerTrustRepository'
+import type { GameCatalogRepository } from '../games/application/gameCatalogRepository'
+import type { GameSearch } from '../games/application/searchGames'
 
 export function App({
   gameSessionRepository,
+  searchGameCatalog,
+  loadGameCatalog,
   participationRequestRepository,
   playerRepository,
   gameListingRepository,
@@ -47,6 +51,8 @@ export function App({
   registrationEnabled,
 }: {
   readonly gameSessionRepository: GameSessionRepository
+  readonly searchGameCatalog: GameSearch
+  readonly loadGameCatalog: GameCatalogRepository['list']
   readonly participationRequestRepository: ParticipationRequestRepository
   readonly playerRepository: PlayerRepository
   readonly gameListingRepository: GameListingRepository
@@ -124,6 +130,8 @@ export function App({
           user && player ? <AuthenticatedPrototype
             player={player}
             repository={gameSessionRepository}
+            searchGameCatalog={searchGameCatalog}
+            loadGameCatalog={loadGameCatalog}
             participationRequestRepository={participationRequestRepository}
             playerRepository={playerRepository}
             gameListingRepository={gameListingRepository}
@@ -143,6 +151,8 @@ export function App({
 function AuthenticatedPrototype({
   player,
   repository,
+  searchGameCatalog,
+  loadGameCatalog,
   participationRequestRepository,
   playerRepository,
   gameListingRepository,
@@ -153,6 +163,8 @@ function AuthenticatedPrototype({
 }: {
   readonly player: Player
   readonly repository: GameSessionRepository
+  readonly searchGameCatalog: GameSearch
+  readonly loadGameCatalog: GameCatalogRepository['list']
   readonly participationRequestRepository: ParticipationRequestRepository
   readonly playerRepository: PlayerRepository
   readonly gameListingRepository: GameListingRepository
@@ -179,12 +191,12 @@ function AuthenticatedPrototype({
         >
           <AppShell>
             <Routes>
-              <Route path="/" element={<ExplorePage />} />
+              <Route path="/" element={<ExplorePage searchGameCatalog={searchGameCatalog} loadGameCatalog={loadGameCatalog} />} />
               <Route path="/sessions/:sessionId" element={<SessionDetailPage />} />
-              <Route path="/sessions/:sessionId/edit" element={<CreateSessionPage />} />
+              <Route path="/sessions/:sessionId/edit" element={<CreateSessionPage searchGameCatalog={searchGameCatalog} />} />
               <Route path="/sessions/:sessionId/reviews" element={<ReviewParticipantsPage />} />
               <Route path="/my-sessions" element={<MySessionsPage />} />
-              <Route path="/create" element={<CreateSessionPage />} />
+              <Route path="/create" element={<CreateSessionPage searchGameCatalog={searchGameCatalog} />} />
               <Route path="/profile" element={<PlayerProfilePage />} />
               <Route path="/players/:playerId" element={<PlayerProfilePage />} />
               <Route path="/players/:playerId/reviews" element={<PlayerReviewsPage />} />
