@@ -186,7 +186,7 @@ export function CreateSessionPage({ searchGameCatalog }: { readonly searchGameCa
   }
 
   return (
-    <section className="page-container form-page">
+    <section className={`page-container form-page session-form-page${isEditing ? '' : ' session-create-page'}`}>
       <div className="page-heading">
         <p className="eyebrow">{isEditing ? 'Gestiona tu mesa' : 'Abre una mesa'}</p>
         <h1>{isEditing ? 'Editar partida' : 'Crear partida'}</h1>
@@ -218,6 +218,7 @@ export function CreateSessionPage({ searchGameCatalog }: { readonly searchGameCa
               id="game"
               label={<><span>Juego</span><span className="field__requirement">Obligatorio</span></>}
               onChange={(selection) => update('gameSelection', selection)}
+              placeholder="Buscar por nombre"
               required
               search={searchGameCatalog}
               allowUncataloged

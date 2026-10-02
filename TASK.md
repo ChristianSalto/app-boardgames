@@ -2,16 +2,12 @@
 
 **Fase actual:** Bloque BETA-R02 — Identidad y catálogo de juegos.
 
-**Tarea activa:** BETA-R02D4B-1 — Preflight cloud DEV y despliegue controlado de Firestore Rules.
+**Tarea activa:** BETA-R02D4B-5 — Auditoría e integración visual de GameCombobox en Crear.
 
-**Estado:** completado el 2026-10-01. Working tree limpio antes del despliegue; R02 versionado en 4f3dfeab5aab63049d94b59c1ae459fe91c8f72e. CLI autenticado, proyecto mesa-abierta-dev confirmado y seleccionado explícitamente sin cambiar el alias por defecto.
+**Diagnóstico:** HEAD inicial 8096b731f7826249dbb9c715b5f652e69aacea80 limpio. Crear ya usa GameCombobox (input editable y lista custom), sin select antiguo ni fallback nativo. El bundle público DEV index-Cr13-mZo.js contiene la integración R02; no se demostró discrepancia de build. El usuario confirmó que puede escribir y filtrar. La apariencia de lista de opciones corresponde al autocompletado; el campo vacío carecía de placeholder. Juego y Zona ya comparten altura 50.39px, borde, radio 10.4px y tipografía 16px.
 
-**Preflight remoto:** Rules previas equivalentes al commit 6040735ebce49099d263700b91d15ac5c40fbbd8; delta limitado al catálogo games y gameId opcional/coherente en partidas. Marketplace sin cambios. Respaldo local ignorado en .qa-r02d4b.local/before-firestore.rules y metadatos before-release.json.
+**Cambios locales:** placeholder Buscar por nombre en Crear/Editar; colores de opciones acordes con Zona; wrap de fallback largo en Crear/Editar. Cabecera compacta solo en Crear: título 72→44px desktop y 36.8→32px móvil; formulario 292.31→214.53px desktop y 256.33→226.13px móvil. Sin cambios de catálogo, selección, Zona, backend o Marketplace.
 
-**Validación:** npm run test:rules pasó (54 pruebas, 10 suites) en Emulator demo; procesos cerrados automáticamente, puertos 8180/9150/9299 libres. git diff --check pasó antes del despliegue. No se modificó la fuente de Rules.
+**Validación:** typecheck y build:cloud passed (aviso de bundle >500 kB preexistente); 18 tests afectados passed. Interacción local con adaptadores deterministas: texto/resultados/selección/fallback/limpiar/flechas/Enter/Escape/Tab a 1440/375/400px; sin overflow de página o lista, incluso fallback de 120 caracteres. Editar: selección por puntero; Explorar: consumidor conservado. Capturas antes/después y after-results.json en .qa-r02d4b5.local. No se ejecutó envío ni escritura cloud. Lector, IME, teclado táctil real y zoom 200% no ejecutados; no certificación WCAG global.
 
-**Deploy ejecutado:** .\node_modules\.bin\firebase.cmd deploy --only firestore:rules --project mesa-abierta-dev; exit 0, Deploy complete. Release activa projects/mesa-abierta-dev/rulesets/2c7126e4-932f-42e7-8598-e5459c628377, actualizada 2026-10-01T17:32:39.219210Z. Verificación remota posterior: fuente idéntica tras normalizar BOM/saltos de línea, SHA-256 d23885f4b4b1a9d053ac12258a3c599196f8f55435d6069998ee7def5b6d6a2a.
-
-**Restricciones cumplidas:** ningún documento Firestore cloud leído o escrito; ningún bootstrap, seed, migración, Hosting, índices, Functions o Storage desplegado. Sin creación de cuentas de servicio, descarga de claves ni modificación de GOOGLE_APPLICATION_CREDENTIALS. El CLI leyó el archivo local de índices durante la preparación, pero no los desplegó.
-
-**Pendiente:** BETA-R02D4B-2 no iniciado. El catálogo aún no se ha cargado por esta tarea; cualquier siguiente operación requiere su alcance autorizado. Detención tras D4B-1, sin avance automático de fase.
+**Estado de entrega:** revisión independiente conforme al cambio acotado, sin hallazgos P0/P1/P2 abiertos. Vite propio PID4108 y Edge propio PID16540 cerrados; puertos5191/9247 libres. git diff --check pasó. Sin deploy ni avance automático de fase.

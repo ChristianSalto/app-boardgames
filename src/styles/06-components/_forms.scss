@@ -292,6 +292,40 @@
   max-width: 56rem;
 }
 
+/* Keep creation task-focused without changing other page headings. */
+.session-create-page {
+  padding-top: var(--space-5);
+}
+
+.session-create-page .page-heading {
+  margin-bottom: var(--space-4);
+}
+
+.session-create-page .page-heading h1 {
+  margin-bottom: var(--space-2);
+  font-size: clamp(2rem, 4vw, 2.75rem);
+  line-height: 1.1;
+}
+
+.session-create-page .page-heading .eyebrow {
+  margin-bottom: var(--space-2);
+}
+
+.session-create-page .page-heading > p:last-child {
+  margin-bottom: 0;
+  font-size: var(--font-size-body);
+}
+
+.session-form-page .game-combobox__option {
+  overflow-wrap: anywhere;
+  color: var(--color-text-muted);
+}
+
+.session-form-page .game-combobox__option:hover,
+.session-form-page .game-combobox__option.is-active {
+  color: var(--color-text);
+}
+
 .form-card {
   gap: var(--space-5);
   padding: var(--space-4);

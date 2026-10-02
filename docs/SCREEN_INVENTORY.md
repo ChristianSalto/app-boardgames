@@ -42,7 +42,7 @@ El prototipo puede mostrar el nombre de un local o punto reconocible; no exige u
 - **Objetivo:** publicar una partida mediante un formulario corto.
 - **Usuario:** persona identificada que organiza.
 - **Punto de entrada:** navegación principal «Crear» o CTA desde el vacío de Explorar/Mis partidas.
-- **Acciones principales:** seleccionar juego simulado, introducir fecha/hora, seleccionar zona o distrito de Madrid, añadir un lugar opcional diferenciado, indicar aforo total, añadir descripción opcional y publicar.
+- **Acciones principales:** buscar y seleccionar un juego del catálogo con GameCombobox o confirmar un nombre no catalogado, introducir fecha/hora, seleccionar zona o distrito de Madrid, añadir un lugar opcional diferenciado, indicar aforo total, añadir descripción opcional y publicar.
 - **Información principal:** Madrid como contexto fijo no editable; zona, lugar y descripción separados; etiquetas, obligatoriedad, ayuda de aforo y resumen de errores.
 - **Estados importantes:** inicial, edición, validación incorrecta, publicación en curso, error de publicación y éxito con navegación a SCR-02.
 

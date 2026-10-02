@@ -13,6 +13,7 @@ export type GameComboboxProps = Readonly<{
   maxResults?: number
   disabled?: boolean
   required?: boolean
+  placeholder?: string
   ariaDescribedBy?: string
   ariaInvalid?: boolean
 }>
@@ -24,7 +25,7 @@ type SearchState =
 
 export function GameCombobox({
   id, label, value, onChange, search, allowUncataloged = false, allowTextSearch = false, maxResults = 8,
-  disabled = false, required = false, ariaDescribedBy, ariaInvalid = false,
+  disabled = false, required = false, placeholder, ariaDescribedBy, ariaInvalid = false,
 }: GameComboboxProps) {
   const generatedId = useId()
   const inputId = id ?? `${generatedId}-game`
@@ -153,6 +154,7 @@ export function GameCombobox({
           type="text"
           role="combobox"
           autoComplete="off"
+          placeholder={placeholder}
           aria-autocomplete="list"
           aria-expanded={showList}
           aria-controls={showList ? listId : undefined}
